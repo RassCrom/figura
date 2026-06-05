@@ -8,6 +8,7 @@ export const GAME_CONFIG = {
   revealAutoDismissMs: 7000,
   debounceMs: 300,
   countdownMs: 900,
+  anchorPopularityRating: 95,
   baseScore: 5000,
   wrongPenalty: 1200,
   timeBonusMax: 800,

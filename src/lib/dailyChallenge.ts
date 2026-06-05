@@ -1,4 +1,5 @@
 import type { Figure } from "../types/figure";
+import { GAME_CONFIG } from "../config/gameConfig";
 import { getFullName, normalizeName } from "./figures";
 
 // All players, everywhere, share the same daily set. We key on UTC date so
@@ -78,7 +79,17 @@ export function getDailyFigures(
   }
   const seed = fnv1a(`daily:${dateString}`);
   const shuffled = seededShuffle(pool, seed);
-  return shuffled.slice(0, DAILY_ROUNDS);
+  const anchorIndex = shuffled.findIndex(
+    (figure) => figure.popularity_rating >= GAME_CONFIG.anchorPopularityRating,
+  );
+  if (anchorIndex <= 0) {
+    return shuffled.slice(0, DAILY_ROUNDS);
+  }
+  const anchor = shuffled[anchorIndex];
+  return [anchor, ...shuffled.slice(0, anchorIndex), ...shuffled.slice(anchorIndex + 1)].slice(
+    0,
+    DAILY_ROUNDS,
+  );
 }
 
 export function getFigureOfTheDay(

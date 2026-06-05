@@ -1,4 +1,18 @@
-import { LogOut, Pause, Play, X } from "lucide-react";
+import {
+  Brush,
+  Compass,
+  Crown,
+  Dumbbell,
+  FlaskConical,
+  LogOut,
+  Music,
+  Pause,
+  PenTool,
+  Play,
+  ScrollText,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { type CSSProperties, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -15,6 +29,7 @@ import {
   normalizeName,
 } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
+import { buildRoundRouteOverlays } from "../lib/routeOverlays";
 import { useGameStore } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Figure } from "../types/figure";
@@ -24,6 +39,67 @@ type Props = {
 };
 
 type MapEngine = typeof import("../lib/mapEngine");
+
+const CATEGORY_META: Record<string, { icon: LucideIcon; label: string }> = {
+  Artist: { icon: Brush, label: "Artist" },
+  Explorer: { icon: Compass, label: "Explorer" },
+  Leader: { icon: Crown, label: "Leader" },
+  Musician: { icon: Music, label: "Musician" },
+  Philosopher: { icon: ScrollText, label: "Philosopher" },
+  Scientist: { icon: FlaskConical, label: "Scientist" },
+  Sportsman: { icon: Dumbbell, label: "Sportsman" },
+  Writer: { icon: PenTool, label: "Writer" },
+};
+
+function toRoman(value: number): string {
+  const numerals: Array<[number, string]> = [
+    [1000, "M"],
+    [900, "CM"],
+    [500, "D"],
+    [400, "CD"],
+    [100, "C"],
+    [90, "XC"],
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let remaining = value;
+  let out = "";
+  for (const [amount, numeral] of numerals) {
+    while (remaining >= amount) {
+      out += numeral;
+      remaining -= amount;
+    }
+  }
+  return out;
+}
+
+function parseHistoricalYear(value: string): number | null {
+  const century = value.match(/\b(\d+)(?:st|nd|rd|th)\s+century\s+BC\b/i);
+  if (century) {
+    return -(Number(century[1]) - 1) * 100 - 1;
+  }
+
+  const year = value.match(/\b\d{1,4}\b/);
+  if (!year) {
+    return null;
+  }
+  const numericYear = Number(year[0]);
+  return /\bBC\b/i.test(value) ? -numericYear : numericYear;
+}
+
+function getCenturyLabel(figure: Figure): string {
+  const year = parseHistoricalYear(figure.birth_date);
+  if (year == null) {
+    return "Century unknown";
+  }
+  const century = Math.floor((Math.abs(year) - 1) / 100) + 1;
+  return year < 0 ? `${toRoman(century)} в. до н.э.` : `${toRoman(century)} в.`;
+}
 
 function TimerArc({ seconds }: { seconds: number }) {
   const radius = 38;
@@ -57,10 +133,12 @@ function PersonCard({
   figure,
   roundScore,
   onDismiss,
+  cinematic,
 }: {
   figure: Figure;
   roundScore: number;
   onDismiss: () => void;
+  cinematic: boolean;
 }) {
   const [remainingMs, setRemainingMs] = useState<number>(GAME_CONFIG.revealAutoDismissMs);
   const journey = distanceKm(
@@ -95,8 +173,15 @@ function PersonCard({
   }, [onDismiss]);
 
   return (
-    <div className="reveal-backdrop" onClick={onDismiss} role="presentation">
-      <article className="person-card" onClick={(event) => event.stopPropagation()}>
+    <div
+      className={cinematic ? "reveal-backdrop cinematic" : "reveal-backdrop"}
+      onClick={onDismiss}
+      role="presentation"
+    >
+      <article
+        className={cinematic ? "person-card cinematic-card" : "person-card"}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="reveal-progress" aria-hidden="true" />
         <button className="icon-button close-button" type="button" onClick={onDismiss} aria-label="Dismiss card">
           <X aria-hidden="true" size={18} />
@@ -139,10 +224,17 @@ export default function GamePage({ figures }: Props) {
   const [mapReady, setMapReady] = useState(false);
   const [mapBearing, setMapBearing] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const guessPanelRef = useRef<HTMLFormElement>(null);
   const wrongPlaceCounter = useRef(0);
   const [guess, setGuess] = useState("");
   const [debouncedGuess, setDebouncedGuess] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
+  const [guessPanelFocused, setGuessPanelFocused] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const [guessPanelHeight, setGuessPanelHeight] = useState(0);
+  const [isSmallViewport, setIsSmallViewport] = useState(false);
+  const [showRevealCard, setShowRevealCard] = useState(false);
+  const [revealFlightActive, setRevealFlightActive] = useState(false);
   const [wrongPlace, setWrongPlace] = useState<{
     key: number;
     name: string;
@@ -157,6 +249,7 @@ export default function GamePage({ figures }: Props) {
   const roundTimer = useGameStore((state) => state.roundTimer);
   const extraBank = useGameStore((state) => state.extraBank);
   const wrongGuesses = useGameStore((state) => state.wrongGuesses);
+  const roundResults = useGameStore((state) => state.roundResults);
   const firstGuessStreak = useGameStore((state) => state.firstGuessStreak);
   // Derive streak visibility instead of reading a store flag. The previous
   // `showStreak` was only ever set DURING the reveal (when the HUD is
@@ -181,6 +274,27 @@ export default function GamePage({ figures }: Props) {
   const { play, crossfadeTo } = useSoundManager();
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
+  const keyboardLayoutActive = guessPanelFocused && isSmallViewport && status === "playing";
+  const revealResult = roundResults[roundResults.length - 1] ?? null;
+  const revealWasCorrect = Boolean(
+    revealedFigure && revealResult?.round === roundIndex + 1 && revealResult.correct,
+  );
+  const historyRoutes = useMemo(
+    () => buildRoundRouteOverlays(roundResults, queue, { correctOnly: true, ghost: true }),
+    [queue, roundResults],
+  );
+  const screenClassName = [
+    "game-screen",
+    `basemap-${basemap.toLowerCase().replace(/\s+/g, "-")}`,
+    keyboardLayoutActive ? "keyboard-open" : "",
+    revealFlightActive ? "reveal-flight" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const screenStyle = {
+    "--keyboard-inset": `${keyboardInset}px`,
+    "--guess-panel-height": `${Math.ceil(guessPanelHeight)}px`,
+  } as CSSProperties;
 
   const suggestions = useMemo(() => {
     const query = normalizeName(debouncedGuess);
@@ -197,6 +311,53 @@ export default function GamePage({ figures }: Props) {
     const timer = window.setTimeout(() => setDebouncedGuess(guess), GAME_CONFIG.debounceMs);
     return () => window.clearTimeout(timer);
   }, [guess]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const update = () => setIsSmallViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) {
+        setKeyboardInset(0);
+        return;
+      }
+      const inset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      setKeyboardInset(Math.round(inset));
+    };
+
+    update();
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    const panel = guessPanelRef.current;
+    if (!panel) {
+      return;
+    }
+
+    const update = () => setGuessPanelHeight(panel.getBoundingClientRect().height);
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(update);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!wrongPlace) {
@@ -249,6 +410,13 @@ export default function GamePage({ figures }: Props) {
   }, [basemap]);
 
   useEffect(() => {
+    if (!mapEngineRef.current || !mapRef.current || !mapReady) {
+      return;
+    }
+    mapEngineRef.current.renderRouteOverlay(mapRef.current, historyRoutes);
+  }, [historyRoutes, mapReady]);
+
+  useEffect(() => {
     if (!mapReady || !mapRef.current) {
       return;
     }
@@ -286,8 +454,9 @@ export default function GamePage({ figures }: Props) {
     engine.renderJourney(map, currentFigure, hints, {
       animateFit: !reducedMotion && (status === "countdown" || status === "playing"),
       reducedMotion,
+      compact: keyboardLayoutActive,
     });
-  }, [currentFigure, mapReady, wrongGuesses, status]);
+  }, [currentFigure, keyboardLayoutActive, mapReady, wrongGuesses, status]);
 
   useEffect(() => {
     if (!mapEngineRef.current || !mapRef.current) {
@@ -298,6 +467,26 @@ export default function GamePage({ figures }: Props) {
       status === "countdown" || status === "paused" || status === "revealed",
     );
   }, [mapReady, status]);
+
+  useEffect(() => {
+    const map = mapRef.current?.map;
+    if (!map) {
+      return;
+    }
+    const timers = [
+      window.setTimeout(() => map.resize(), 0),
+      window.setTimeout(() => {
+        map.resize();
+        if (keyboardLayoutActive && currentFigure && mapEngineRef.current && mapRef.current) {
+          mapEngineRef.current.focusJourney(mapRef.current, currentFigure, {
+            reducedMotion: true,
+            compact: true,
+          });
+        }
+      }, 240),
+    ];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [currentFigure, guessPanelHeight, keyboardInset, keyboardLayoutActive]);
 
   useEffect(() => {
     if (status !== "countdown") {
@@ -345,6 +534,40 @@ export default function GamePage({ figures }: Props) {
     }
   }, [roundIndex, status, inputShakeKey]);
 
+  useEffect(() => {
+    if (status !== "playing") {
+      setGuessPanelFocused(false);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (!revealedFigure) {
+      setShowRevealCard(false);
+      setRevealFlightActive(false);
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cinematic = revealWasCorrect && !reducedMotion;
+    if (mapEngineRef.current && mapRef.current) {
+      mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, { reducedMotion });
+    }
+
+    if (!cinematic) {
+      setShowRevealCard(true);
+      setRevealFlightActive(false);
+      return;
+    }
+
+    setShowRevealCard(false);
+    setRevealFlightActive(true);
+    const timer = window.setTimeout(() => {
+      setRevealFlightActive(false);
+      setShowRevealCard(true);
+    }, 620);
+    return () => window.clearTimeout(timer);
+  }, [revealWasCorrect, revealedFigure]);
+
   // Round transition: clear local UI state that's only meaningful within the
   // round just ended (the typed guess, the wrong-figure toast).
   useEffect(() => {
@@ -363,6 +586,8 @@ export default function GamePage({ figures }: Props) {
     setGuess("");
     setActiveSuggestion(0);
     if (correct) {
+      inputRef.current?.blur();
+      setGuessPanelFocused(false);
       play("correct");
       crossfadeTo("reveal-flourish");
       return;
@@ -387,6 +612,9 @@ export default function GamePage({ figures }: Props) {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (suggestions.length === 0) {
+      return;
+    }
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveSuggestion((index) => Math.min(suggestions.length - 1, index + 1));
@@ -415,7 +643,7 @@ export default function GamePage({ figures }: Props) {
   }
 
   return (
-    <main className={`game-screen basemap-${basemap.toLowerCase().replace(/\s+/g, "-")}`}>
+    <main className={screenClassName} style={screenStyle}>
       <div ref={mapContainerRef} className="map-canvas" aria-label="World map" />
       <div className="map-vignette" aria-hidden="true" />
       {vignetteKey > 0 ? <div key={vignetteKey} className="wrong-vignette" aria-hidden="true" /> : null}
@@ -479,23 +707,44 @@ export default function GamePage({ figures }: Props) {
           ) : null}
         </div>
 
-        <form className="guess-panel" onSubmit={handleSubmit}>
+        <form
+          ref={guessPanelRef}
+          className="guess-panel"
+          onSubmit={handleSubmit}
+          onFocusCapture={() => setGuessPanelFocused(true)}
+          onBlurCapture={() => {
+            window.setTimeout(() => {
+              setGuessPanelFocused(Boolean(guessPanelRef.current?.contains(document.activeElement)));
+            }, 0);
+          }}
+        >
           <label htmlFor="guess-input">{en.who}</label>
           {suggestions.length > 0 ? (
             <div className="suggestions" role="listbox">
-              {suggestions.map((figure, index) => (
-                <button
-                  key={getFullName(figure)}
-                  type="button"
-                  className={index === activeSuggestion ? "suggestion active" : "suggestion"}
-                  onClick={() => submitValue(getFullName(figure))}
-                  role="option"
-                  aria-selected={index === activeSuggestion}
-                >
-                  <span>{getFullName(figure)}</span>
-                  <small>{figure.category}</small>
-                </button>
-              ))}
+              {suggestions.map((figure, index) => {
+                const meta = CATEGORY_META[figure.category] ?? { icon: ScrollText, label: figure.category };
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={getFullName(figure)}
+                    type="button"
+                    className={index === activeSuggestion ? "suggestion active" : "suggestion"}
+                    onClick={() => submitValue(getFullName(figure))}
+                    role="option"
+                    aria-selected={index === activeSuggestion}
+                  >
+                    <span className="suggestion-icon" aria-hidden="true">
+                      <Icon size={16} />
+                    </span>
+                    <span className="suggestion-copy">
+                      <strong>{getFullName(figure)}</strong>
+                      <small>
+                        {getCenturyLabel(figure)} · {meta.label}
+                      </small>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : null}
           <input
@@ -553,8 +802,13 @@ export default function GamePage({ figures }: Props) {
         </div>
       ) : null}
 
-      {revealedFigure ? (
-        <PersonCard figure={revealedFigure} roundScore={currentRoundScore} onDismiss={dismissReveal} />
+      {revealedFigure && showRevealCard ? (
+        <PersonCard
+          figure={revealedFigure}
+          roundScore={currentRoundScore}
+          onDismiss={dismissReveal}
+          cinematic={revealWasCorrect}
+        />
       ) : null}
     </main>
   );
