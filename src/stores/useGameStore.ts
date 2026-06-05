@@ -6,11 +6,15 @@ import { getFullName, inferContinent, normalizeName } from "../lib/figures";
 
 type GameStatus = "idle" | "countdown" | "playing" | "paused" | "revealed" | "ended";
 
+type GameMode = "classic" | "daily";
+
 type StartSessionArgs = {
   nickname: string;
   difficulty: Difficulty;
   categories: string[];
   queue: Figure[];
+  mode?: GameMode;
+  dailyDate?: string;
 };
 
 type GameState = {
@@ -18,17 +22,17 @@ type GameState = {
   sessionId: string;
   difficulty: Difficulty;
   categories: string[];
+  mode: GameMode;
+  dailyDate: string | null;
   queue: Figure[];
   roundIndex: number;
   status: GameStatus;
   countdownText: string;
   score: number;
-  displayedScore: number;
   roundTimer: number;
   extraBank: number;
   wrongGuesses: number;
   firstGuessStreak: number;
-  showStreak: boolean;
   currentRoundScore: number;
   timeUsed: number;
   extraUsed: number;
@@ -58,17 +62,17 @@ const initialState = {
   sessionId: "",
   difficulty: "Explorer" as Difficulty,
   categories: [] as string[],
+  mode: "classic" as GameMode,
+  dailyDate: null as string | null,
   queue: [] as Figure[],
   roundIndex: 0,
   status: "idle" as GameStatus,
   countdownText: "",
   score: 0,
-  displayedScore: 0,
   roundTimer: GAME_CONFIG.roundSeconds,
   extraBank: GAME_CONFIG.extraBankSeconds,
   wrongGuesses: 0,
   firstGuessStreak: 0,
-  showStreak: false,
   currentRoundScore: 0,
   timeUsed: 0,
   extraUsed: 0,
@@ -81,23 +85,54 @@ const initialState = {
   leaderboardSaved: false,
 };
 
+// Per-round state that must be wiped at every round boundary. Everything
+// cumulative (score, queue, roundIndex, firstGuessStreak, roundResults) is
+// deliberately NOT in here.
+function freshRoundState(): Pick<
+  GameState,
+  | "roundTimer"
+  | "wrongGuesses"
+  | "currentRoundScore"
+  | "timeUsed"
+  | "extraUsed"
+  | "hintsUsed"
+  | "revealedFigure"
+> {
+  return {
+    roundTimer: GAME_CONFIG.roundSeconds,
+    wrongGuesses: 0,
+    currentRoundScore: 0,
+    timeUsed: 0,
+    extraUsed: 0,
+    hintsUsed: 0,
+    revealedFigure: null,
+  };
+}
+
 function currentFigure(state: GameState): Figure | null {
   return state.queue[state.roundIndex] ?? null;
 }
 
+// Single entry point into the "revealed" state. Always writes the same set
+// of fields explicitly so currentRoundScore, score, and streak can never
+// be stale from the previous round.
 function reveal(state: GameState, score: number, correct: boolean): Partial<GameState> {
   const figure = currentFigure(state);
   if (!figure) {
     return { status: "ended" };
   }
 
-  const nextTotal = state.score + score;
+  const isFirstGuess = correct && state.wrongGuesses === 0;
+  // Streak counts CONSECUTIVE first-try-correct rounds; any non-first-guess
+  // outcome (wrong guess, skip, timeout) resets it.
+  const nextFirstGuessStreak = isFirstGuess ? state.firstGuessStreak + 1 : 0;
+
   return {
     status: "revealed",
     revealedFigure: figure,
     currentRoundScore: score,
-    score: nextTotal,
-    displayedScore: nextTotal,
+    score: state.score + score,
+    firstGuessStreak: nextFirstGuessStreak,
     roundResults: [
       ...state.roundResults,
       {
@@ -109,7 +144,7 @@ function reveal(state: GameState, score: number, correct: boolean): Partial<Game
         category: figure.category,
         continent: inferContinent(figure.coordinates_of_the_place_of_birth),
         correct,
-        firstGuess: correct && state.wrongGuesses === 0,
+        firstGuess: isFirstGuess,
       },
     ],
   };
@@ -117,13 +152,15 @@ function reveal(state: GameState, score: number, correct: boolean): Partial<Game
 
 export const useGameStore = create<GameState>((set, get) => ({
   ...initialState,
-  startSession: ({ nickname, difficulty, categories, queue }) =>
+  startSession: ({ nickname, difficulty, categories, queue, mode = "classic", dailyDate }) =>
     set({
       ...initialState,
       nickname,
       sessionId: crypto.randomUUID(),
       difficulty,
       categories,
+      mode,
+      dailyDate: dailyDate ?? null,
       queue,
       status: "countdown",
       countdownText: "3",
@@ -131,16 +168,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   setToast: (toast) => set({ toast }),
   setCountdownText: (countdownText) => set({ countdownText }),
   beginRound: () =>
-    set({
-      status: "playing",
-      countdownText: "",
-      roundTimer: GAME_CONFIG.roundSeconds,
-      wrongGuesses: 0,
-      currentRoundScore: 0,
-      timeUsed: 0,
-      extraUsed: 0,
-      hintsUsed: 0,
-      revealedFigure: null,
+    set((state) => {
+      // Only start a round from countdown. Guards against a stray beginRound
+      // call (e.g. a queued setTimeout firing after pause/resume) re-entering
+      // a round and wiping its progress.
+      if (state.status !== "countdown") {
+        return state;
+      }
+      return {
+        ...freshRoundState(),
+        status: "playing",
+        countdownText: "",
+      };
     }),
   tick: (deltaSeconds) =>
     set((state) => {
@@ -148,23 +187,37 @@ export const useGameStore = create<GameState>((set, get) => ({
         return state;
       }
 
-      if (state.roundTimer > 0) {
-        const nextTimer = Math.max(0, state.roundTimer - deltaSeconds);
-        return {
-          roundTimer: nextTimer,
-          timeUsed: state.timeUsed + deltaSeconds,
-        };
+      // Drain primary timer first, spill over into extra bank, and only
+      // then reveal as a timeout. Using Math.min keeps timeUsed/extraUsed
+      // accurate to the actual seconds consumed — the previous version
+      // could overshoot by up to deltaSeconds when the timer hit zero
+      // mid-tick, which silently inflated the time-bonus penalty.
+      let remaining = deltaSeconds;
+      let roundTimer = state.roundTimer;
+      let timeUsed = state.timeUsed;
+      let extraBank = state.extraBank;
+      let extraUsed = state.extraUsed;
+
+      if (roundTimer > 0) {
+        const used = Math.min(roundTimer, remaining);
+        roundTimer -= used;
+        timeUsed += used;
+        remaining -= used;
       }
 
-      if (state.extraBank > 0) {
-        const drained = Math.min(state.extraBank, deltaSeconds);
-        return {
-          extraBank: Math.max(0, state.extraBank - drained),
-          extraUsed: state.extraUsed + drained,
-        };
+      if (remaining > 0 && extraBank > 0) {
+        const used = Math.min(extraBank, remaining);
+        extraBank -= used;
+        extraUsed += used;
+        remaining -= used;
       }
 
-      return reveal(state, 0, false);
+      if (remaining > 0) {
+        // Both clocks are empty. Reveal as a timeout.
+        return { ...state, ...reveal(state, 0, false) };
+      }
+
+      return { roundTimer, timeUsed, extraBank, extraUsed };
     }),
   submitGuess: (guess) => {
     const state = get();
@@ -175,40 +228,29 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const isCorrect = normalizeName(getFullName(figure)) === normalizeName(guess);
     if (isCorrect) {
+      // Streak bonus applies when this round is a first-try-correct AND the
+      // player already had a streak going from prior rounds.
       const streak = state.wrongGuesses === 0 && state.firstGuessStreak >= 1;
-      const nextFirstGuessStreak = state.wrongGuesses === 0 ? state.firstGuessStreak + 1 : 0;
       const roundScore = calcRoundScore(
         state.wrongGuesses,
         state.timeUsed,
         state.extraUsed,
         streak,
       );
-      set((latest) => ({
-        ...reveal({ ...latest, firstGuessStreak: nextFirstGuessStreak }, roundScore, true),
-        firstGuessStreak: nextFirstGuessStreak,
-        showStreak: nextFirstGuessStreak >= 2,
-      }));
+      set(reveal(state, roundScore, true));
       return true;
     }
 
     set((latest) => {
       const wrongGuesses = latest.wrongGuesses + 1;
-      if (wrongGuesses >= 3) {
-        return {
-          wrongGuesses,
-          firstGuessStreak: 0,
-          showStreak: false,
-          hintsUsed: 3,
-          vignetteKey: latest.vignetteKey + 1,
-          inputShakeKey: latest.inputShakeKey + 1,
-        };
-      }
-
       return {
         wrongGuesses,
+        // Any wrong guess breaks the streak immediately; the round can
+        // still be won, but the streak bonus is gone.
         firstGuessStreak: 0,
-        showStreak: false,
-        hintsUsed: wrongGuesses,
+        // hintsUsed mirrors wrongGuesses (capped at 3) — used for the
+        // round-result summary and achievements.
+        hintsUsed: Math.min(3, wrongGuesses),
         vignetteKey: latest.vignetteKey + 1,
         inputShakeKey: latest.inputShakeKey + 1,
       };
@@ -216,29 +258,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     return false;
   },
   skipRound: () =>
-    set((state) => ({
-      ...reveal(state, 0, false),
-      firstGuessStreak: 0,
-      showStreak: false,
-    })),
+    set((state) => {
+      if (state.status !== "playing") {
+        return state;
+      }
+      return reveal(state, 0, false);
+    }),
   dismissReveal: () =>
     set((state) => {
+      // Guard against double-fire. The PersonCard's 7s auto-dismiss timer,
+      // the user's "Next" click, and the Escape keyhandler all call this;
+      // without the guard, two near-simultaneous calls would advance
+      // roundIndex twice and silently skip a round (the visible symptom:
+      // figure + score look like they belong to the previous round).
+      if (state.status !== "revealed") {
+        return state;
+      }
       const nextRound = state.roundIndex + 1;
       if (nextRound >= state.queue.length) {
         return { status: "ended", roundIndex: nextRound, revealedFigure: null };
       }
 
       return {
+        ...freshRoundState(),
         status: "countdown",
         countdownText: "3",
         roundIndex: nextRound,
-        roundTimer: GAME_CONFIG.roundSeconds,
-        wrongGuesses: 0,
-        currentRoundScore: 0,
-        timeUsed: 0,
-        extraUsed: 0,
-        hintsUsed: 0,
-        revealedFigure: null,
       };
     }),
   pause: () => set((state) => (state.status === "playing" ? { status: "paused" } : state)),

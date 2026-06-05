@@ -46,7 +46,11 @@ export function SettingsPage({ categories }: { categories: string[] }) {
               >
                 <span>{item}</span>
                 <small>
-                  {item === "Explorer" ? "Popularity 90+" : item === "Scholar" ? "Popularity 85-89" : "Below 85"}
+                  {item === "Explorer"
+                    ? "Famous faces — great for beginners"
+                    : item === "Scholar"
+                      ? "Lesser-known but significant figures"
+                      : "The deepest cut — for true historians"}
                 </small>
               </button>
             ))}

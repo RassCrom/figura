@@ -20,7 +20,15 @@ export type Figure = {
 
 export type Difficulty = "Explorer" | "Scholar" | "Conqueror";
 
-export type Basemap = "Steppe" | "OSM" | "ESRI Topo" | "ESRI Satellite" | "CartoDB Dark";
+export type Basemap =
+  | "Steppe"
+  | "OSM"
+  | "ESRI Topo"
+  | "ESRI Satellite"
+  | "CartoDB Dark"
+  | "Dark Night Blue"
+  | "Historic"
+  | "Custom Vector";
 
 export type Continent =
   | "Africa"

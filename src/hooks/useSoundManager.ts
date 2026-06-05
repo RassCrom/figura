@@ -18,6 +18,11 @@ export function useSoundManager() {
   const play = useCallback(
     (id: SoundId) => {
       const context = getContext();
+      // Resume the context if it was auto-suspended (common on mobile Safari
+      // and any browser where the context was created before a user gesture).
+      if (context.state === "suspended") {
+        void context.resume();
+      }
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       const isMusic = id.includes("ambient") || id.includes("tension");
@@ -42,6 +47,9 @@ export function useSoundManager() {
         return;
       }
       const context = getContext();
+      if (context.state === "suspended") {
+        void context.resume();
+      }
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       oscillator.type = "triangle";

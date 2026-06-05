@@ -1,5 +1,5 @@
-import { Pause, Play, X } from "lucide-react";
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { LogOut, Pause, Play, X } from "lucide-react";
+import { type CSSProperties, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { GAME_CONFIG } from "../config/gameConfig";
@@ -85,7 +85,8 @@ function PersonCard({
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" || event.key === " " || event.key === "Enter") {
+        event.preventDefault();
         onDismiss();
       }
     };
@@ -136,7 +137,9 @@ export default function GamePage({ figures }: Props) {
   const mapEngineRef = useRef<MapEngine | null>(null);
   const mapRef = useRef<GameMapHandle | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapBearing, setMapBearing] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrongPlaceCounter = useRef(0);
   const [guess, setGuess] = useState("");
   const [debouncedGuess, setDebouncedGuess] = useState("");
   const [activeSuggestion, setActiveSuggestion] = useState(0);
@@ -154,8 +157,14 @@ export default function GamePage({ figures }: Props) {
   const roundTimer = useGameStore((state) => state.roundTimer);
   const extraBank = useGameStore((state) => state.extraBank);
   const wrongGuesses = useGameStore((state) => state.wrongGuesses);
-  const showStreak = useGameStore((state) => state.showStreak);
   const firstGuessStreak = useGameStore((state) => state.firstGuessStreak);
+  // Derive streak visibility instead of reading a store flag. The previous
+  // `showStreak` was only ever set DURING the reveal (when the HUD is
+  // hidden) and wiped on dismiss, so the badge could never actually appear
+  // to the player. Showing it whenever the player carries ≥2 in a row
+  // means the badge is visible during the next round, which is when it's
+  // meaningful.
+  const showStreak = firstGuessStreak >= 2;
   const currentRoundScore = useGameStore((state) => state.currentRoundScore);
   const revealedFigure = useGameStore((state) => state.revealedFigure);
   const vignetteKey = useGameStore((state) => state.vignetteKey);
@@ -168,6 +177,7 @@ export default function GamePage({ figures }: Props) {
   const dismissReveal = useGameStore((state) => state.dismissReveal);
   const pause = useGameStore((state) => state.pause);
   const resume = useGameStore((state) => state.resume);
+  const reset = useGameStore((state) => state.reset);
   const { play, crossfadeTo } = useSoundManager();
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
@@ -239,6 +249,21 @@ export default function GamePage({ figures }: Props) {
   }, [basemap]);
 
   useEffect(() => {
+    if (!mapReady || !mapRef.current) {
+      return;
+    }
+
+    const map = mapRef.current.map;
+    const updateBearing = () => setMapBearing(Number(map.getBearing().toFixed(1)));
+    updateBearing();
+    map.on("rotate", updateBearing);
+
+    return () => {
+      map.off("rotate", updateBearing);
+    };
+  }, [mapReady]);
+
+  useEffect(() => {
     const engine = mapEngineRef.current;
     const map = mapRef.current;
     if (!engine || !map || !currentFigure || !mapReady) {
@@ -257,9 +282,10 @@ export default function GamePage({ figures }: Props) {
       },
     };
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     engine.renderJourney(map, currentFigure, hints, {
-      animateFit: status === "playing",
-      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      animateFit: !reducedMotion && (status === "countdown" || status === "playing"),
+      reducedMotion,
     });
   }, [currentFigure, mapReady, wrongGuesses, status]);
 
@@ -312,9 +338,21 @@ export default function GamePage({ figures }: Props) {
 
   useEffect(() => {
     if (status === "playing") {
+      // Refocus on round transition AND after wrong-guess shake. The input
+      // uses `key={inputShakeKey}` to re-trigger the CSS shake animation,
+      // which remounts the element and drops focus — so re-grab it.
       inputRef.current?.focus();
     }
-  }, [roundIndex, status]);
+  }, [roundIndex, status, inputShakeKey]);
+
+  // Round transition: clear local UI state that's only meaningful within the
+  // round just ended (the typed guess, the wrong-figure toast).
+  useEffect(() => {
+    setGuess("");
+    setDebouncedGuess("");
+    setActiveSuggestion(0);
+    setWrongPlace(null);
+  }, [roundIndex]);
 
   function submitValue(value: string) {
     if (!value.trim()) {
@@ -330,8 +368,12 @@ export default function GamePage({ figures }: Props) {
       return;
     }
     if (guessedFigure) {
+      // Monotonic counter — Date.now() can collide if the user submits
+      // twice in the same millisecond, which prevents the toast's mount
+      // animation from re-triggering on the second wrong guess.
+      wrongPlaceCounter.current += 1;
       setWrongPlace({
-        key: Date.now(),
+        key: wrongPlaceCounter.current,
         name: getFullName(guessedFigure),
         place: guessedFigure.place_of_birth,
       });
@@ -355,6 +397,19 @@ export default function GamePage({ figures }: Props) {
     }
   }
 
+  function handleLeaveGame() {
+    reset();
+    navigate("/", { replace: true });
+  }
+
+  function handleResetCompass() {
+    const map = mapRef.current?.map;
+    if (!map) {
+      return;
+    }
+    map.easeTo({ bearing: 0, pitch: 0, duration: 420, essential: true });
+  }
+
   if (!currentFigure && status !== "ended") {
     return <Navigate to="/" replace />;
   }
@@ -364,6 +419,22 @@ export default function GamePage({ figures }: Props) {
       <div ref={mapContainerRef} className="map-canvas" aria-label="World map" />
       <div className="map-vignette" aria-hidden="true" />
       {vignetteKey > 0 ? <div key={vignetteKey} className="wrong-vignette" aria-hidden="true" /> : null}
+      <button
+        className="custom-compass"
+        type="button"
+        onClick={handleResetCompass}
+        aria-label={en.resetCompass}
+        disabled={!mapReady}
+        style={{ "--bearing": `${-mapBearing}deg` } as CSSProperties}
+      >
+        <span className="compass-rose" aria-hidden="true">
+          <span className="compass-cardinal compass-n">N</span>
+          <span className="compass-cardinal compass-e">E</span>
+          <span className="compass-cardinal compass-s">S</span>
+          <span className="compass-cardinal compass-w">W</span>
+          <span className="compass-needle" />
+        </span>
+      </button>
 
       <section className={status === "revealed" ? "game-hud hidden" : "game-hud"} aria-label="Game controls">
         <div className="hud-top">
@@ -468,10 +539,17 @@ export default function GamePage({ figures }: Props) {
       ) : null}
 
       {status === "paused" ? (
-        <div className="countdown-overlay paused-overlay">
-          <button className="primary-button" type="button" onClick={resume}>
-            {en.resume}
-          </button>
+        <div className="countdown-overlay paused-overlay" role="dialog" aria-label={en.pause}>
+          <div className="pause-menu">
+            <button className="primary-button" type="button" onClick={resume}>
+              <Play aria-hidden="true" size={18} />
+              {en.resume}
+            </button>
+            <button className="secondary-button" type="button" onClick={handleLeaveGame}>
+              <LogOut aria-hidden="true" size={18} />
+              {en.leaveGame}
+            </button>
+          </div>
         </div>
       ) : null}
 

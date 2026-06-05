@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { GAME_CONFIG } from "../config/gameConfig";
 import { en } from "../i18n/en";
@@ -39,6 +40,12 @@ export function LeaderboardTable({ entries, full = false }: Props) {
     () => collapseDuplicateCurrentRuns(entries).sort((a, b) => b.score - a.score),
     [entries],
   );
+  // Precompute rank for every entry once so the render loop is O(1) per row
+  // instead of O(n) per row (findIndex was O(n²) total).
+  const rankMap = useMemo(
+    () => new Map(sorted.map((entry, index) => [entry.id, index + 1])),
+    [sorted],
+  );
   const pageCount = Math.max(1, Math.ceil(sorted.length / GAME_CONFIG.leaderboardPageSize));
   const visible = full
     ? sorted
@@ -65,11 +72,15 @@ export function LeaderboardTable({ entries, full = false }: Props) {
         </thead>
         <tbody>
           {visible.map((entry) => {
-            const rank = sorted.findIndex((item) => item.id === entry.id) + 1;
+            const rank = rankMap.get(entry.id) ?? 0;
             return (
               <tr key={entry.id} className={entry.current ? "current-row" : undefined}>
                 <td>{rank}</td>
-                <td>{entry.nickname}</td>
+                <td>
+                  <Link to={`/profile/${entry.nickname}`} className="leaderboard-nick">
+                    {entry.nickname}
+                  </Link>
+                </td>
                 <td>{entry.score.toLocaleString()}</td>
                 <td>{entry.levelName ? <LevelBadge level={entry.levelName} /> : "Traveler"}</td>
                 <td>

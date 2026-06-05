@@ -9,7 +9,7 @@ const coordinateSchema = z
 
 const figureSchema = z.object({
   first_name: z.string().trim().min(1),
-  last_name: z.string().trim().min(1),
+  last_name: z.string().trim(),
   nationality: z.string().trim().min(1),
   country_of_origin: z.string().trim().min(1),
   flag: z.string(),
@@ -31,9 +31,7 @@ const parsedFigures = (rawFigures as unknown[])
   .map((result) => result.data);
 
 export function loadFigures(): Promise<Figure[]> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => resolve(parsedFigures), 450);
-  });
+  return Promise.resolve(parsedFigures);
 }
 
 export function getValidatedFigures(): Figure[] {
@@ -45,7 +43,7 @@ export function getCategories(figures: Figure[] = parsedFigures): string[] {
 }
 
 export function getFullName(figure: Figure): string {
-  return `${figure.first_name} ${figure.last_name}`;
+  return `${figure.first_name} ${figure.last_name}`.trim();
 }
 
 export function normalizeName(value: string): string {
@@ -90,7 +88,7 @@ export function shuffle<T>(items: T[]): T[] {
 }
 
 export function getWikipediaUrl(figure: Figure): string {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(`${figure.first_name}_${figure.last_name}`)}`;
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(getFullName(figure).replace(/\s+/g, "_"))}`;
 }
 
 export function extractYearRange(description: string): string {
@@ -146,23 +144,29 @@ export function distanceKm(from: [number, number], to: [number, number]): number
 }
 
 export function inferContinent([lat, lng]: [number, number]): Continent {
+  // Oceania: Australia + Pacific islands
   if (lat <= -8 && lng >= 110 && lng <= 180) {
     return "Oceania";
   }
 
+  // Americas
   if (lng >= -170 && lng <= -30) {
     return lat >= 12 ? "North America" : "South America";
   }
 
-  if (lat >= -35 && lat <= 37 && lng >= -20 && lng <= 55) {
-    return "Africa";
-  }
-
+  // Europe: rough northern landmass
   if (lat >= 35 && lng >= -25 && lng <= 45) {
     return "Europe";
   }
 
-  if (lat >= -10 && lng >= 25 && lng <= 180) {
+  // Africa: extend east to include the Horn of Africa and Red Sea coast
+  if (lat >= -35 && lat <= 38 && lng >= -20 && lng <= 55) {
+    return "Africa";
+  }
+
+  // Asia: covers the rest (Middle East, Central Asia, South/East/Southeast Asia,
+  // Siberia). Intentionally broad — checked last so Europe and Africa take priority.
+  if (lat >= -10 && lat <= 80 && lng >= 25 && lng <= 180) {
     return "Asia";
   }
 

@@ -2,11 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { GAME_CONFIG } from "../config/gameConfig";
+import { fetchTopLeaderboard } from "../lib/api";
 import type { LeaderboardEntry } from "../types/figure";
 
 type LeaderboardState = {
   entries: LeaderboardEntry[];
   lastEntryId: string | null;
+  loading: boolean;
+  lastFetchedAt: number;
+  refresh: (force?: boolean) => Promise<void>;
   addEntry: (entry: Omit<LeaderboardEntry, "id" | "date">) => string;
   clearCurrentMarkers: () => void;
 };
@@ -20,11 +24,32 @@ function sameCategories(left: string[], right: string[]): boolean {
   );
 }
 
+const REFRESH_INTERVAL_MS = 30_000;
+
 export const useLeaderboardStore = create<LeaderboardState>()(
   persist(
     (set, get) => ({
       entries: [],
       lastEntryId: null,
+      loading: false,
+      lastFetchedAt: 0,
+      refresh: async (force = false) => {
+        const now = Date.now();
+        if (!force && now - get().lastFetchedAt < REFRESH_INTERVAL_MS) {
+          return;
+        }
+        set({ loading: true });
+        const remote = await fetchTopLeaderboard(GAME_CONFIG.maxLeaderboardEntries);
+        if (remote.length === 0) {
+          set({ loading: false, lastFetchedAt: now });
+          return;
+        }
+        const currentIds = new Set(get().entries.filter((e) => e.current).map((e) => e.id));
+        const merged = remote.map((entry) =>
+          currentIds.has(entry.id) ? { ...entry, current: true } : entry,
+        );
+        set({ entries: merged, loading: false, lastFetchedAt: now });
+      },
       addEntry: (entry) => {
         const existing = get().entries.find(
           (item) =>
@@ -66,7 +91,11 @@ export const useLeaderboardStore = create<LeaderboardState>()(
     }),
     {
       name: "gtf_leaderboard",
-      version: 1,
+      version: 2,
+      partialize: (state) => ({
+        entries: state.entries,
+        lastEntryId: state.lastEntryId,
+      }),
     },
   ),
 );
