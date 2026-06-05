@@ -11,9 +11,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.107.0
         version: 2.107.0
-      '@tailwindcss/vite':
-        specifier: ^4.1.8
-        version: 4.3.0(vite@6.4.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))
       '@turf/great-circle':
         specifier: ^7.2.0
         version: 7.3.5
@@ -35,9 +32,6 @@ importers:
       react-router-dom:
         specifier: ^6.30.1
         version: 6.30.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tailwindcss:
-        specifier: ^4.1.8
-        version: 4.3.0
       zod:
         specifier: ^3.25.56
         version: 3.25.76
@@ -45,6 +39,9 @@ importers:
         specifier: ^5.0.5
         version: 5.0.14(@types/react@18.3.30)(react@18.3.1)
     devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.8
+        version: 4.3.0(vite@6.4.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))
       '@types/node':
         specifier: ^22.15.29
         version: 22.19.19
@@ -57,6 +54,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.5.1
         version: 4.7.0(vite@6.4.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))
+      tailwindcss:
+        specifier: ^4.1.8
+        version: 4.3.0
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

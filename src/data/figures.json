@@ -3172,5 +3172,1155 @@
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jesse_Owens_3.jpg",
     "birth_date": "1913-09-12",
     "death_date": "1980-03-31"
+  },
+  {
+    "first_name": "Marie",
+    "last_name": "Antoinette",
+    "nationality": "Austrian, French",
+    "country_of_origin": "Habsburg Monarchy",
+    "flag": "",
+    "place_of_birth": "Vienna",
+    "coordinates_of_the_place_of_birth": [
+      48.2082,
+      16.3738
+    ],
+    "place_of_death": "Paris",
+    "coordinates_of_the_place_of_death": [
+      48.8566,
+      2.3522
+    ],
+    "category": "Leader",
+    "description": "Marie Antoinette was the last Queen of France before the French Revolution. She became a symbol of the excesses of the monarchy and was executed by guillotine.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marie-Antoinette%3B_koningin_der_Fransen.jpg",
+    "birth_date": "1755-11-02",
+    "death_date": "1793-10-16"
+  },
+  {
+    "first_name": "John",
+    "last_name": "Locke",
+    "nationality": "English",
+    "country_of_origin": "Kingdom of England",
+    "flag": "",
+    "place_of_birth": "Wrington",
+    "coordinates_of_the_place_of_birth": [
+      51.361,
+      -2.766
+    ],
+    "place_of_death": "High Laver",
+    "coordinates_of_the_place_of_death": [
+      51.782,
+      0.207
+    ],
+    "category": "Philosopher",
+    "description": "John Locke was an English philosopher and physician, widely regarded as one of the most influential of Enlightenment thinkers and commonly known as the 'Father of Liberalism'.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/John_Locke.jpg",
+    "birth_date": "1632-08-29",
+    "death_date": "1704-10-28"
+  },
+  {
+    "first_name": "Jean-Jacques",
+    "last_name": "Rousseau",
+    "nationality": "Genevan",
+    "country_of_origin": "Republic of Geneva",
+    "flag": "",
+    "place_of_birth": "Geneva",
+    "coordinates_of_the_place_of_birth": [
+      46.2044,
+      6.1432
+    ],
+    "place_of_death": "Ermenonville",
+    "coordinates_of_the_place_of_death": [
+      49.127,
+      2.697
+    ],
+    "category": "Philosopher",
+    "description": "Jean-Jacques Rousseau was a Genevan philosopher, writer, and composer. His political philosophy influenced the progress of the Enlightenment throughout Europe.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jean-Jacques_Rousseau_(painted_portrait).jpg",
+    "birth_date": "1712-06-28",
+    "death_date": "1778-07-02"
+  },
+  {
+    "first_name": "Thomas",
+    "last_name": "Jefferson",
+    "nationality": "American",
+    "country_of_origin": "British America",
+    "flag": "",
+    "place_of_birth": "Shadwell",
+    "coordinates_of_the_place_of_birth": [
+      38.017,
+      -78.396
+    ],
+    "place_of_death": "Charlottesville",
+    "coordinates_of_the_place_of_death": [
+      38.0293,
+      -78.4767
+    ],
+    "category": "Leader",
+    "description": "Thomas Jefferson was an American statesman, diplomat, lawyer, architect, philosopher, and Founding Father who served as the third president of the United States. He was the principal author of the Declaration of Independence.",
+    "popularity_rating": 93,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Thomas_Jefferson_by_Rembrandt_Peale%2C_1800.jpg",
+    "birth_date": "1743-04-13",
+    "death_date": "1826-07-04"
+  },
+  {
+    "first_name": "Benjamin",
+    "last_name": "Franklin",
+    "nationality": "American",
+    "country_of_origin": "British America",
+    "flag": "",
+    "place_of_birth": "Boston",
+    "coordinates_of_the_place_of_birth": [
+      42.3601,
+      -71.0589
+    ],
+    "place_of_death": "Philadelphia",
+    "coordinates_of_the_place_of_death": [
+      39.9526,
+      -75.1652
+    ],
+    "category": "Scientist",
+    "description": "Benjamin Franklin was an American polymath who was active as a writer, scientist, inventor, statesman, diplomat, printer, publisher, and political philosopher. Among the leading intellectuals of his time.",
+    "popularity_rating": 94,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/BenFranklinDuplessis.jpg",
+    "birth_date": "1706-01-17",
+    "death_date": "1790-04-17"
+  },
+  {
+    "first_name": "Alexander",
+    "last_name": "Hamilton",
+    "nationality": "American",
+    "country_of_origin": "British Leeward Islands",
+    "flag": "",
+    "place_of_birth": "Charlestown",
+    "coordinates_of_the_place_of_birth": [
+      17.139,
+      -62.623
+    ],
+    "place_of_death": "New York City",
+    "coordinates_of_the_place_of_death": [
+      40.7128,
+      -74.006
+    ],
+    "category": "Leader",
+    "description": "Alexander Hamilton was an American military officer, statesman, and Founding Father who served as the first United States Secretary of the Treasury.",
+    "popularity_rating": 92,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Alexander_Hamilton_portrait_by_John_Trumbull_1806.jpg",
+    "birth_date": "1755-01-11",
+    "death_date": "1804-07-12"
+  },
+  {
+    "first_name": "Martin",
+    "last_name": "Luther",
+    "nationality": "German",
+    "country_of_origin": "Holy Roman Empire",
+    "flag": "",
+    "place_of_birth": "Eisleben",
+    "coordinates_of_the_place_of_birth": [
+      51.528,
+      11.545
+    ],
+    "place_of_death": "Eisleben",
+    "coordinates_of_the_place_of_death": [
+      51.528,
+      11.545
+    ],
+    "category": "Leader",
+    "description": "Martin Luther was a German priest, theologian, author, hymnwriter, professor, and Augustinian friar. He was the seminal figure of the Protestant Reformation.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Lucas_Cranach_d.%C3%84._-_Martin_Luther%2C_1528_(Veste_Coburg).jpg",
+    "birth_date": "1483-11-10",
+    "death_date": "1546-02-18"
+  },
+  {
+    "first_name": "Johannes",
+    "last_name": "Gutenberg",
+    "nationality": "German",
+    "country_of_origin": "Holy Roman Empire",
+    "flag": "",
+    "place_of_birth": "Mainz",
+    "coordinates_of_the_place_of_birth": [
+      50,
+      8.271
+    ],
+    "place_of_death": "Mainz",
+    "coordinates_of_the_place_of_death": [
+      50,
+      8.271
+    ],
+    "category": "Scientist",
+    "description": "Johannes Gutenberg was a German inventor, printer, publisher, and goldsmith who introduced printing to Europe with his mechanical movable-type printing press.",
+    "popularity_rating": 92,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gutenberg.jpg",
+    "birth_date": "1400",
+    "death_date": "1468-02-03"
+  },
+  {
+    "first_name": "Immanuel",
+    "last_name": "Kant",
+    "nationality": "German",
+    "country_of_origin": "Kingdom of Prussia",
+    "flag": "",
+    "place_of_birth": "Königsberg",
+    "coordinates_of_the_place_of_birth": [
+      54.71,
+      20.452
+    ],
+    "place_of_death": "Königsberg",
+    "coordinates_of_the_place_of_death": [
+      54.71,
+      20.452
+    ],
+    "category": "Philosopher",
+    "description": "Immanuel Kant was a German philosopher and one of the central Enlightenment thinkers. Kant's comprehensive and systematic works in epistemology, metaphysics, ethics, and aesthetics have made him one of the most influential figures in modern Western philosophy.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Immanuel_Kant_(painted_portrait).jpg",
+    "birth_date": "1724-04-22",
+    "death_date": "1804-02-12"
+  },
+  {
+    "first_name": "Friedrich",
+    "last_name": "Nietzsche",
+    "nationality": "German",
+    "country_of_origin": "Kingdom of Prussia",
+    "flag": "",
+    "place_of_birth": "Röcken",
+    "coordinates_of_the_place_of_birth": [
+      51.24,
+      12.115
+    ],
+    "place_of_death": "Weimar",
+    "coordinates_of_the_place_of_death": [
+      50.979,
+      11.323
+    ],
+    "category": "Philosopher",
+    "description": "Friedrich Nietzsche was a German philosopher, cultural critic and philologist whose work has exerted a profound influence on modern intellectual history.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Nietzsche187a.jpg",
+    "birth_date": "1844-10-15",
+    "death_date": "1900-08-25"
+  },
+  {
+    "first_name": "Karl",
+    "last_name": "Popper",
+    "nationality": "Austrian, British",
+    "country_of_origin": "Austria-Hungary",
+    "flag": "",
+    "place_of_birth": "Vienna",
+    "coordinates_of_the_place_of_birth": [
+      48.2082,
+      16.3738
+    ],
+    "place_of_death": "Kenley",
+    "coordinates_of_the_place_of_death": [
+      51.323,
+      -0.096
+    ],
+    "category": "Philosopher",
+    "description": "Sir Karl Popper was an Austrian-British philosopher, academic and social commentator. One of the 20th century's most influential philosophers of science.",
+    "popularity_rating": 85,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Karl_Popper.jpg",
+    "birth_date": "1902-07-28",
+    "death_date": "1994-09-17"
+  },
+  {
+    "first_name": "Adam",
+    "last_name": "Smith",
+    "nationality": "Scottish",
+    "country_of_origin": "Kingdom of Great Britain",
+    "flag": "",
+    "place_of_birth": "Kirkcaldy",
+    "coordinates_of_the_place_of_birth": [
+      56.111,
+      -3.159
+    ],
+    "place_of_death": "Edinburgh",
+    "coordinates_of_the_place_of_death": [
+      55.953,
+      -3.188
+    ],
+    "category": "Scientist",
+    "description": "Adam Smith was a Scottish economist and philosopher who was a pioneer of political economy and key figure during the Scottish Enlightenment.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/AdamSmith.jpg",
+    "birth_date": "1723-06-16",
+    "death_date": "1790-07-17"
+  },
+  {
+    "first_name": "John Maynard",
+    "last_name": "Keynes",
+    "nationality": "British",
+    "country_of_origin": "United Kingdom",
+    "flag": "",
+    "place_of_birth": "Cambridge",
+    "coordinates_of_the_place_of_birth": [
+      52.205,
+      0.119
+    ],
+    "place_of_death": "Firle",
+    "coordinates_of_the_place_of_death": [
+      50.825,
+      0.054
+    ],
+    "category": "Scientist",
+    "description": "John Maynard Keynes was an English economist, whose ideas fundamentally changed the theory and practice of macroeconomics and the economic policies of governments.",
+    "popularity_rating": 86,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/John_Maynard_Keynes.jpg",
+    "birth_date": "1883-06-05",
+    "death_date": "1946-04-21"
+  },
+  {
+    "first_name": "Fidel",
+    "last_name": "Castro",
+    "nationality": "Cuban",
+    "country_of_origin": "Cuba",
+    "flag": "",
+    "place_of_birth": "Birán",
+    "coordinates_of_the_place_of_birth": [
+      20.549,
+      -75.823
+    ],
+    "place_of_death": "Havana",
+    "coordinates_of_the_place_of_death": [
+      23.113,
+      -82.366
+    ],
+    "category": "Leader",
+    "description": "Fidel Castro was a Cuban revolutionary and politician who was the leader of Cuba from 1959 to 2008.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fidel_Castro.jpg",
+    "birth_date": "1926-08-13",
+    "death_date": "2016-11-25"
+  },
+  {
+    "first_name": "Che",
+    "last_name": "Guevara",
+    "nationality": "Argentine",
+    "country_of_origin": "Argentina",
+    "flag": "",
+    "place_of_birth": "Rosario",
+    "coordinates_of_the_place_of_birth": [
+      -32.944,
+      -60.65
+    ],
+    "place_of_death": "La Higuera",
+    "coordinates_of_the_place_of_death": [
+      -18.804,
+      -64.12
+    ],
+    "category": "Leader",
+    "description": "Ernesto 'Che' Guevara was an Argentine Marxist revolutionary, physician, author, guerrilla leader, diplomat, and military theorist.",
+    "popularity_rating": 92,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CheHigh.jpg",
+    "birth_date": "1928-06-14",
+    "death_date": "1967-10-09"
+  },
+  {
+    "first_name": "Vladimir",
+    "last_name": "Lenin",
+    "nationality": "Russian",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Ulyanovsk",
+    "coordinates_of_the_place_of_birth": [
+      54.314,
+      48.403
+    ],
+    "place_of_death": "Gorki Leninskiye",
+    "coordinates_of_the_place_of_death": [
+      55.503,
+      37.766
+    ],
+    "category": "Leader",
+    "description": "Vladimir Lenin was a Russian revolutionary, politician, and political theorist. He served as the first and founding head of government of Soviet Russia from 1917 to 1924 and of the Soviet Union from 1922 to 1924.",
+    "popularity_rating": 94,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Vladimir_Lenin.jpg",
+    "birth_date": "1870-04-22",
+    "death_date": "1924-01-21"
+  },
+  {
+    "first_name": "Joseph",
+    "last_name": "Stalin",
+    "nationality": "Soviet, Georgian",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Gori",
+    "coordinates_of_the_place_of_birth": [
+      41.984,
+      44.116
+    ],
+    "place_of_death": "Moscow",
+    "coordinates_of_the_place_of_death": [
+      55.755,
+      37.617
+    ],
+    "category": "Leader",
+    "description": "Joseph Stalin was a Georgian revolutionary and political leader who ruled the Soviet Union from 1924 until his death in 1953.",
+    "popularity_rating": 95,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Stalin_1943.jpg",
+    "birth_date": "1878-12-18",
+    "death_date": "1953-03-05"
+  },
+  {
+    "first_name": "Mao",
+    "last_name": "Zedong",
+    "nationality": "Chinese",
+    "country_of_origin": "Qing dynasty",
+    "flag": "",
+    "place_of_birth": "Shaoshan",
+    "coordinates_of_the_place_of_birth": [
+      27.917,
+      112.483
+    ],
+    "place_of_death": "Beijing",
+    "coordinates_of_the_place_of_death": [
+      39.904,
+      116.407
+    ],
+    "category": "Leader",
+    "description": "Mao Zedong, also known as Chairman Mao, was a Chinese communist revolutionary who was the founder of the People's Republic of China (PRC), which he ruled as the chairman of the Chinese Communist Party from the establishment of the PRC in 1949 until his death in 1976.",
+    "popularity_rating": 95,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mao_Zedong_portrait.jpg",
+    "birth_date": "1893-12-26",
+    "death_date": "1976-09-09"
+  },
+  {
+    "first_name": "Sun",
+    "last_name": "Yat-sen",
+    "nationality": "Chinese",
+    "country_of_origin": "Qing dynasty",
+    "flag": "",
+    "place_of_birth": "Cuiheng",
+    "coordinates_of_the_place_of_birth": [
+      22.404,
+      113.523
+    ],
+    "place_of_death": "Beijing",
+    "coordinates_of_the_place_of_death": [
+      39.904,
+      116.407
+    ],
+    "category": "Leader",
+    "description": "Sun Yat-sen was a Chinese statesman, physician, and political philosopher, who served as the provisional first president of the Republic of China and the first leader of the Kuomintang.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sun_Yat-sen_2.jpg",
+    "birth_date": "1866-11-12",
+    "death_date": "1925-03-12"
+  },
+  {
+    "first_name": "Emperor",
+    "last_name": "Meiji",
+    "nationality": "Japanese",
+    "country_of_origin": "Japan",
+    "flag": "",
+    "place_of_birth": "Kyoto",
+    "coordinates_of_the_place_of_birth": [
+      35.011,
+      135.768
+    ],
+    "place_of_death": "Tokyo",
+    "coordinates_of_the_place_of_death": [
+      35.676,
+      139.65
+    ],
+    "category": "Leader",
+    "description": "Emperor Meiji was the 122nd emperor of Japan according to the traditional order of succession, reigning from 1867 until his death. He presided over the Meiji era, a time of rapid change that witnessed the Empire of Japan rapidly transform from an isolationist feudal state to an industrialized world power.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Emperor_Meiji.jpg",
+    "birth_date": "1852-11-03",
+    "death_date": "1912-07-30"
+  },
+  {
+    "first_name": "Oda",
+    "last_name": "Nobunaga",
+    "nationality": "Japanese",
+    "country_of_origin": "Japan",
+    "flag": "",
+    "place_of_birth": "Nagoya",
+    "coordinates_of_the_place_of_birth": [
+      35.181,
+      136.906
+    ],
+    "place_of_death": "Kyoto",
+    "coordinates_of_the_place_of_death": [
+      35.011,
+      135.768
+    ],
+    "category": "Leader",
+    "description": "Oda Nobunaga was a Japanese daimyō and one of the leading figures of the Sengoku period. He is regarded as the first 'Great Unifier' of Japan.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Oda_Nobunaga.jpg",
+    "birth_date": "1534-06-23",
+    "death_date": "1582-06-21"
+  },
+  {
+    "first_name": "Saladin",
+    "last_name": "",
+    "nationality": "Kurdish",
+    "country_of_origin": "Abbasid Caliphate",
+    "flag": "",
+    "place_of_birth": "Tikrit",
+    "coordinates_of_the_place_of_birth": [
+      34.606,
+      43.678
+    ],
+    "place_of_death": "Damascus",
+    "coordinates_of_the_place_of_death": [
+      33.513,
+      36.292
+    ],
+    "category": "Leader",
+    "description": "Saladin was the founder of the Ayyubid dynasty. Hailing from a Kurdish family, he was the first sultan of both Egypt and Syria.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Saladin_Portrait.jpg",
+    "birth_date": "1138",
+    "death_date": "1193-03-04"
+  },
+  {
+    "first_name": "Richard",
+    "last_name": "the Lionheart",
+    "nationality": "English",
+    "country_of_origin": "Kingdom of England",
+    "flag": "",
+    "place_of_birth": "Oxford",
+    "coordinates_of_the_place_of_birth": [
+      51.752,
+      -1.258
+    ],
+    "place_of_death": "Châlus",
+    "coordinates_of_the_place_of_death": [
+      45.655,
+      0.979
+    ],
+    "category": "Leader",
+    "description": "Richard I was King of England from 1189 until his death in 1199. He also ruled as Duke of Normandy, Aquitaine and Gascony, Lord of Cyprus, and Count of Poitiers, Anjou, Maine, and Nantes, and was overlord of Brittany at various times during the same period.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Richard_I.jpg",
+    "birth_date": "1157-09-08",
+    "death_date": "1199-04-06"
+  },
+  {
+    "first_name": "Charlemagne",
+    "last_name": "",
+    "nationality": "Frankish",
+    "country_of_origin": "Francia",
+    "flag": "",
+    "place_of_birth": "Aachen",
+    "coordinates_of_the_place_of_birth": [
+      50.775,
+      6.083
+    ],
+    "place_of_death": "Aachen",
+    "coordinates_of_the_place_of_death": [
+      50.775,
+      6.083
+    ],
+    "category": "Leader",
+    "description": "Charlemagne or Charles the Great, was King of the Franks from 768, King of the Lombards from 774, and Emperor of the Romans from 800. He united the majority of western and central Europe.",
+    "popularity_rating": 92,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Charlemagne-by-Durer.jpg",
+    "birth_date": "742",
+    "death_date": "814-01-28"
+  },
+  {
+    "first_name": "Augustus",
+    "last_name": "",
+    "nationality": "Roman",
+    "country_of_origin": "Roman Republic",
+    "flag": "",
+    "place_of_birth": "Rome",
+    "coordinates_of_the_place_of_birth": [
+      41.902,
+      12.496
+    ],
+    "place_of_death": "Nola",
+    "coordinates_of_the_place_of_death": [
+      40.926,
+      14.533
+    ],
+    "category": "Leader",
+    "description": "Augustus was the founder of the Roman Principate and considered the first Roman emperor, controlling the Roman Empire from 27 BC until his death in AD 14.",
+    "popularity_rating": 93,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Augustus_of_Prima_Porta_(inv._2290).jpg",
+    "birth_date": "63 BC",
+    "death_date": "14 AD"
+  },
+  {
+    "first_name": "Constantine",
+    "last_name": "the Great",
+    "nationality": "Roman",
+    "country_of_origin": "Roman Empire",
+    "flag": "",
+    "place_of_birth": "Naissus",
+    "coordinates_of_the_place_of_birth": [
+      43.32,
+      21.895
+    ],
+    "place_of_death": "Nicomedia",
+    "coordinates_of_the_place_of_death": [
+      40.766,
+      29.916
+    ],
+    "category": "Leader",
+    "description": "Constantine the Great, also known as Constantine I, was a Roman emperor from AD 306 to 337. He was the first Roman emperor to convert to Christianity.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Constantine_I_bronze_portrait_(Capitoline_Museums).jpg",
+    "birth_date": "272",
+    "death_date": "337-05-22"
+  },
+  {
+    "first_name": "Justinian I",
+    "last_name": "",
+    "nationality": "Byzantine",
+    "country_of_origin": "Byzantine Empire",
+    "flag": "",
+    "place_of_birth": "Tauresium",
+    "coordinates_of_the_place_of_birth": [
+      41.904,
+      21.603
+    ],
+    "place_of_death": "Constantinople",
+    "coordinates_of_the_place_of_death": [
+      41.008,
+      28.978
+    ],
+    "category": "Leader",
+    "description": "Justinian I, also known as Justinian the Great, was the Byzantine emperor from 527 to 565. His reign is marked by the ambitious but only partly realized renovatio imperii, or 'restoration of the Empire'.",
+    "popularity_rating": 87,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mosaic_of_Justinianus_I_-_Basilica_San_Vitale_(Ravenna).jpg",
+    "birth_date": "482",
+    "death_date": "565-11-14"
+  },
+  {
+    "first_name": "Cyrus",
+    "last_name": "the Great",
+    "nationality": "Persian",
+    "country_of_origin": "Achaemenid Empire",
+    "flag": "",
+    "place_of_birth": "Anshan",
+    "coordinates_of_the_place_of_birth": [
+      30.01,
+      52.404
+    ],
+    "place_of_death": "Syr Darya",
+    "coordinates_of_the_place_of_death": [
+      44.809,
+      61.353
+    ],
+    "category": "Leader",
+    "description": "Cyrus II of Persia, commonly known as Cyrus the Great, was the founder of the Achaemenid Empire, the first Persian empire.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cyrus_the_Great_portrait.jpg",
+    "birth_date": "600 BC",
+    "death_date": "530 BC"
+  },
+  {
+    "first_name": "Alexander",
+    "last_name": "Pushkin",
+    "nationality": "Russian",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Moscow",
+    "coordinates_of_the_place_of_birth": [
+      55.755,
+      37.617
+    ],
+    "place_of_death": "Saint Petersburg",
+    "coordinates_of_the_place_of_death": [
+      59.931,
+      30.36
+    ],
+    "category": "Writer",
+    "description": "Alexander Pushkin was a Russian poet, playwright, and novelist of the Romantic era. He is considered by many to be the greatest Russian poet and the founder of modern Russian literature.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kiprensky_Pushkin.jpg",
+    "birth_date": "1799-06-06",
+    "death_date": "1837-02-10"
+  },
+  {
+    "first_name": "Anton",
+    "last_name": "Chekhov",
+    "nationality": "Russian",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Taganrog",
+    "coordinates_of_the_place_of_birth": [
+      47.236,
+      38.896
+    ],
+    "place_of_death": "Badenweiler",
+    "coordinates_of_the_place_of_death": [
+      47.801,
+      7.671
+    ],
+    "category": "Writer",
+    "description": "Anton Chekhov was a Russian playwright and short-story writer who is considered to be among the greatest writers of short fiction in history.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Anton_Chekhov_1889.jpg",
+    "birth_date": "1860-01-29",
+    "death_date": "1904-07-15"
+  },
+  {
+    "first_name": "Pyotr Ilyich",
+    "last_name": "Tchaikovsky",
+    "nationality": "Russian",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Votkinsk",
+    "coordinates_of_the_place_of_birth": [
+      57.05,
+      53.983
+    ],
+    "place_of_death": "Saint Petersburg",
+    "coordinates_of_the_place_of_death": [
+      59.931,
+      30.36
+    ],
+    "category": "Musician",
+    "description": "Pyotr Ilyich Tchaikovsky was a Russian composer of the Romantic period. He was the first Russian composer whose music would make a lasting impression internationally.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pyotr_Ilyich_Tchaikovsky.jpg",
+    "birth_date": "1840-05-07",
+    "death_date": "1893-11-06"
+  },
+  {
+    "first_name": "Igor",
+    "last_name": "Stravinsky",
+    "nationality": "Russian, French, American",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Lomonosov",
+    "coordinates_of_the_place_of_birth": [
+      59.916,
+      29.766
+    ],
+    "place_of_death": "New York City",
+    "coordinates_of_the_place_of_death": [
+      40.712,
+      -74.006
+    ],
+    "category": "Musician",
+    "description": "Igor Stravinsky was a Russian-born composer, pianist, and conductor. He is widely considered one of the most important and influential composers of the 20th century.",
+    "popularity_rating": 87,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Igor_Stravinsky.jpg",
+    "birth_date": "1882-06-17",
+    "death_date": "1971-04-06"
+  },
+  {
+    "first_name": "Sergei",
+    "last_name": "Rachmaninoff",
+    "nationality": "Russian, American",
+    "country_of_origin": "Russian Empire",
+    "flag": "",
+    "place_of_birth": "Starorussky District",
+    "coordinates_of_the_place_of_birth": [
+      58,
+      31
+    ],
+    "place_of_death": "Beverly Hills",
+    "coordinates_of_the_place_of_death": [
+      34.073,
+      -118.4
+    ],
+    "category": "Musician",
+    "description": "Sergei Rachmaninoff was a Russian composer, virtuoso pianist, and conductor of the late Romantic period.",
+    "popularity_rating": 86,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sergei_Rachmaninoff.jpg",
+    "birth_date": "1873-04-01",
+    "death_date": "1943-03-28"
+  },
+  {
+    "first_name": "Frédéric",
+    "last_name": "Chopin",
+    "nationality": "Polish, French",
+    "country_of_origin": "Duchy of Warsaw",
+    "flag": "",
+    "place_of_birth": "Żelazowa Wola",
+    "coordinates_of_the_place_of_birth": [
+      52.257,
+      20.316
+    ],
+    "place_of_death": "Paris",
+    "coordinates_of_the_place_of_death": [
+      48.856,
+      2.352
+    ],
+    "category": "Musician",
+    "description": "Frédéric Chopin was a Polish composer and virtuoso pianist of the Romantic era who wrote primarily for solo piano.",
+    "popularity_rating": 92,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Frederic_Chopin_photo.jpeg",
+    "birth_date": "1810-03-01",
+    "death_date": "1849-10-17"
+  },
+  {
+    "first_name": "Franz",
+    "last_name": "Liszt",
+    "nationality": "Hungarian",
+    "country_of_origin": "Austrian Empire",
+    "flag": "",
+    "place_of_birth": "Raiding",
+    "coordinates_of_the_place_of_birth": [
+      47.566,
+      16.533
+    ],
+    "place_of_death": "Bayreuth",
+    "coordinates_of_the_place_of_death": [
+      49.948,
+      11.578
+    ],
+    "category": "Musician",
+    "description": "Franz Liszt was a Hungarian composer, virtuoso pianist, conductor, music teacher, arranger, and organist of the Romantic era.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Franz_Liszt_by_Nadar.jpg",
+    "birth_date": "1811-10-22",
+    "death_date": "1886-07-31"
+  },
+  {
+    "first_name": "Johannes",
+    "last_name": "Brahms",
+    "nationality": "German",
+    "country_of_origin": "Free and Hanseatic City of Hamburg",
+    "flag": "",
+    "place_of_birth": "Hamburg",
+    "coordinates_of_the_place_of_birth": [
+      53.551,
+      9.993
+    ],
+    "place_of_death": "Vienna",
+    "coordinates_of_the_place_of_death": [
+      48.208,
+      16.373
+    ],
+    "category": "Musician",
+    "description": "Johannes Brahms was a German composer, pianist, and conductor of the Romantic period. Born in Hamburg into a Lutheran family, he spent much of his professional life in Vienna.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Johannes_Brahms.jpg",
+    "birth_date": "1833-05-07",
+    "death_date": "1897-04-03"
+  },
+  {
+    "first_name": "Richard",
+    "last_name": "Wagner",
+    "nationality": "German",
+    "country_of_origin": "Kingdom of Saxony",
+    "flag": "",
+    "place_of_birth": "Leipzig",
+    "coordinates_of_the_place_of_birth": [
+      51.339,
+      12.373
+    ],
+    "place_of_death": "Venice",
+    "coordinates_of_the_place_of_death": [
+      45.44,
+      12.315
+    ],
+    "category": "Musician",
+    "description": "Richard Wagner was a German composer, theatre director, polemicist, and conductor who is chiefly known for his operas (or, as some of his mature works were later known, 'music dramas').",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Richard_Wagner_by_Franz_Seraph_Hanfstaengl.jpg",
+    "birth_date": "1813-05-22",
+    "death_date": "1883-02-13"
+  },
+  {
+    "first_name": "Giuseppe",
+    "last_name": "Verdi",
+    "nationality": "Italian",
+    "country_of_origin": "First French Empire",
+    "flag": "",
+    "place_of_birth": "Le Roncole",
+    "coordinates_of_the_place_of_birth": [
+      44.898,
+      10.053
+    ],
+    "place_of_death": "Milan",
+    "coordinates_of_the_place_of_death": [
+      45.464,
+      9.19
+    ],
+    "category": "Musician",
+    "description": "Giuseppe Verdi was an Italian opera composer. He was born near Busseto to a provincial family of moderate means, and developed a musical education with the help of a local patron.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Giuseppe_Verdi_by_Giovanni_Boldini_1886.jpg",
+    "birth_date": "1813-10-09",
+    "death_date": "1901-01-27"
+  },
+  {
+    "first_name": "Giacomo",
+    "last_name": "Puccini",
+    "nationality": "Italian",
+    "country_of_origin": "Grand Duchy of Tuscany",
+    "flag": "",
+    "place_of_birth": "Lucca",
+    "coordinates_of_the_place_of_birth": [
+      43.842,
+      10.502
+    ],
+    "place_of_death": "Brussels",
+    "coordinates_of_the_place_of_death": [
+      50.85,
+      4.351
+    ],
+    "category": "Musician",
+    "description": "Giacomo Puccini was an Italian composer known primarily for his operas. Regarded as the greatest and most successful proponent of Italian opera after Verdi.",
+    "popularity_rating": 88,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Giacomo_Puccini.jpg",
+    "birth_date": "1858-12-22",
+    "death_date": "1924-11-29"
+  },
+  {
+    "first_name": "Edgar Allan",
+    "last_name": "Poe",
+    "nationality": "American",
+    "country_of_origin": "United States",
+    "flag": "",
+    "place_of_birth": "Boston",
+    "coordinates_of_the_place_of_birth": [
+      42.36,
+      -71.058
+    ],
+    "place_of_death": "Baltimore",
+    "coordinates_of_the_place_of_death": [
+      39.29,
+      -76.612
+    ],
+    "category": "Writer",
+    "description": "Edgar Allan Poe was an American writer, poet, editor, and literary critic. Poe is best known for his poetry and short stories, particularly his tales of mystery and the macabre.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Edgar_Allan_Poe_daguerreotype.jpg",
+    "birth_date": "1809-01-19",
+    "death_date": "1849-10-07"
+  },
+  {
+    "first_name": "Ernest",
+    "last_name": "Hemingway",
+    "nationality": "American",
+    "country_of_origin": "United States",
+    "flag": "",
+    "place_of_birth": "Oak Park",
+    "coordinates_of_the_place_of_birth": [
+      41.885,
+      -87.784
+    ],
+    "place_of_death": "Ketchum",
+    "coordinates_of_the_place_of_death": [
+      43.68,
+      -114.363
+    ],
+    "category": "Writer",
+    "description": "Ernest Hemingway was an American novelist, short-story writer, and journalist. His economical and understated style—which he termed the iceberg theory—had a strong influence on 20th-century fiction.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ernest_Hemingway.jpg",
+    "birth_date": "1899-07-21",
+    "death_date": "1961-07-02"
+  },
+  {
+    "first_name": "F. Scott",
+    "last_name": "Fitzgerald",
+    "nationality": "American",
+    "country_of_origin": "United States",
+    "flag": "",
+    "place_of_birth": "St. Paul",
+    "coordinates_of_the_place_of_birth": [
+      44.953,
+      -93.089
+    ],
+    "place_of_death": "Los Angeles",
+    "coordinates_of_the_place_of_death": [
+      34.052,
+      -118.243
+    ],
+    "category": "Writer",
+    "description": "Francis Scott Key Fitzgerald was an American novelist, essayist, and short story writer. He is best known for his novels depicting the flamboyance and excess of the Jazz Age.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/F_Scott_Fitzgerald_1921.jpg",
+    "birth_date": "1896-09-24",
+    "death_date": "1940-12-21"
+  },
+  {
+    "first_name": "John",
+    "last_name": "Milton",
+    "nationality": "English",
+    "country_of_origin": "Kingdom of England",
+    "flag": "",
+    "place_of_birth": "London",
+    "coordinates_of_the_place_of_birth": [
+      51.512,
+      -0.093
+    ],
+    "place_of_death": "London",
+    "coordinates_of_the_place_of_death": [
+      51.512,
+      -0.093
+    ],
+    "category": "Writer",
+    "description": "John Milton was an English poet, intellectual, and civil servant for the Commonwealth of England. He wrote at a time of religious flux and political upheaval, and is best known for his epic poem Paradise Lost.",
+    "popularity_rating": 86,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/John_Milton_by_William_Faithorne.jpg",
+    "birth_date": "1608-12-09",
+    "death_date": "1674-11-08"
+  },
+  {
+    "first_name": "Geoffrey",
+    "last_name": "Chaucer",
+    "nationality": "English",
+    "country_of_origin": "Kingdom of England",
+    "flag": "",
+    "place_of_birth": "London",
+    "coordinates_of_the_place_of_birth": [
+      51.512,
+      -0.093
+    ],
+    "place_of_death": "London",
+    "coordinates_of_the_place_of_death": [
+      51.512,
+      -0.093
+    ],
+    "category": "Writer",
+    "description": "Geoffrey Chaucer was an English poet, author, and civil servant best known for The Canterbury Tales. He has been called the 'father of English literature', or, alternatively, the 'father of English poetry'.",
+    "popularity_rating": 87,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Geoffrey_Chaucer.jpg",
+    "birth_date": "1340",
+    "death_date": "1400-10-25"
+  },
+  {
+    "first_name": "Voltaire",
+    "last_name": "",
+    "nationality": "French",
+    "country_of_origin": "Kingdom of France",
+    "flag": "",
+    "place_of_birth": "Paris",
+    "coordinates_of_the_place_of_birth": [
+      48.856,
+      2.352
+    ],
+    "place_of_death": "Paris",
+    "coordinates_of_the_place_of_death": [
+      48.856,
+      2.352
+    ],
+    "category": "Writer",
+    "description": "François-Marie Arouet, known by his nom de plume Voltaire, was a French Enlightenment writer, historian, and philosopher famous for his wit, his criticism of Christianity—especially the Roman Catholic Church.",
+    "popularity_rating": 91,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Voltaire.jpg",
+    "birth_date": "1694-11-21",
+    "death_date": "1778-05-30"
+  },
+  {
+    "first_name": "Victor",
+    "last_name": "Hugo",
+    "nationality": "French",
+    "country_of_origin": "French First Republic",
+    "flag": "",
+    "place_of_birth": "Besançon",
+    "coordinates_of_the_place_of_birth": [
+      47.237,
+      6.024
+    ],
+    "place_of_death": "Paris",
+    "coordinates_of_the_place_of_death": [
+      48.856,
+      2.352
+    ],
+    "category": "Writer",
+    "description": "Victor Hugo was a French Romantic writer and politician. During a literary career that spanned more than sixty years, he wrote in a variety of genres and forms. He is considered to be one of the greatest French writers.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Victor_Hugo.jpg",
+    "birth_date": "1802-02-26",
+    "death_date": "1885-05-22"
+  },
+  {
+    "first_name": "Alexandre",
+    "last_name": "Dumas",
+    "nationality": "French",
+    "country_of_origin": "French First Republic",
+    "flag": "",
+    "place_of_birth": "Villers-Cotterêts",
+    "coordinates_of_the_place_of_birth": [
+      49.253,
+      3.09
+    ],
+    "place_of_death": "Puys",
+    "coordinates_of_the_place_of_death": [
+      49.932,
+      1.107
+    ],
+    "category": "Writer",
+    "description": "Alexandre Dumas was a French writer. His works have been translated into many languages, and he is one of the most widely read French authors.",
+    "popularity_rating": 89,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Alexandre_Dumas_p%C3%A8re.jpg",
+    "birth_date": "1802-07-24",
+    "death_date": "1870-12-05"
+  },
+  {
+    "first_name": "Gustave",
+    "last_name": "Flaubert",
+    "nationality": "French",
+    "country_of_origin": "Kingdom of France",
+    "flag": "",
+    "place_of_birth": "Rouen",
+    "coordinates_of_the_place_of_birth": [
+      49.443,
+      1.099
+    ],
+    "place_of_death": "Croisset",
+    "coordinates_of_the_place_of_death": [
+      49.431,
+      1.036
+    ],
+    "category": "Writer",
+    "description": "Gustave Flaubert was a French novelist. Highly influential, he has been considered the leading exponent of literary realism in his country. He is known especially for his debut novel Madame Bovary.",
+    "popularity_rating": 87,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gustave_Flaubert.jpg",
+    "birth_date": "1821-12-12",
+    "death_date": "1880-05-08"
+  },
+  {
+    "first_name": "Jules",
+    "last_name": "Verne",
+    "nationality": "French",
+    "country_of_origin": "Kingdom of France",
+    "flag": "",
+    "place_of_birth": "Nantes",
+    "coordinates_of_the_place_of_birth": [
+      47.218,
+      -1.553
+    ],
+    "place_of_death": "Amiens",
+    "coordinates_of_the_place_of_death": [
+      49.894,
+      2.295
+    ],
+    "category": "Writer",
+    "description": "Jules Verne was a French novelist, poet, and playwright. His collaboration with the publisher Pierre-Jules Hetzel led to the creation of the Voyages extraordinaires, a series of bestselling adventure novels.",
+    "popularity_rating": 90,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jules_Verne.jpg",
+    "birth_date": "1828-02-08",
+    "death_date": "1905-03-24"
+  },
+  {
+    "first_name": "Marcel",
+    "last_name": "Proust",
+    "nationality": "French",
+    "country_of_origin": "French Third Republic",
+    "flag": "",
+    "place_of_birth": "Paris",
+    "coordinates_of_the_place_of_birth": [
+      48.856,
+      2.352
+    ],
+    "place_of_death": "Paris",
+    "coordinates_of_the_place_of_death": [
+      48.856,
+      2.352
+    ],
+    "category": "Writer",
+    "description": "Marcel Proust was a French novelist, critic, and essayist best known for his monumental novel À la recherche du temps perdu, published in seven parts between 1913 and 1927.",
+    "popularity_rating": 86,
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marcel_Proust.jpg",
+    "birth_date": "1871-07-10",
+    "death_date": "1922-11-18"
   }
 ]
