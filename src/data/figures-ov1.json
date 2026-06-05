@@ -1,0 +1,842 @@
+[
+    {
+        "first_name": "Albert",
+        "last_name": "Einstein",
+        "nationality": "German, Swiss, American",
+        "country_of_origin": "German Empire",
+        "flag": "",
+        "place_of_birth": "Ulm",
+        "coordinates_of_the_place_of_birth": [
+            48.3984,
+            9.9916
+        ],
+        "place_of_death": "Princeton",
+        "coordinates_of_the_place_of_death": [
+            40.3573,
+            -74.6672
+        ],
+        "category": "Scientist",
+        "description": "Albert Einstein was a theoretical physicist widely acknowledged as one of the greatest physicists of all time. He is best known for developing the theory of relativity, which fundamentally changed the understanding of space, time, and gravity. He was awarded the Nobel Prize in Physics in 1921.",
+        "popularity_rating": 99,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Einstein_1921_by_F_Schmutzer_-_Restoration.jpg"
+    },
+    {
+        "first_name": "Leonardo",
+        "last_name": "da Vinci",
+        "nationality": "Italian",
+        "country_of_origin": "Republic of Florence",
+        "flag": "",
+        "place_of_birth": "Vinci",
+        "coordinates_of_the_place_of_birth": [
+            43.7833,
+            10.925
+        ],
+        "place_of_death": "Amboise",
+        "coordinates_of_the_place_of_death": [
+            47.4125,
+            0.9833
+        ],
+        "category": "Artist",
+        "description": "Leonardo da Vinci was an Italian polymath of the High Renaissance who was active as a painter, draughtsman, engineer, scientist, theorist, sculptor, and architect. He is widely considered one of the greatest painters of all time and is famous for masterpieces such as the Mona Lisa and The Last Supper. His notebooks reveal a spirit of scientific inquiry and a mechanical inventiveness that were centuries ahead of their time.",
+        "popularity_rating": 98,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Francesco_Melzi_-_Portrait_of_Leonardo_da_Vinci_-_WGA14795.jpg"
+    },
+    {
+        "first_name": "William",
+        "last_name": "Shakespeare",
+        "nationality": "English",
+        "country_of_origin": "Kingdom of England",
+        "flag": "",
+        "place_of_birth": "Stratford-upon-Avon",
+        "coordinates_of_the_place_of_birth": [
+            52.192,
+            -1.706
+        ],
+        "place_of_death": "Stratford-upon-Avon",
+        "coordinates_of_the_place_of_death": [
+            52.192,
+            -1.706
+        ],
+        "category": "Writer",
+        "description": "William Shakespeare was an English playwright, poet and actor, widely regarded as the greatest writer in the English language and the world's greatest dramatist. He is often called England's national poet and the 'Bard of Avon'. His extant works consist of some 39 plays, 154 sonnets, and three long narrative poems.",
+        "popularity_rating": 97,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Shakespeare_Droeshout_1623.jpg"
+    },
+    {
+        "first_name": "Marie",
+        "last_name": "Curie",
+        "nationality": "Polish, French",
+        "country_of_origin": "Russian Empire",
+        "flag": "",
+        "place_of_birth": "Warsaw",
+        "coordinates_of_the_place_of_birth": [
+            52.2297,
+            21.0122
+        ],
+        "place_of_death": "Passy",
+        "coordinates_of_the_place_of_death": [
+            45.9236,
+            6.6853
+        ],
+        "category": "Scientist",
+        "description": "Marie Curie was a Polish and naturalized-French physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, the first person to win a Nobel Prize twice, and the only person to win a Nobel Prize in two scientific fields. Her discoveries remain fundamental to modern medical treatments.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Marie_Curie_c._1920s.jpg"
+    },
+    {
+        "first_name": "Mohandas",
+        "last_name": "Gandhi",
+        "nationality": "Indian",
+        "country_of_origin": "British India",
+        "flag": "",
+        "place_of_birth": "Porbandar",
+        "coordinates_of_the_place_of_birth": [
+            21.6417,
+            69.601
+        ],
+        "place_of_death": "New Delhi",
+        "coordinates_of_the_place_of_death": [
+            28.6139,
+            77.209
+        ],
+        "category": "Leader",
+        "description": "Mahatma Gandhi was an Indian lawyer, anti-colonial nationalist, and political ethicist who employed nonviolent resistance to lead the successful campaign for India's independence from British Rule. His principles of passive resistance and non-violence later inspired movements for civil rights and freedom across the world. He remains a global symbol of peaceful protest.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Mahatma-Gandhi%2C_studio_portrait_2013-05-19_23-53.jpg"
+    },
+    {
+        "first_name": "Isaac",
+        "last_name": "Newton",
+        "nationality": "English",
+        "country_of_origin": "Kingdom of England",
+        "flag": "",
+        "place_of_birth": "Woolsthorpe-by-Colsterworth",
+        "coordinates_of_the_place_of_birth": [
+            52.809,
+            -0.63
+        ],
+        "place_of_death": "London",
+        "coordinates_of_the_place_of_death": [
+            51.5074,
+            -0.1278
+        ],
+        "category": "Scientist",
+        "description": "Sir Isaac Newton was an English mathematician, physicist, astronomer, alchemist, and author who is widely recognized as one of the greatest mathematicians and most influential scientists of all time. He established classical mechanics and formulated the laws of motion and universal gravitation. His book 'Principia Mathematica' is arguably the most important scientific book ever written.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/39/GodfreyKneller-IsaacNewton%2B1689.jpg"
+    },
+    {
+        "first_name": "Wolfgang Amadeus",
+        "last_name": "Mozart",
+        "nationality": "Austrian",
+        "country_of_origin": "Holy Roman Empire",
+        "flag": "",
+        "place_of_birth": "Salzburg",
+        "coordinates_of_the_place_of_birth": [
+            47.8095,
+            13.0436
+        ],
+        "place_of_death": "Vienna",
+        "coordinates_of_the_place_of_death": [
+            48.2082,
+            16.3738
+        ],
+        "category": "Musician",
+        "description": "Wolfgang Amadeus Mozart was a prolific and influential composer of the Classical period. Despite his short life, his rapid pace of composition resulted in more than 800 works of virtually every genre of his time. Many of these compositions are acknowledged as pinnacles of the symphonic, concertante, chamber, operatic, and choral repertoire.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Wolfgang-amadeus-mozart_1.jpg"
+    },
+    {
+        "first_name": "Julius",
+        "last_name": "Caesar",
+        "nationality": "Roman",
+        "country_of_origin": "Roman Republic",
+        "flag": "",
+        "place_of_birth": "Rome",
+        "coordinates_of_the_place_of_birth": [
+            41.9028,
+            12.4964
+        ],
+        "place_of_death": "Rome",
+        "coordinates_of_the_place_of_death": [
+            41.9028,
+            12.4964
+        ],
+        "category": "Leader",
+        "description": "Julius Caesar was a Roman general and statesman who played a critical role in the events that led to the demise of the Roman Republic and the rise of the Roman Empire. A brilliant military commander, his conquest of Gaul extended Rome's territory to the English Channel and the Rhine. He was assassinated on the Ides of March in 44 BC by rebellious senators.",
+        "popularity_rating": 98,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Julius_Caesar_Cini_Maiano.jpg"
+    },
+    {
+        "first_name": "Cleopatra",
+        "last_name": "VII",
+        "nationality": "Greek, Egyptian",
+        "country_of_origin": "Ptolemaic Kingdom",
+        "flag": "",
+        "place_of_birth": "Alexandria",
+        "coordinates_of_the_place_of_birth": [
+            31.2001,
+            29.9187
+        ],
+        "place_of_death": "Alexandria",
+        "coordinates_of_the_place_of_death": [
+            31.2001,
+            29.9187
+        ],
+        "category": "Leader",
+        "description": "Cleopatra was the last active ruler of the Ptolemaic Kingdom of Egypt. As a member of the Ptolemaic dynasty, she was a descendant of its founder Ptolemy I Soter, a Macedonian Greek general and companion of Alexander the Great. She famously aligned with Julius Caesar and later Mark Antony in an effort to maintain her kingdom's independence from Rome.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Cleopatra_Altes_Museum_Berlin.jpg"
+    },
+    {
+        "first_name": "Napoleon",
+        "last_name": "Bonaparte",
+        "nationality": "French",
+        "country_of_origin": "Kingdom of France",
+        "flag": "",
+        "place_of_birth": "Ajaccio",
+        "coordinates_of_the_place_of_birth": [
+            41.9267,
+            8.7369
+        ],
+        "place_of_death": "Longwood",
+        "coordinates_of_the_place_of_death": [
+            -15.95,
+            -5.6833
+        ],
+        "category": "Leader",
+        "description": "Napoleon Bonaparte was a French military and political leader who rose to prominence during the French Revolution and led several successful campaigns during the Revolutionary Wars. He was the de facto leader of the French Republic as First Consul from 1799 to 1804, and as Napoleon I, he was Emperor of the French from 1804 until 1814. He remains one of the most celebrated and controversial political figures in human history.",
+        "popularity_rating": 97,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/5/50/Jacques-Louis_David_-_The_Emperor_Napoleon_in_His_Study_at_the_Tuileries_-_Google_Art_Project.jpg"
+    },
+    {
+        "first_name": "Charles",
+        "last_name": "Darwin",
+        "nationality": "English",
+        "country_of_origin": "United Kingdom",
+        "flag": "",
+        "place_of_birth": "Shrewsbury",
+        "coordinates_of_the_place_of_birth": [
+            52.7101,
+            -2.7521
+        ],
+        "place_of_death": "Downe",
+        "coordinates_of_the_place_of_death": [
+            51.3364,
+            0.0526
+        ],
+        "category": "Scientist",
+        "description": "Charles Darwin was an English naturalist, geologist and biologist, best known for his contributions to the science of evolution. His proposition that all species of life have descended from common ancestors is now widely accepted and considered a fundamental concept in science. He introduced his scientific theory that this branching pattern of evolution resulted from a process that he called natural selection.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Charles_Darwin_seated_crop.jpg"
+    },
+    {
+        "first_name": "Abraham",
+        "last_name": "Lincoln",
+        "nationality": "American",
+        "country_of_origin": "United States",
+        "flag": "",
+        "place_of_birth": "Hodgenville",
+        "coordinates_of_the_place_of_birth": [
+            37.5712,
+            -85.7347
+        ],
+        "place_of_death": "Washington D.C.",
+        "coordinates_of_the_place_of_death": [
+            38.9072,
+            -77.0369
+        ],
+        "category": "Leader",
+        "description": "Abraham Lincoln was an American lawyer and statesman who served as the 16th president of the United States from 1861 until his assassination in 1865. Lincoln led the nation through the American Civil War, its bloodiest war and its greatest moral, constitutional, and political crisis. He succeeded in preserving the Union, abolishing slavery, bolstering the federal government, and modernizing the U.S. economy.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Abraham_Lincoln_O-77_by_Gardner%2C_1863-crop.jpg"
+    },
+    {
+        "first_name": "Vincent",
+        "last_name": "van Gogh",
+        "nationality": "Dutch",
+        "country_of_origin": "Kingdom of the Netherlands",
+        "flag": "",
+        "place_of_birth": "Zundert",
+        "coordinates_of_the_place_of_birth": [
+            51.4704,
+            4.6625
+        ],
+        "place_of_death": "Auvers-sur-Oise",
+        "coordinates_of_the_place_of_death": [
+            49.0708,
+            2.1714
+        ],
+        "category": "Artist",
+        "description": "Vincent van Gogh was a Dutch Post-Impressionist painter who posthumously became one of the most famous and influential figures in Western art history. In a decade, he created about 2,100 artworks, including around 860 oil paintings, most of which date from the last two years of his life. His iconic works include Starry Night and Sunflowers.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Vincent_van_Gogh_-_Self-Portrait_-_Google_Art_Project_Short_Hair.jpg"
+    },
+    {
+        "first_name": "Ludwig",
+        "last_name": "van Beethoven",
+        "nationality": "German",
+        "country_of_origin": "Holy Roman Empire",
+        "flag": "",
+        "place_of_birth": "Bonn",
+        "coordinates_of_the_place_of_birth": [
+            50.7374,
+            7.0982
+        ],
+        "place_of_death": "Vienna",
+        "coordinates_of_the_place_of_death": [
+            48.2082,
+            16.3738
+        ],
+        "category": "Musician",
+        "description": "Ludwig van Beethoven was a German composer and pianist. He is one of the most revered figures in the history of Western music; his works rank amongst the most performed of the classical music repertoire and span the transition from the Classical period to the Romantic era in classical music. He created some of his most important works despite suffering from profound deafness.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Beethoven.jpg"
+    },
+    {
+        "first_name": "Muhammad",
+        "last_name": "Ali",
+        "nationality": "American",
+        "country_of_origin": "United States",
+        "flag": "",
+        "place_of_birth": "Louisville",
+        "coordinates_of_the_place_of_birth": [
+            38.2527,
+            -85.7585
+        ],
+        "place_of_death": "Scottsdale",
+        "coordinates_of_the_place_of_death": [
+            33.4942,
+            -111.9261
+        ],
+        "category": "Sportsman",
+        "description": "Muhammad Ali was an American professional boxer, activist, entertainer, poet, and philanthropist. Nicknamed 'The Greatest', he is widely regarded as one of the most significant and celebrated sporting figures of the 20th century. In 1999, he was crowned Sportsman of the Century by Sports Illustrated.",
+        "popularity_rating": 92,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/8/89/Muhammad_Ali_NYWTS.jpg"
+    },
+    {
+        "first_name": "Nelson",
+        "last_name": "Mandela",
+        "nationality": "South African",
+        "country_of_origin": "Union of South Africa",
+        "flag": "",
+        "place_of_birth": "Mvezo",
+        "coordinates_of_the_place_of_birth": [
+            -31.9546,
+            28.5147
+        ],
+        "place_of_death": "Johannesburg",
+        "coordinates_of_the_place_of_death": [
+            -26.2041,
+            28.0473
+        ],
+        "category": "Leader",
+        "description": "Nelson Mandela was a South African anti-apartheid revolutionary, political leader and philanthropist who served as President of South Africa from 1994 to 1999. He was the country's first black head of state and the first elected in a fully representative democratic election. His government focused on dismantling the legacy of apartheid by tackling institutionalised racism.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/0/02/Nelson_Mandela_1994.jpg"
+    },
+    {
+        "first_name": "Winston",
+        "last_name": "Churchill",
+        "nationality": "British",
+        "country_of_origin": "United Kingdom",
+        "flag": "",
+        "place_of_birth": "Woodstock",
+        "coordinates_of_the_place_of_birth": [
+            51.8458,
+            -1.3537
+        ],
+        "place_of_death": "London",
+        "coordinates_of_the_place_of_death": [
+            51.5074,
+            -0.1278
+        ],
+        "category": "Leader",
+        "description": "Winston Churchill was a British statesman, army officer, and writer who served as Prime Minister of the United Kingdom from 1940 to 1945, during the Second World War, and again from 1951 to 1955. His leadership and rousing speeches during WWII were crucial in maintaining British morale and ultimately defeating Nazi Germany. He also won the Nobel Prize in Literature in 1953.",
+        "popularity_rating": 93,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Sir_Winston_Churchill_1941_by_Yousuf_Karsh.jpg"
+    },
+    {
+        "first_name": "Galileo",
+        "last_name": "Galilei",
+        "nationality": "Italian",
+        "country_of_origin": "Duchy of Florence",
+        "flag": "",
+        "place_of_birth": "Pisa",
+        "coordinates_of_the_place_of_birth": [
+            43.7228,
+            10.4017
+        ],
+        "place_of_death": "Arcetri",
+        "coordinates_of_the_place_of_death": [
+            43.75,
+            11.25
+        ],
+        "category": "Scientist",
+        "description": "Galileo Galilei was an Italian astronomer, physicist and engineer, sometimes described as a polymath, from Pisa. He has been called the 'father of observational astronomy', the 'father of modern physics', and the 'father of the scientific method'. His championing of heliocentrism and Copernicanism was controversial during his lifetime and led to an inquisition by the Catholic Church.",
+        "popularity_rating": 92,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Justus_Sustermans_-_Portrait_of_Galileo_Galilei%2C_1636.jpg"
+    },
+    {
+        "first_name": "Marilyn",
+        "last_name": "Monroe",
+        "nationality": "American",
+        "country_of_origin": "United States",
+        "flag": "",
+        "place_of_birth": "Los Angeles",
+        "coordinates_of_the_place_of_birth": [
+            34.0522,
+            -118.2437
+        ],
+        "place_of_death": "Los Angeles",
+        "coordinates_of_the_place_of_death": [
+            34.0522,
+            -118.2437
+        ],
+        "category": "Artist",
+        "description": "Marilyn Monroe was an American actress, singer, and model. Famous for playing comedic 'blonde bombshell' characters, she became one of the most popular sex symbols of the 1950s and early 1960s and was emblematic of the era's sexual revolution. Long after her death, she continues to be a major icon of pop culture.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Marilyn_Monroe_湯%E3%83%BB%E3%83%A2%E3%83%B3%E3%83%AD%E3%83%BC_1954.jpg"
+    },
+    {
+        "first_name": "Alexander",
+        "last_name": "the Great",
+        "nationality": "Greek",
+        "country_of_origin": "Kingdom of Macedon",
+        "flag": "",
+        "place_of_birth": "Pella",
+        "coordinates_of_the_place_of_birth": [
+            40.761,
+            22.5256
+        ],
+        "place_of_death": "Babylon",
+        "coordinates_of_the_place_of_death": [
+            32.5364,
+            44.4208
+        ],
+        "category": "Leader",
+        "description": "Alexander III of Macedon, commonly known as Alexander the Great, was a king of the ancient Greek kingdom of Macedon. He succeeded his father Philip II to the throne at the age of 20, and spent most of his ruling years on an unprecedented military campaign through Western Asia and Northeastern Africa. By the age of thirty, he had created one of the largest empires of the ancient world.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/a2/AlexanderTheGreat_Bust.jpg"
+    },
+    {
+        "first_name": "Aristotle",
+        "last_name": "",
+        "nationality": "Greek",
+        "country_of_origin": "Kingdom of Macedon",
+        "flag": "",
+        "place_of_birth": "Stagira",
+        "coordinates_of_the_place_of_birth": [
+            40.5283,
+            23.7942
+        ],
+        "place_of_death": "Chalcis",
+        "coordinates_of_the_place_of_death": [
+            38.4632,
+            23.6015
+        ],
+        "category": "Scientist",
+        "description": "Aristotle was an ancient Greek philosopher and polymath during the Classical period in Ancient Greece. Taught by Plato, he was the founder of the Lyceum, the Peripatetic school of philosophy, and the Aristotelian tradition. His writings cover many subjects including physics, biology, zoology, metaphysics, logic, ethics, aesthetics, poetry, theater, music, rhetoric, psychology, linguistics, economics, politics, and meteorology.",
+        "popularity_rating": 97,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Aristotle_Altemps_Inv8575.jpg"
+    },
+    {
+        "first_name": "Genghis",
+        "last_name": "Khan",
+        "nationality": "Mongolian",
+        "country_of_origin": "Khamag Mongol",
+        "flag": "",
+        "place_of_birth": "Delüün Boldog",
+        "coordinates_of_the_place_of_birth": [
+            49.0233,
+            110.5183
+        ],
+        "place_of_death": "Yinchuan",
+        "coordinates_of_the_place_of_death": [
+            38.4872,
+            106.2309
+        ],
+        "category": "Leader",
+        "description": "Genghis Khan was the founder and first Great Khan of the Mongol Empire, which became the largest contiguous empire in history after his death. He came to power by uniting many of the nomadic tribes of Northeast Asia and launching devastating military campaigns across Eurasia. He remains a highly influential and complex figure celebrated for his administrative structures and strategic brilliance.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/35/YuanJuanNationalPortraitOfGenghisKhan.jpg"
+    },
+    {
+        "first_name": "Ulugh",
+        "last_name": "Beg",
+        "nationality": "Timurid",
+        "country_of_origin": "Timurid Empire",
+        "flag": "",
+        "place_of_birth": "Sultaniya",
+        "coordinates_of_the_place_of_birth": [
+            36.435,
+            48.7975
+        ],
+        "place_of_death": "Samarkand",
+        "coordinates_of_the_place_of_death": [
+            39.6542,
+            66.9597
+        ],
+        "category": "Scientist",
+        "description": "Ulugh Beg was a Timurid sultan as well as an extraordinary astronomer and mathematician. He constructed the monumental Samarkand Observatory and computed incredibly precise trigonometric tables and earth-mapping star catalogs that were centuries ahead of contemporary European measurements. He is recognized as one of the most significant scientific minds of the medieval Islamic world.",
+        "popularity_rating": 88,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/31/Ulugh_Beg_Mural_Samarkand.jpg"
+    },
+    {
+        "first_name": "Muhammad",
+        "last_name": "al-Farabi",
+        "nationality": "Turkic, Persian",
+        "country_of_origin": "Abbasid Caliphate",
+        "flag": "",
+        "place_of_birth": "Farab",
+        "coordinates_of_the_place_of_birth": [
+            42.7441,
+            68.3078
+        ],
+        "place_of_death": "Damascus",
+        "coordinates_of_the_place_of_death": [
+            33.5138,
+            36.2913
+        ],
+        "category": "Scientist",
+        "description": "Al-Farabi was a renowned polymath and philosopher of the Islamic Golden Age, often referred to in the East as the 'Second Teacher' after Aristotle. He made major contributions to logic, metaphysics, political philosophy, music theory, and sociology. His integration of Greek philosophy with Islamic thought significantly shaped both Eastern and Western medieval scholastics.",
+        "popularity_rating": 89,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Al-Farabi.jpg"
+    },
+    {
+        "first_name": "Chokan",
+        "last_name": "Valikhanov",
+        "nationality": "Kazakh, Russian",
+        "country_of_origin": "Russian Empire",
+        "flag": "",
+        "place_of_birth": "Kushmurun",
+        "coordinates_of_the_place_of_birth": [
+            52.4172,
+            64.6331
+        ],
+        "place_of_death": "Altyn-Emel National Park region",
+        "coordinates_of_the_place_of_death": [
+            44.1544,
+            78.4328
+        ],
+        "category": "Scientist",
+        "description": "Chokan Valikhanov was a brilliant Kazakh scholar, ethnographer, historian, and cartographer who served in the Russian Imperial Army. He is highly celebrated for his precise geographic, mapping, and structural descriptions of Central Asia, including his risky, historic disguise expedition to Kashgar. His extensive field records remain an archival cornerstone of Eurasian geographical documentation.",
+        "popularity_rating": 82,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Shoqan_Walikhanov.jpg"
+    },
+    {
+        "first_name": "Nikola",
+        "last_name": "Tesla",
+        "nationality": "Serbian, American",
+        "country_of_origin": "Austrian Empire",
+        "flag": "",
+        "place_of_birth": "Smiljan",
+        "coordinates_of_the_place_of_birth": [
+            44.5627,
+            15.3181
+        ],
+        "place_of_death": "New York City",
+        "coordinates_of_the_place_of_death": [
+            40.7128,
+            -74.006
+        ],
+        "category": "Scientist",
+        "description": "Nikola Tesla was a Serbian-American engineer and futurist best known for his contributions to the design of the modern alternating current (AC) electricity supply system. An eccentric but brilliant inventor, his work spanning wireless lighting, x-ray imaging, and radio communication laid massive foundations for contemporary electrical infrastructure.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/7/79/Tesla_circa_1890.jpeg"
+    },
+    {
+        "first_name": "George",
+        "last_name": "Washington",
+        "nationality": "American",
+        "country_of_origin": "British America",
+        "flag": "",
+        "place_of_birth": "Westmoreland County",
+        "coordinates_of_the_place_of_birth": [
+            38.1643,
+            -76.9247
+        ],
+        "place_of_death": "Mount Vernon",
+        "coordinates_of_the_place_of_death": [
+            38.7079,
+            -77.0861
+        ],
+        "category": "Leader",
+        "description": "George Washington was an American military officer, statesman, and Founding Father who served as the first president of the United States from 1789 to 1797. Appointed commander of the Continental Army during the American Revolutionary War, he led Patriot forces to victory and later presided over the 1787 Constitutional Convention.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Gilbert_Stuart_Williamstown_Portrait_of_George_Washington.jpg"
+    },
+    {
+        "first_name": "Michelangelo",
+        "last_name": "Buonarroti",
+        "nationality": "Italian",
+        "country_of_origin": "Republic of Florence",
+        "flag": "",
+        "place_of_birth": "Caprese",
+        "coordinates_of_the_place_of_birth": [
+            43.6414,
+            11.9869
+        ],
+        "place_of_death": "Rome",
+        "coordinates_of_the_place_of_death": [
+            41.9028,
+            12.4964
+        ],
+        "category": "Artist",
+        "description": "Michelangelo was an Italian sculptor, painter, architect, and poet of the High Renaissance. His unparalleled mastery is immortalized in works like the statue of David, Pietà, and his monumental ceiling frescoes inside the Sistine Chapel. Along with Leonardo da Vinci, he is considered a archetypal Renaissance polymath.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Miguel_%C3%81ngel%2C_by_Daniele_da_Volterra_edit.jpg"
+    },
+    {
+        "first_name": "Pablo",
+        "last_name": "Picasso",
+        "nationality": "Spanish",
+        "country_of_origin": "Kingdom of Spain",
+        "flag": "",
+        "place_of_birth": "Málaga",
+        "coordinates_of_the_place_of_birth": [
+            36.7213,
+            -4.4214
+        ],
+        "place_of_death": "Mougins",
+        "coordinates_of_the_place_of_death": [
+            43.6007,
+            7.0006
+        ],
+        "category": "Artist",
+        "description": "Pablo Picasso was a Spanish painter, sculptor, printmaker, ceramicist, and theatre designer who spent most of his adult life in France. As one of the most influential artists of the 20th century, he co-founded the Cubist movement, invented constructed sculpture, and co-invented collage.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/9/98/Pablo_picasso_1.jpg"
+    },
+    {
+        "first_name": "Marco",
+        "last_name": "Polo",
+        "nationality": "Venetian",
+        "country_of_origin": "Republic of Venice",
+        "flag": "",
+        "place_of_birth": "Venice",
+        "coordinates_of_the_place_of_birth": [
+            45.4408,
+            12.3155
+        ],
+        "place_of_death": "Venice",
+        "coordinates_of_the_place_of_death": [
+            45.4408,
+            12.3155
+        ],
+        "category": "Explorer",
+        "description": "Marco Polo was a Venetian merchant, explorer, and writer who travelled through Asia along the Silk Road between 1271 and 1295. His travels are recorded in 'The Travels of Marco Polo', a book that introduced Europeans to the mysterious cultures, massive scope, and inner workings of Central Asia and China.",
+        "popularity_rating": 93,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/9/90/Marco_Polo_custom_portrait.jpg"
+    },
+    {
+        "first_name": "Christopher",
+        "last_name": "Columbus",
+        "nationality": "Genoese",
+        "country_of_origin": "Republic of Genoa",
+        "flag": "",
+        "place_of_birth": "Genoa",
+        "coordinates_of_the_place_of_birth": [
+            44.4056,
+            8.9463
+        ],
+        "place_of_death": "Valladolid",
+        "coordinates_of_the_place_of_death": [
+            41.6523,
+            -4.7245
+        ],
+        "category": "Explorer",
+        "description": "Christopher Columbus was an Italian explorer and navigator who completed four Spanish-sponsored voyages across the Atlantic Ocean. His expeditions opened the way for widespread European exploration, cartographic charting, and colonization of the Americas, fundamentally remapping the global geopolitical landscape.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/30/Santi_di_Tito_-_Portrait_of_Christopher_Columbus.jpg"
+    },
+    {
+        "first_name": "Louis",
+        "last_name": "Pasteur",
+        "nationality": "French",
+        "country_of_origin": "Kingdom of France",
+        "flag": "",
+        "place_of_birth": "Dole",
+        "coordinates_of_the_place_of_birth": [
+            47.0917,
+            5.4912
+        ],
+        "place_of_death": "Marnes-la-Coquette",
+        "coordinates_of_the_place_of_death": [
+            48.8297,
+            2.1764
+        ],
+        "category": "Scientist",
+        "description": "Louis Pasteur was a French chemist and microbiologist renowned for his discoveries of the principles of vaccination, microbial fermentation, and pasteurization. His breakthrough research in germ theory directly lowered mortality rates from viral infections and laid the foundation for modern preventative medicine.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Louis_Pasteur%2C_by_Albert_Edelfelt_b.jpg"
+    },
+    {
+        "first_name": "Plato",
+        "last_name": "",
+        "nationality": "Greek",
+        "country_of_origin": "Classical Athens",
+        "flag": "",
+        "place_of_birth": "Athens",
+        "coordinates_of_the_place_of_birth": [
+            37.9838,
+            23.7275
+        ],
+        "place_of_death": "Athens",
+        "coordinates_of_the_place_of_death": [
+            37.9838,
+            23.7275
+        ],
+        "category": "Philosopher",
+        "description": "Plato was an ancient Greek philosopher born in Athens during the Classical period. He founded the Academy, the first institution of higher learning in the Western world, and authored foundational philosophical texts, most notably 'The Republic', establishing concepts that underpin Western ethics and politics.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/8/88/Plato_Silanion_Musei_Capitolini_MC1377.jpg"
+    },
+    {
+        "first_name": "Confucius",
+        "last_name": "",
+        "nationality": "Chinese",
+        "country_of_origin": "Lu state",
+        "flag": "",
+        "place_of_birth": "Qufu",
+        "coordinates_of_the_place_of_birth": [
+            35.5806,
+            116.9833
+        ],
+        "place_of_death": "Qufu",
+        "coordinates_of_the_place_of_death": [
+            35.5806,
+            116.9833
+        ],
+        "category": "Philosopher",
+        "description": "Confucius was a Chinese philosopher and politician of the Spring and Autumn period. His philosophy, known as Confucianism, emphasized personal and governmental morality, correctness of social relationships, justice, kindness, and sincerity, deeply anchoring East Asian cultural frameworks.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Confucius_Tang_Dynasty.jpg"
+    },
+    {
+        "first_name": "Queen",
+        "last_name": "Victoria",
+        "nationality": "British",
+        "country_of_origin": "United Kingdom",
+        "flag": "",
+        "place_of_birth": "London",
+        "coordinates_of_the_place_of_birth": [
+            51.5014,
+            -0.1866
+        ],
+        "place_of_death": "Isle of Wight",
+        "coordinates_of_the_place_of_death": [
+            50.6938,
+            -1.3047
+        ],
+        "category": "Leader",
+        "description": "Queen Victoria was Queen of the United Kingdom of Great Britain and Ireland from 1837 until her death in 1901. Her reign of over 63 years was longer than that of any of her predecessors and is known as the Victorian era, a definitive period of intense industrial, political, scientific, and military expansion.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Queen_Victoria_by_Bassano%2C_1882.jpg"
+    },
+    {
+        "first_name": "Joan",
+        "last_name": "of Arc",
+        "nationality": "French",
+        "country_of_origin": "Kingdom of France",
+        "flag": "",
+        "place_of_birth": "Domrémy",
+        "coordinates_of_the_place_of_birth": [
+            48.4422,
+            5.6744
+        ],
+        "place_of_death": "Rouen",
+        "coordinates_of_the_place_of_death": [
+            49.4431,
+            1.0993
+        ],
+        "category": "Leader",
+        "description": "Joan of Arc is a patron saint of France who became a legendary heroine for her crucial role during the Lancastrian phase of the Hundred Years' War. Claiming divine guidance, she inspired French troops to lift the Siege of Orléans before being captured, tried, and burned at the stake by the English.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/39/Joan_of_arc_miniature_graded.jpg"
+    },
+    {
+        "first_name": "Sigmund",
+        "last_name": "Freud",
+        "nationality": "Austrian",
+        "country_of_origin": "Austrian Empire",
+        "flag": "",
+        "place_of_birth": "Příbor",
+        "coordinates_of_the_place_of_birth": [
+            49.6402,
+            18.1436
+        ],
+        "place_of_death": "London",
+        "coordinates_of_the_place_of_death": [
+            51.5074,
+            -0.1278
+        ],
+        "category": "Scientist",
+        "description": "Sigmund Freud was an Austrian neurologist and the founder of psychoanalysis, a clinical method for evaluating and treating pathologies through dialogue between a patient and a psychoanalyst. His theories regarding the unconscious mind, dreams, and human psychology profoundly altered 20th-century intellectual landscapes.",
+        "popularity_rating": 94,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/1/12/Sigmund_Freud_LIFE.jpg"
+    },
+    {
+        "first_name": "Ada",
+        "last_name": "Lovelace",
+        "nationality": "English",
+        "country_of_origin": "United Kingdom",
+        "flag": "",
+        "place_of_birth": "London",
+        "coordinates_of_the_place_of_birth": [
+            51.5074,
+            -0.1278
+        ],
+        "place_of_death": "London",
+        "coordinates_of_the_place_of_death": [
+            51.5074,
+            -0.1278
+        ],
+        "category": "Scientist",
+        "description": "Ada Lovelace was an English mathematician and writer, chiefly known for her pioneering work on Charles Babbage's proposed mechanical general-purpose computer, the Analytical Engine. She is widely celebrated for publishing the first algorithm intended to be carried out by a machine, making her the world's first computer programmer.",
+        "popularity_rating": 91,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Ada_Lovelace_portrait.jpg"
+    },
+    {
+        "first_name": "Martin Luther",
+        "last_name": "King Jr.",
+        "nationality": "American",
+        "country_of_origin": "United States",
+        "flag": "",
+        "place_of_birth": "Atlanta",
+        "coordinates_of_the_place_of_birth": [
+            33.749,
+            -84.388
+        ],
+        "place_of_death": "Memphis",
+        "coordinates_of_the_place_of_death": [
+            35.1495,
+            -90.049
+        ],
+        "category": "Leader",
+        "description": "Martin Luther King Jr. was an American Baptist minister and activist who became the most prominent leader in the civil rights movement from 1955 until his assassination in 1968. He advanced civil rights for people of color in the United States through nonviolence and civil disobedience, famously delivering his 'I Have a Dream' speech.",
+        "popularity_rating": 96,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/0/05/Martin_Luther_King%2C_Jr..jpg"
+    },
+    {
+        "first_name": "Charles",
+        "last_name": "Chaplin",
+        "nationality": "English",
+        "country_of_origin": "United Kingdom",
+        "flag": "",
+        "place_of_birth": "London",
+        "coordinates_of_the_place_of_birth": [
+            51.5074,
+            -0.1278
+        ],
+        "place_of_death": "Corsier-sur-Vevey",
+        "coordinates_of_the_place_of_death": [
+            46.471,
+            6.8407
+        ],
+        "category": "Artist",
+        "description": "Charlie Chaplin was an English comic actor, filmmaker, and composer who rose to fame in the era of silent film. He became a worldwide icon through his screen persona, 'The Tramp', and is considered one of the most essential and influential figures in the history of the cinematic art form.",
+        "popularity_rating": 95,
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/3/34/Charlie_Chaplin_portrait.jpg"
+    }
+]
