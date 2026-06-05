@@ -115,10 +115,11 @@ input:focus-visible {
 }
 
 .home-page {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .home-map-bg {
@@ -149,6 +150,8 @@ input:focus-visible {
 .home-page > .home-panel {
   position: relative;
   z-index: 1;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -810,14 +813,13 @@ h2 {
     font-size: 1rem;
   }
   .tab-row {
-    overflow-x: auto;
-    flex-wrap: nowrap;
+    gap: 2px;
   }
   .tab-button {
-    flex-shrink: 0;
+    padding: 8px 10px;
+    font-size: 0.82rem;
   }
   .home-map-bg {
-    /* Less expensive blur on phones */
     filter: blur(4px) saturate(0.7) brightness(0.55);
   }
 }
@@ -1946,13 +1948,13 @@ input[type="range"] {
 .person-card {
   position: relative;
   width: min(920px, 100%);
-  max-height: min(78dvh, 720px);
+  max-height: min(82dvh, 720px);
   overflow: auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18px;
-  padding: 20px;
-  border-radius: 24px 24px 18px 18px;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px 20px 14px 14px;
   animation: sheetUp 400ms var(--ease-out);
 }
 
@@ -1979,6 +1981,7 @@ input[type="range"] {
 .person-card img {
   width: 100%;
   aspect-ratio: 4 / 5;
+  max-height: 240px;
   object-fit: cover;
   border: 1px solid var(--color-border-strong);
   border-radius: 14px;
@@ -2130,7 +2133,13 @@ input[type="range"] {
 
   .person-card {
     grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    gap: 18px;
     padding: 28px;
+    border-radius: 24px 24px 18px 18px;
+  }
+
+  .person-card img {
+    max-height: none;
   }
 }
 
@@ -2142,78 +2151,172 @@ input[type="range"] {
 
 @media (max-width: 520px) {
   .top-nav {
-    align-items: flex-start;
-    flex-direction: column;
+    min-height: 52px;
+    margin-bottom: 16px;
   }
 
   .top-nav nav {
-    width: 100%;
-    justify-content: space-between;
+    gap: 4px;
+    font-size: 0.82rem;
+  }
+
+  .top-nav nav a {
+    padding: 0 8px;
+    min-height: 38px;
+  }
+
+  .logo-lockup span {
+    display: none;
   }
 
   .hud-top {
-    grid-template-columns: 54px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .icon-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .round-pill {
+    min-height: 48px;
+    padding: 6px 10px;
   }
 
   .score-box {
-    grid-column: 1 / -1;
-    justify-self: end;
-    min-width: 132px;
+    min-height: 48px;
+    min-width: 90px;
+    padding: 6px 10px;
   }
 
   .custom-compass {
-    top: max(154px, calc(env(safe-area-inset-top) + 154px));
-    width: 58px;
-    height: 58px;
+    top: max(72px, calc(env(safe-area-inset-top) + 72px));
+    right: 10px;
+    width: 52px;
+    height: 52px;
   }
 
   .compass-rose {
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
   }
 
   .hud-middle {
-    align-items: flex-start;
     flex-wrap: wrap;
-    padding-right: 86px;
+    gap: 8px;
+    padding: 8px 10px 0;
+    padding-right: 68px;
   }
 
   .timer-arc {
-    width: 84px;
-    height: 84px;
+    width: 72px;
+    height: 72px;
+  }
+
+  .timer-value strong {
+    font-size: 1.8rem;
+  }
+
+  .extra-pill,
+  .streak-badge {
+    min-height: 48px;
+    padding: 6px 12px;
   }
 
   .extra-pill {
-    min-height: 58px;
     flex: 1;
+  }
+
+  .extra-pill strong,
+  .streak-badge strong {
+    font-size: 1.15rem;
   }
 
   .streak-badge {
     margin-left: 0;
   }
 
+  .guess-panel {
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    padding: 12px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .guess-panel input {
+    min-height: 46px;
+  }
+
+  .skip-button {
+    right: 8px;
+    bottom: calc(160px + env(safe-area-inset-bottom));
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 0.85rem;
+  }
+
+  .wrong-place-card {
+    bottom: calc(175px + env(safe-area-inset-bottom));
+  }
+
   .slider-stack label {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
+    gap: 4px 8px;
+  }
+
+  .slider-stack label input[type="range"] {
+    grid-column: 1 / -1;
+    order: 1;
   }
 }
 
-/* U9 — very narrow viewports (e.g. iPhone SE, 320–374px wide).
-   The default mobile layout still overflows at this width:
-   the timer arc + extra-bank pill + streak badge can't all fit
-   in a single row. Stack them and shrink the timer further. */
+@media (max-width: 480px) {
+  .page-shell {
+    padding: 12px;
+  }
+
+  .home-panel {
+    padding: 16px 14px 14px;
+  }
+
+  .home-panel h1 {
+    font-size: 1.8rem;
+  }
+
+  .content-panel {
+    padding: 20px 16px;
+  }
+
+  .menu-actions {
+    gap: 6px;
+  }
+
+  .menu-actions .secondary-button {
+    min-width: 0;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+}
+
 @media (max-width: 374px) {
   .hud-top {
-    /* Collapse score into the second column so the row stays single-line */
-    grid-template-columns: 44px 1fr;
-    gap: 6px;
-    padding-left: 8px;
-    padding-right: 8px;
+    grid-template-columns: 42px 1fr auto;
+    gap: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .icon-button {
+    width: 42px;
+    height: 42px;
   }
 
   .score-box {
-    /* Keep score anchored to the right of the pill on the same row */
-    grid-column: 2;
-    justify-self: end;
     min-width: 0;
     padding: 4px 8px;
   }
@@ -2223,37 +2326,37 @@ input[type="range"] {
   }
 
   .round-pill {
-    min-height: 48px;
+    min-height: 42px;
+    padding: 4px 8px;
     font-size: 0.62rem;
   }
 
   .timer-arc {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
   }
 
   .timer-value strong {
-    font-size: 1.7rem;
-  }
-
-  .extra-pill,
-  .streak-badge {
-    min-height: 48px;
-    padding: 6px 10px;
-  }
-
-  .extra-pill strong,
-  .streak-badge strong {
-    font-size: 1.1rem;
-  }
-
-  .guess-panel {
-    padding: 10px;
-    gap: 6px;
+    font-size: 1.5rem;
   }
 
   .hud-middle {
-    padding-right: 78px;
+    padding-right: 62px;
+  }
+
+  .custom-compass {
+    width: 46px;
+    height: 46px;
+  }
+
+  .compass-rose {
+    width: 32px;
+    height: 32px;
+  }
+
+  .guess-panel {
+    padding: 8px;
+    gap: 6px;
   }
 
   .guess-panel label {
@@ -2261,7 +2364,7 @@ input[type="range"] {
   }
 
   input {
-    min-height: 46px;
+    min-height: 44px;
     font-size: 0.9rem;
   }
 }
