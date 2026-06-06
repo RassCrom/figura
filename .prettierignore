@@ -1,0 +1,6 @@
+dist
+node_modules
+public/data
+py
+src/data/*.json
+pnpm-lock.yaml

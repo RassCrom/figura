@@ -10,6 +10,7 @@ import {
   getUtcDateString,
 } from "../lib/dailyChallenge";
 import { distanceKm, getFullName, getLifeDateRange, getWikipediaUrl } from "../lib/figures";
+import { usePageMetadata } from "../hooks/usePageMetadata";
 import type { GameMapHandle } from "../lib/mapEngine";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Figure } from "../types/figure";
@@ -30,6 +31,19 @@ export function FigureProfilePage({ figures, mode }: Props) {
     }
     return params.slug ? findFigureBySlug(figures, params.slug) : null;
   }, [figures, mode, params.slug, today]);
+  const metadata = useMemo(() => {
+    if (!figure) return null;
+    const fullName = getFullName(figure);
+    const journey = `${figure.place_of_birth} to ${figure.place_of_death}`;
+    return {
+      title: `${fullName} | Figura`,
+      description: `Explore ${fullName}'s life journey from ${journey} and learn who they were.`,
+      image: figure.photo,
+      imageAlt: `Portrait of ${fullName}`,
+      type: "profile" as const,
+    };
+  }, [figure]);
+  usePageMetadata(metadata);
 
   const basemap = useSettingsStore((state) => state.basemap);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -125,7 +139,11 @@ export function FigureProfilePage({ figures, mode }: Props) {
           <p className="figure-map-meta">
             {figure.place_of_birth} → {figure.place_of_death} · {journey.toLocaleString()} km
           </p>
-          <div ref={mapContainerRef} className="figure-map" aria-label="Birth and death locations" />
+          <div
+            ref={mapContainerRef}
+            className="figure-map"
+            aria-label="Birth and death locations"
+          />
         </section>
 
         <div className="action-row">
@@ -138,7 +156,12 @@ export function FigureProfilePage({ figures, mode }: Props) {
               Play a new game
             </Link>
           )}
-          <a className="secondary-button" href={getWikipediaUrl(figure)} target="_blank" rel="noreferrer">
+          <a
+            className="secondary-button"
+            href={getWikipediaUrl(figure)}
+            target="_blank"
+            rel="noreferrer"
+          >
             View on Wikipedia
           </a>
           {mode === "today" ? (

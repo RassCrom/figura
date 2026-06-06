@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="background" cx="600" cy="260" r="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#332718"/>
+      <stop offset=".58" stop-color="#15120d"/>
+      <stop offset="1" stop-color="#080806"/>
+    </radialGradient>
+    <linearGradient id="route" x1="240" y1="410" x2="960" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d29b35"/>
+      <stop offset=".5" stop-color="#fff0bd"/>
+      <stop offset="1" stop-color="#d29b35"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <g fill="none" stroke="#ecd08a" stroke-opacity=".13">
+    <path d="M0 126h1200M0 252h1200M0 378h1200M0 504h1200"/>
+    <path d="M200 0v630M400 0v630M600 0v630M800 0v630M1000 0v630"/>
+    <ellipse cx="600" cy="315" rx="390" ry="230"/>
+    <ellipse cx="600" cy="315" rx="210" ry="230"/>
+  </g>
+  <path d="M248 404c194-210 432-225 704-166" fill="none" stroke="url(#route)" stroke-dasharray="14 14" stroke-linecap="round" stroke-width="8"/>
+  <circle cx="248" cy="404" r="19" fill="#0f0e0c" stroke="#d29b35" stroke-width="8"/>
+  <circle cx="952" cy="238" r="19" fill="#0f0e0c" stroke="#ecd08a" stroke-width="8"/>
+  <text x="600" y="300" fill="#f7eed7" font-family="Georgia, serif" font-size="112" font-weight="700" text-anchor="middle">Figura</text>
+  <text x="600" y="355" fill="#ecd08a" font-family="Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="9" text-anchor="middle">WHO WAS HERE</text>
+  <text x="600" y="530" fill="#c7bda7" font-family="Arial, sans-serif" font-size="26" text-anchor="middle">Guess historical figures by their journeys</text>
+</svg>

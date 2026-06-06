@@ -11,15 +11,29 @@ import { useLeaderboardStore } from "./stores/useLeaderboardStore";
 import { useProfileStore } from "./stores/useProfileStore";
 import { useSettingsStore } from "./stores/useSettingsStore";
 import type { Figure } from "./types/figure";
-import { DailyChallengePage } from "./pages/DailyChallengePage";
-import { EndPage } from "./pages/EndPage";
-import { FigureProfilePage } from "./pages/FigureProfilePage";
-import { HomePage } from "./pages/HomePage";
-import { LeaderboardPage } from "./pages/LeaderboardPage";
-import { PublicProfilePage } from "./pages/PublicProfilePage";
-import { SettingsPage } from "./pages/SettingsPage";
 
 const GamePage = lazy(() => import("./pages/GamePage"));
+const DailyChallengePage = lazy(() =>
+  import("./pages/DailyChallengePage").then((module) => ({ default: module.DailyChallengePage })),
+);
+const EndPage = lazy(() =>
+  import("./pages/EndPage").then((module) => ({ default: module.EndPage })),
+);
+const FigureProfilePage = lazy(() =>
+  import("./pages/FigureProfilePage").then((module) => ({ default: module.FigureProfilePage })),
+);
+const HomePage = lazy(() =>
+  import("./pages/HomePage").then((module) => ({ default: module.HomePage })),
+);
+const LeaderboardPage = lazy(() =>
+  import("./pages/LeaderboardPage").then((module) => ({ default: module.LeaderboardPage })),
+);
+const PublicProfilePage = lazy(() =>
+  import("./pages/PublicProfilePage").then((module) => ({ default: module.PublicProfilePage })),
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage })),
+);
 
 export function App() {
   const [figures, setFigures] = useState<Figure[] | null>(null);
@@ -50,9 +64,8 @@ export function App() {
     return () => {
       mounted = false;
     };
-  // setSelectedCategories is a stable Zustand action reference — this effect
-  // should only run once on mount, not on every category-count change.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // setSelectedCategories is a stable Zustand action reference — this effect
+    // should only run once on mount, not on every category-count change.
   }, [setSelectedCategories]);
 
   useEffect(() => {
@@ -72,25 +85,26 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage figures={figures} categories={categories} />} />
-        <Route path="/settings" element={<SettingsPage categories={categories} />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/daily" element={<DailyChallengePage figures={figures} />} />
-        <Route path="/figure/today" element={<FigureProfilePage figures={figures} mode="today" />} />
-        <Route path="/figure/:slug" element={<FigureProfilePage figures={figures} mode="slug" />} />
-        <Route path="/profile/:nickname" element={<PublicProfilePage />} />
-        <Route
-          path="/game"
-          element={
-            <Suspense fallback={<LoadingScreen />}>
-              <GamePage figures={figures} />
-            </Suspense>
-          }
-        />
-        <Route path="/end" element={<EndPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/" element={<HomePage figures={figures} categories={categories} />} />
+          <Route path="/settings" element={<SettingsPage categories={categories} />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/daily" element={<DailyChallengePage figures={figures} />} />
+          <Route
+            path="/figure/today"
+            element={<FigureProfilePage figures={figures} mode="today" />}
+          />
+          <Route
+            path="/figure/:slug"
+            element={<FigureProfilePage figures={figures} mode="slug" />}
+          />
+          <Route path="/profile/:nickname" element={<PublicProfilePage />} />
+          <Route path="/game" element={<GamePage figures={figures} />} />
+          <Route path="/end" element={<EndPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
       <Toast message={toast} />
       <Analytics />
     </BrowserRouter>

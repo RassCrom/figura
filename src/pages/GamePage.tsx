@@ -13,7 +13,15 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { type CSSProperties, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { GAME_CONFIG } from "../config/gameConfig";
@@ -109,7 +117,10 @@ function TimerArc({ seconds }: { seconds: number }) {
   const statusClass = seconds <= 5 ? "danger" : seconds <= 10 ? "warning" : "";
 
   return (
-    <div className={`timer-arc ${statusClass}`} aria-label={`${Math.ceil(seconds)} seconds remaining`}>
+    <div
+      className={`timer-arc ${statusClass}`}
+      aria-label={`${Math.ceil(seconds)} seconds remaining`}
+    >
       <svg viewBox="0 0 96 96" aria-hidden="true">
         <circle cx="48" cy="48" r={radius} className="timer-track" />
         <circle
@@ -183,7 +194,12 @@ function PersonCard({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="reveal-progress" aria-hidden="true" />
-        <button className="icon-button close-button" type="button" onClick={onDismiss} aria-label="Dismiss card">
+        <button
+          className="icon-button close-button"
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss card"
+        >
           <X aria-hidden="true" size={18} />
         </button>
         <img src={figure.photo} alt={getFullName(figure)} loading="eager" />
@@ -313,7 +329,7 @@ export default function GamePage({ figures }: Props) {
   }, [guess]);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 760px)");
+    const media = window.matchMedia("(max-width: 759px)");
     const update = () => setIsSmallViewport(media.matches);
     update();
     media.addEventListener("change", update);
@@ -454,9 +470,9 @@ export default function GamePage({ figures }: Props) {
     engine.renderJourney(map, currentFigure, hints, {
       animateFit: !reducedMotion && (status === "countdown" || status === "playing"),
       reducedMotion,
-      compact: keyboardLayoutActive,
+      compact: isSmallViewport,
     });
-  }, [currentFigure, keyboardLayoutActive, mapReady, wrongGuesses, status]);
+  }, [currentFigure, isSmallViewport, mapReady, wrongGuesses, status]);
 
   useEffect(() => {
     if (!mapEngineRef.current || !mapRef.current) {
@@ -467,26 +483,6 @@ export default function GamePage({ figures }: Props) {
       status === "countdown" || status === "paused" || status === "revealed",
     );
   }, [mapReady, status]);
-
-  useEffect(() => {
-    const map = mapRef.current?.map;
-    if (!map) {
-      return;
-    }
-    const timers = [
-      window.setTimeout(() => map.resize(), 0),
-      window.setTimeout(() => {
-        map.resize();
-        if (keyboardLayoutActive && currentFigure && mapEngineRef.current && mapRef.current) {
-          mapEngineRef.current.focusJourney(mapRef.current, currentFigure, {
-            reducedMotion: true,
-            compact: true,
-          });
-        }
-      }, 240),
-    ];
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [currentFigure, guessPanelHeight, keyboardInset, keyboardLayoutActive]);
 
   useEffect(() => {
     if (status !== "countdown") {
@@ -502,14 +498,16 @@ export default function GamePage({ figures }: Props) {
           window.setTimeout(() => {
             beginRound();
             crossfadeTo("round-tension");
-            inputRef.current?.focus();
+            if (!isSmallViewport) {
+              inputRef.current?.focus();
+            }
           }, 520);
         }
       }, index * GAME_CONFIG.countdownMs),
     );
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [beginRound, crossfadeTo, play, setCountdownText, status]);
+  }, [beginRound, crossfadeTo, isSmallViewport, play, setCountdownText, status]);
 
   useEffect(() => {
     if (status !== "playing") {
@@ -526,13 +524,13 @@ export default function GamePage({ figures }: Props) {
   }, [navigate, status]);
 
   useEffect(() => {
-    if (status === "playing") {
+    if (status === "playing" && (!isSmallViewport || guessPanelFocused)) {
       // Refocus on round transition AND after wrong-guess shake. The input
       // uses `key={inputShakeKey}` to re-trigger the CSS shake animation,
       // which remounts the element and drops focus — so re-grab it.
       inputRef.current?.focus();
     }
-  }, [roundIndex, status, inputShakeKey]);
+  }, [guessPanelFocused, inputShakeKey, isSmallViewport, roundIndex, status]);
 
   useEffect(() => {
     if (status !== "playing") {
@@ -550,7 +548,10 @@ export default function GamePage({ figures }: Props) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cinematic = revealWasCorrect && !reducedMotion;
     if (mapEngineRef.current && mapRef.current) {
-      mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, { reducedMotion });
+      mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, {
+        reducedMotion,
+        compact: isSmallViewport,
+      });
     }
 
     if (!cinematic) {
@@ -566,7 +567,7 @@ export default function GamePage({ figures }: Props) {
       setShowRevealCard(true);
     }, 620);
     return () => window.clearTimeout(timer);
-  }, [revealWasCorrect, revealedFigure]);
+  }, [isSmallViewport, revealWasCorrect, revealedFigure]);
 
   // Round transition: clear local UI state that's only meaningful within the
   // round just ended (the typed guess, the wrong-figure toast).
@@ -581,7 +582,9 @@ export default function GamePage({ figures }: Props) {
     if (!value.trim()) {
       return;
     }
-    const guessedFigure = figures.find((figure) => normalizeName(getFullName(figure)) === normalizeName(value));
+    const guessedFigure = figures.find(
+      (figure) => normalizeName(getFullName(figure)) === normalizeName(value),
+    );
     const correct = submitGuess(value);
     setGuess("");
     setActiveSuggestion(0);
@@ -646,7 +649,9 @@ export default function GamePage({ figures }: Props) {
     <main className={screenClassName} style={screenStyle}>
       <div ref={mapContainerRef} className="map-canvas" aria-label="World map" />
       <div className="map-vignette" aria-hidden="true" />
-      {vignetteKey > 0 ? <div key={vignetteKey} className="wrong-vignette" aria-hidden="true" /> : null}
+      {vignetteKey > 0 ? (
+        <div key={vignetteKey} className="wrong-vignette" aria-hidden="true" />
+      ) : null}
       <button
         className="custom-compass"
         type="button"
@@ -664,7 +669,10 @@ export default function GamePage({ figures }: Props) {
         </span>
       </button>
 
-      <section className={status === "revealed" ? "game-hud hidden" : "game-hud"} aria-label="Game controls">
+      <section
+        className={status === "revealed" ? "game-hud hidden" : "game-hud"}
+        aria-label="Game controls"
+      >
         <div className="hud-top">
           <button
             className="icon-button pause-button"
@@ -672,11 +680,16 @@ export default function GamePage({ figures }: Props) {
             onClick={status === "paused" ? resume : pause}
             aria-label={status === "paused" ? en.resume : en.pause}
           >
-            {status === "paused" ? <Play aria-hidden="true" size={20} /> : <Pause aria-hidden="true" size={20} />}
+            {status === "paused" ? (
+              <Play aria-hidden="true" size={20} />
+            ) : (
+              <Pause aria-hidden="true" size={20} />
+            )}
           </button>
           <div className="round-pill">
             <span>
-              {en.round} {Math.min(roundIndex + 1, GAME_CONFIG.roundCount)} of {GAME_CONFIG.roundCount}
+              {en.round} {Math.min(roundIndex + 1, GAME_CONFIG.roundCount)} of{" "}
+              {GAME_CONFIG.roundCount}
             </span>
             <div className="round-dots" aria-hidden="true">
               {Array.from({ length: GAME_CONFIG.roundCount }).map((_, index) => (
@@ -714,7 +727,9 @@ export default function GamePage({ figures }: Props) {
           onFocusCapture={() => setGuessPanelFocused(true)}
           onBlurCapture={() => {
             window.setTimeout(() => {
-              setGuessPanelFocused(Boolean(guessPanelRef.current?.contains(document.activeElement)));
+              setGuessPanelFocused(
+                Boolean(guessPanelRef.current?.contains(document.activeElement)),
+              );
             }, 0);
           }}
         >
@@ -722,7 +737,10 @@ export default function GamePage({ figures }: Props) {
           {suggestions.length > 0 ? (
             <div className="suggestions" role="listbox">
               {suggestions.map((figure, index) => {
-                const meta = CATEGORY_META[figure.category] ?? { icon: ScrollText, label: figure.category };
+                const meta = CATEGORY_META[figure.category] ?? {
+                  icon: ScrollText,
+                  label: figure.category,
+                };
                 const Icon = meta.icon;
                 return (
                   <button
@@ -761,7 +779,9 @@ export default function GamePage({ figures }: Props) {
             disabled={status !== "playing"}
           />
           <div className="hint-live" aria-live="polite">
-            {wrongGuesses === 1 ? "Hint added: life dates are visible near the birth marker." : null}
+            {wrongGuesses === 1
+              ? "Hint added: life dates are visible near the birth marker."
+              : null}
             {wrongGuesses === 2 ? "Hint added: place names are visible near the markers." : null}
           </div>
         </form>

@@ -1,44 +1,31 @@
-import { z } from "zod";
-
-import rawFigures from "../data/figures.json";
 import type { Continent, Difficulty, Figure } from "../types/figure";
 
-const coordinateSchema = z
-  .tuple([z.number(), z.number()])
-  .refine(([lat, lng]) => lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180);
-
-const figureSchema = z.object({
-  first_name: z.string().trim().min(1),
-  last_name: z.string().trim(),
-  nationality: z.string().trim().min(1),
-  country_of_origin: z.string().trim().min(1),
-  flag: z.string(),
-  place_of_birth: z.string().trim().min(1),
-  coordinates_of_the_place_of_birth: coordinateSchema,
-  place_of_death: z.string().trim().min(1),
-  coordinates_of_the_place_of_death: coordinateSchema,
-  category: z.string().trim().min(1),
-  description: z.string().trim().min(1),
-  popularity_rating: z.number().min(0).max(100),
-  photo: z.string().url(),
-  birth_date: z.string().trim().min(1),
-  death_date: z.string().trim().min(1),
-});
-
-const parsedFigures = (rawFigures as unknown[])
-  .map((entry) => figureSchema.safeParse(entry))
-  .filter((result): result is z.SafeParseSuccess<Figure> => result.success)
-  .map((result) => result.data);
+let loadedFigures: Figure[] | null = null;
+let loadPromise: Promise<Figure[]> | null = null;
 
 export function loadFigures(): Promise<Figure[]> {
-  return Promise.resolve(parsedFigures);
+  if (loadedFigures) {
+    return Promise.resolve(loadedFigures);
+  }
+  loadPromise ??= fetch(`${import.meta.env.BASE_URL}data/figures.json`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Unable to load figures: ${response.status}`);
+      }
+      return response.json() as Promise<Figure[]>;
+    })
+    .then((figures) => {
+      loadedFigures = figures;
+      return figures;
+    });
+  return loadPromise;
 }
 
 export function getValidatedFigures(): Figure[] {
-  return parsedFigures;
+  return loadedFigures ?? [];
 }
 
-export function getCategories(figures: Figure[] = parsedFigures): string[] {
+export function getCategories(figures: Figure[] = loadedFigures ?? []): string[] {
   return [...new Set(figures.map((figure) => figure.category))].sort((a, b) => a.localeCompare(b));
 }
 
@@ -67,9 +54,14 @@ export function figureMatchesDifficulty(figure: Figure, difficulty: Difficulty):
   return figure.popularity_rating < 85;
 }
 
-export function getDifficultyPool(figures: Figure[], difficulty: Difficulty, selectedCategories: string[]): Figure[] {
+export function getDifficultyPool(
+  figures: Figure[],
+  difficulty: Difficulty,
+  selectedCategories: string[],
+): Figure[] {
   return figures.filter(
-    (figure) => figureMatchesDifficulty(figure, difficulty) && selectedCategories.includes(figure.category),
+    (figure) =>
+      figureMatchesDifficulty(figure, difficulty) && selectedCategories.includes(figure.category),
   );
 }
 
@@ -100,7 +92,10 @@ export function extractYearRange(description: string): string {
   return `${years[0]} - ${years[1]}`;
 }
 
-export function extractLifeYears(description: string): { birthYear: string | null; deathYear: string | null } {
+export function extractLifeYears(description: string): {
+  birthYear: string | null;
+  deathYear: string | null;
+} {
   const years = description.match(/\b(?:1[0-9]{3}|20[0-2][0-9]|[5-9][0-9]{2})\b/g);
   return {
     birthYear: years?.[0] ?? null,
@@ -108,7 +103,9 @@ export function extractLifeYears(description: string): { birthYear: string | nul
   };
 }
 
-export function getLifeDateRange(figure: Pick<Figure, "birth_date" | "death_date" | "description">): string {
+export function getLifeDateRange(
+  figure: Pick<Figure, "birth_date" | "death_date" | "description">,
+): string {
   if (figure.birth_date && figure.death_date) {
     return `${figure.birth_date} - ${figure.death_date}`;
   }
@@ -138,8 +135,7 @@ export function distanceKm(from: [number, number], to: [number, number]): number
   const [lat2, lng2] = to.map((value) => (value * Math.PI) / 180);
   const dLat = lat2 - lat1;
   const dLng = lng2 - lng1;
-  const a =
-    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
