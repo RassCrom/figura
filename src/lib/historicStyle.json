@@ -1,0 +1,104 @@
+{
+  "version": 8,
+  "name": "Figura Historic Atlas",
+  "sources": {
+    "natural-earth": {
+      "type": "raster",
+      "tiles": ["https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png"],
+      "tileSize": 256,
+      "maxzoom": 6,
+      "attribution": "OpenFreeMap, Natural Earth"
+    },
+    "openmaptiles": {
+      "type": "vector",
+      "url": "https://tiles.openfreemap.org/planet"
+    }
+  },
+  "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#d2bf91" }
+    },
+    {
+      "id": "natural-earth",
+      "type": "raster",
+      "source": "natural-earth",
+      "maxzoom": 7,
+      "paint": {
+        "raster-saturation": -0.72,
+        "raster-hue-rotate": 18,
+        "raster-brightness-min": 0.34,
+        "raster-brightness-max": 0.88,
+        "raster-contrast": 0.08,
+        "raster-opacity": 0.58
+      }
+    },
+    {
+      "id": "parks",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "park",
+      "paint": { "fill-color": "#9eaa76", "fill-opacity": 0.28 }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "water",
+      "paint": { "fill-color": "#90a7a3", "fill-opacity": 0.72 }
+    },
+    {
+      "id": "waterways",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "waterway",
+      "paint": { "line-color": "#718d89", "line-width": 0.8, "line-opacity": 0.66 }
+    },
+    {
+      "id": "boundaries",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "boundary",
+      "filter": ["<=", ["get", "admin_level"], 4],
+      "paint": {
+        "line-color": "#5c4734",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 1, 0.55, 8, 1.35],
+        "line-opacity": 0.62,
+        "line-dasharray": [3, 2]
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "filter": ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary"]]],
+      "paint": {
+        "line-color": "#856d4f",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.25, 12, 1.6],
+        "line-opacity": 0.42
+      }
+    },
+    {
+      "id": "places",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "filter": ["in", ["get", "class"], ["literal", ["country", "state", "city"]]],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 2, 10, 8, 14],
+        "text-letter-spacing": 0.08
+      },
+      "paint": {
+        "text-color": "#403124",
+        "text-halo-color": "#d2bf91",
+        "text-halo-width": 1.2,
+        "text-opacity": 0.82
+      }
+    }
+  ]
+}

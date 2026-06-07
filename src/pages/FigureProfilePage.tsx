@@ -113,6 +113,7 @@ export function FigureProfilePage({ figures, mode }: Props) {
   const dates = getLifeDateRange(figure);
   const slug = getFigureSlug(figure);
   const dayNumber = mode === "today" ? getDayNumber(today) : null;
+  const basemapClassName = `basemap-${basemap.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
     <main className="page-shell">
@@ -141,7 +142,7 @@ export function FigureProfilePage({ figures, mode }: Props) {
           </p>
           <div
             ref={mapContainerRef}
-            className="figure-map"
+            className={`figure-map ${basemapClassName}`}
             aria-label="Birth and death locations"
           />
         </section>

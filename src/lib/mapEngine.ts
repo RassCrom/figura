@@ -60,6 +60,8 @@ export type RouteOverlay = {
 type RouteOverlayOptions = {
   fit?: boolean;
   animateFit?: boolean;
+  animateRoutes?: boolean;
+  reducedMotion?: boolean;
   padding?: number;
   maxZoom?: number;
 };
@@ -89,6 +91,7 @@ export type GameMapHandle = {
   routeOverlay: PendingRouteOverlay | null;
   pendingRouteOverlay: PendingRouteOverlay | null;
   routeOverlayStyleListener: (() => void) | null;
+  routeAnimationFrame: number;
 };
 
 const arcCache = new Map<string, CachedArc>();
@@ -103,6 +106,8 @@ const JOURNEY_PULSE_SOURCE_ID = "journey-arc-pulse";
 const JOURNEY_BASE_LAYER_ID = "journey-arc";
 const JOURNEY_PULSE_LAYER_ID = "journey-arc-pulse";
 const ROUTE_OVERLAY_PREFIX = "journey-history-arc";
+const ROUTE_DRAW_MS = 1100;
+const ROUTE_STAGGER_MS = 180;
 
 function isStyleReadyForJourney(map: maplibregl.Map): boolean {
   // MapLibre's public isStyleLoaded() waits for tile sources too. The journey
@@ -344,6 +349,10 @@ function removeJourneyLayers(map: maplibregl.Map): void {
 }
 
 function removeRouteOverlayLayers(handle: GameMapHandle): void {
+  if (handle.routeAnimationFrame) {
+    window.cancelAnimationFrame(handle.routeAnimationFrame);
+    handle.routeAnimationFrame = 0;
+  }
   for (const { layerId, sourceId } of [...handle.routeLayerIds].reverse()) {
     if (handle.map.getLayer(layerId)) {
       handle.map.removeLayer(layerId);
@@ -369,8 +378,13 @@ function fitRoutes(map: maplibregl.Map, routes: RouteOverlay[], options: RouteOv
 
   const bounds = new maplibregl.LngLatBounds();
   for (const route of routes) {
-    bounds.extend(route.birth);
-    bounds.extend(route.death);
+    const coordinates = routeToCoordinates(route);
+    const arc = buildArcFromCoordinates(coordinates, `route:${route.id}:${coordinatesKey(coordinates)}`);
+    for (const segment of arc.segments) {
+      for (const point of segment) {
+        bounds.extend(point as [number, number]);
+      }
+    }
   }
 
   fitBoundsSafely(map, bounds, {
@@ -448,6 +462,7 @@ export function createGameMap(container: HTMLElement, basemap: Basemap): GameMap
     routeOverlay: null,
     pendingRouteOverlay: null,
     routeOverlayStyleListener: null,
+    routeAnimationFrame: 0,
   };
 }
 
@@ -633,13 +648,27 @@ function doRenderRouteOverlay(
 
   const map = handle.map;
   const beforeId = map.getLayer(JOURNEY_BASE_LAYER_ID) ? JOURNEY_BASE_LAYER_ID : undefined;
+  const animatedRoutes: Array<{
+    arc: CachedArc;
+    coordinates: JourneyCoordinates;
+    sourceId: string;
+    pulseSourceId: string;
+    drawn: boolean;
+  }> = [];
+  const shouldAnimate = Boolean(options.animateRoutes && !options.reducedMotion);
+
   routes.forEach((route, index) => {
     const coordinates = routeToCoordinates(route);
     const arc = buildArcFromCoordinates(coordinates, `route:${route.id}:${coordinatesKey(coordinates)}`);
     const sourceId = `${ROUTE_OVERLAY_PREFIX}-source-${index}`;
     const layerId = `${ROUTE_OVERLAY_PREFIX}-layer-${index}`;
+    const pulseSourceId = `${ROUTE_OVERLAY_PREFIX}-pulse-source-${index}`;
+    const pulseLayerId = `${ROUTE_OVERLAY_PREFIX}-pulse-layer-${index}`;
 
-    map.addSource(sourceId, { type: "geojson", data: arcFeature(arc, 1, coordinates) });
+    map.addSource(sourceId, {
+      type: "geojson",
+      data: shouldAnimate ? emptyArcFeature(arc) : arcFeature(arc, 1, coordinates),
+    });
     map.addLayer(
       {
         id: layerId,
@@ -657,9 +686,61 @@ function doRenderRouteOverlay(
       beforeId,
     );
     handle.routeLayerIds.push({ sourceId, layerId });
+
+    if (shouldAnimate) {
+      map.addSource(pulseSourceId, { type: "geojson", data: emptyArcFeature(arc) });
+      map.addLayer(
+        {
+          id: pulseLayerId,
+          type: "line",
+          source: pulseSourceId,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": route.color,
+            "line-width": (route.width ?? 2) + 3.5,
+            "line-opacity": Math.min(1, (route.opacity ?? 0.3) + 0.18),
+            "line-blur": 2.2,
+          },
+        },
+        beforeId,
+      );
+      handle.routeLayerIds.push({ sourceId: pulseSourceId, layerId: pulseLayerId });
+      animatedRoutes.push({ arc, coordinates, sourceId, pulseSourceId, drawn: false });
+    }
   });
 
   fitRoutes(map, routes, options);
+
+  if (shouldAnimate && animatedRoutes.length > 0) {
+    const animationStart = performance.now() + (options.animateFit ? 360 : 0);
+    const frame = (now: number) => {
+      animatedRoutes.forEach((animatedRoute, index) => {
+        const { arc, coordinates, sourceId, pulseSourceId } = animatedRoute;
+        const routeElapsed = Math.max(0, now - animationStart - index * ROUTE_STAGGER_MS);
+        const drawProgress = Math.min(1, routeElapsed / ROUTE_DRAW_MS);
+        const easedDraw = 1 - Math.pow(1 - drawProgress, 3);
+        const source = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
+        const pulseSource = map.getSource(pulseSourceId) as maplibregl.GeoJSONSource | undefined;
+
+        if (source && !animatedRoute.drawn) {
+          source.setData(arcFeature(arc, easedDraw, coordinates));
+          animatedRoute.drawn = drawProgress >= 1;
+        }
+        if (pulseSource && routeElapsed > 0) {
+          pulseSource.setData(arcPulseFeature(arc, routeElapsed));
+        }
+      });
+
+      if (!map.getSource(animatedRoutes[0].sourceId)) {
+        handle.routeAnimationFrame = 0;
+        return;
+      }
+
+      // Keep the highlights traveling after all arcs have drawn.
+      handle.routeAnimationFrame = window.requestAnimationFrame(frame);
+    };
+    handle.routeAnimationFrame = window.requestAnimationFrame(frame);
+  }
 }
 
 function doRender(

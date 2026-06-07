@@ -2,6 +2,8 @@ import type { StyleSpecification } from "maplibre-gl";
 
 import type { Basemap } from "../types/figure";
 import customVectorStyle from "./customVectorStyle.json";
+import darkNightBlueStyle from "./darkNightBlueStyle.json";
+import historicStyle from "./historicStyle.json";
 
 type TileConfig = {
   type: "raster";
@@ -47,18 +49,12 @@ const TILE_CONFIG: Record<Basemap, TileConfig> = {
     attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
   },
   "Dark Night Blue": {
-    type: "raster",
-    tiles: ["https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"],
-    attribution: "Stadia Maps",
-    brightnessMax: 0.8,
-    saturate: 0.2
+    type: "vector",
+    style: darkNightBlueStyle,
   },
   Historic: {
-    type: "raster",
-    tiles: ["https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"],
-    attribution: "Stadia Maps",
-    contrast: 0.1,
-    saturate: -0.2
+    type: "vector",
+    style: historicStyle,
   },
   "Custom Vector": {
     type: "vector",

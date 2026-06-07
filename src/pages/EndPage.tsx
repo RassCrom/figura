@@ -14,7 +14,6 @@ import { buildFigureQueue } from "../lib/session";
 import { useGameStore } from "../stores/useGameStore";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
 import { useProfileStore } from "../stores/useProfileStore";
-import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Figure, RoundResult } from "../types/figure";
 import type { GameMapHandle } from "../lib/mapEngine";
 
@@ -52,9 +51,7 @@ function SessionRoutesMap({ results, queue }: { results: RoundResult[]; queue: F
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapEngineRef = useRef<MapEngine | null>(null);
   const mapRef = useRef<GameMapHandle | null>(null);
-  const lastBasemapRef = useRef(useSettingsStore.getState().basemap);
   const [mapReady, setMapReady] = useState(false);
-  const basemap = useSettingsStore((state) => state.basemap);
   const routes = useMemo(() => buildRoundRouteOverlays(results, queue), [queue, results]);
 
   useEffect(() => {
@@ -68,7 +65,7 @@ function SessionRoutesMap({ results, queue }: { results: RoundResult[]; queue: F
         return;
       }
       mapEngineRef.current = engine;
-      mapRef.current = engine.createGameMap(containerRef.current, lastBasemapRef.current);
+      mapRef.current = engine.createGameMap(containerRef.current, "Steppe");
       engine.setMapLocked(mapRef.current, true);
       setMapReady(true);
     });
@@ -91,18 +88,12 @@ function SessionRoutesMap({ results, queue }: { results: RoundResult[]; queue: F
     mapEngineRef.current.renderRouteOverlay(mapRef.current, routes, {
       fit: true,
       animateFit: true,
+      animateRoutes: true,
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       padding: 52,
       maxZoom: 3.7,
     });
   }, [mapReady, routes]);
-
-  useEffect(() => {
-    if (!mapReady || !mapEngineRef.current || !mapRef.current || lastBasemapRef.current === basemap) {
-      return;
-    }
-    lastBasemapRef.current = basemap;
-    mapEngineRef.current.setBasemap(mapRef.current, basemap);
-  }, [basemap, mapReady]);
 
   if (routes.length === 0) {
     return null;
@@ -117,7 +108,10 @@ function SessionRoutesMap({ results, queue }: { results: RoundResult[]; queue: F
         </div>
         <span>{results.filter((result) => result.correct).length}/5 solved</span>
       </div>
-      <div ref={containerRef} className="routes-map" aria-label="Map of all route arcs" />
+      <div className="routes-map-frame basemap-steppe">
+        <div ref={containerRef} className="routes-map" aria-label="Map of all route arcs" />
+        <div className="routes-map-vignette" aria-hidden="true" />
+      </div>
       <div className="route-legend" aria-label="Route result colors">
         {results.map((result) => (
           <span
