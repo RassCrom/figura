@@ -34,21 +34,21 @@ const figures = [
 ];
 
 describe("five-round figure queues", () => {
-  it("places distinct 97+ figures at the first and last session rounds", () => {
+  it("places distinct 98+ figures at the first and last session rounds", () => {
     const { queue } = buildFigureQueue(figures, "Scholar", ["Scientist"]);
 
     expect(queue).toHaveLength(5);
-    expect(queue[0].popularity_rating).toBeGreaterThanOrEqual(97);
-    expect(queue[4].popularity_rating).toBeGreaterThanOrEqual(97);
+    expect(queue[0].popularity_rating).toBeGreaterThanOrEqual(98);
+    expect(queue[4].popularity_rating).toBeGreaterThanOrEqual(98);
     expect(queue[0].first_name).not.toBe(queue[4].first_name);
   });
 
-  it("places distinct 97+ figures at the first and last daily rounds", () => {
+  it("places distinct 98+ figures at the first and last daily rounds", () => {
     const queue = getDailyFigures(figures, "2026-06-08");
 
     expect(queue).toHaveLength(5);
-    expect(queue[0].popularity_rating).toBeGreaterThanOrEqual(97);
-    expect(queue[4].popularity_rating).toBeGreaterThanOrEqual(97);
+    expect(queue[0].popularity_rating).toBeGreaterThanOrEqual(98);
+    expect(queue[4].popularity_rating).toBeGreaterThanOrEqual(98);
     expect(queue[0].first_name).not.toBe(queue[4].first_name);
   });
 });

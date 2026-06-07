@@ -1,15 +1,18 @@
 import {
+  BookOpenText,
   Brush,
   Compass,
   Crown,
   Dumbbell,
   FlaskConical,
+  LetterText,
   LogOut,
   Music,
   Pause,
   PenTool,
   Play,
   ScrollText,
+  Tag,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -38,7 +41,7 @@ import {
 } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
-import { useGameStore } from "../stores/useGameStore";
+import { type GameHint, useGameStore } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Figure } from "../types/figure";
 
@@ -58,6 +61,22 @@ const CATEGORY_META: Record<string, { icon: LucideIcon; label: string }> = {
   Sportsman: { icon: Dumbbell, label: "Sportsman" },
   Writer: { icon: PenTool, label: "Writer" },
 };
+
+const GAME_HINTS: Array<{
+  id: GameHint;
+  icon: LucideIcon;
+  label: string;
+  shortLabel: string;
+}> = [
+  { id: "initial", icon: LetterText, label: "Reveal surname initial", shortLabel: "Initial" },
+  {
+    id: "description",
+    icon: BookOpenText,
+    label: "Show person description",
+    shortLabel: "Description",
+  },
+  { id: "category", icon: Tag, label: "Show person category", shortLabel: "Category" },
+];
 
 function toRoman(value: number): string {
   const numerals: Array<[number, string]> = [
@@ -224,7 +243,9 @@ function PersonCard({
             <strong>{journey.toLocaleString()} km</strong>
           </div>
           <div className="reveal-controls">
-            <span>{autoAdvance ? `Next in ${Math.ceil(remainingMs / 1000)}s` : "Ready when you are"}</span>
+            <span>
+              {autoAdvance ? `Next in ${Math.ceil(remainingMs / 1000)}s` : "Ready when you are"}
+            </span>
             <button className="primary-button" type="button" onClick={onDismiss}>
               Next
             </button>
@@ -275,6 +296,8 @@ export default function GamePage({ figures }: Props) {
   const roundTimer = useGameStore((state) => state.roundTimer);
   const extraBank = useGameStore((state) => state.extraBank);
   const wrongGuesses = useGameStore((state) => state.wrongGuesses);
+  const usedGameHints = useGameStore((state) => state.usedGameHints);
+  const roundGameHints = useGameStore((state) => state.roundGameHints);
   const roundResults = useGameStore((state) => state.roundResults);
   const firstGuessStreak = useGameStore((state) => state.firstGuessStreak);
   // Derive streak visibility instead of reading a store flag. The previous
@@ -291,6 +314,7 @@ export default function GamePage({ figures }: Props) {
   const setCountdownText = useGameStore((state) => state.setCountdownText);
   const beginRound = useGameStore((state) => state.beginRound);
   const tick = useGameStore((state) => state.tick);
+  const activateGameHint = useGameStore((state) => state.activateGameHint);
   const submitGuess = useGameStore((state) => state.submitGuess);
   const skipRound = useGameStore((state) => state.skipRound);
   const dismissReveal = useGameStore((state) => state.dismissReveal);
@@ -300,6 +324,8 @@ export default function GamePage({ figures }: Props) {
   const { play, crossfadeTo } = useSoundManager();
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
+  const initialSource = currentFigure?.last_name.trim() || currentFigure?.first_name.trim() || "";
+  const revealedInitial = initialSource.charAt(0).toLocaleUpperCase();
   const keyboardLayoutActive = guessPanelFocused && isSmallViewport && status === "playing";
   const revealResult = roundResults[roundResults.length - 1] ?? null;
   const revealWasCorrect = Boolean(
@@ -749,6 +775,56 @@ export default function GamePage({ figures }: Props) {
             }, 0);
           }}
         >
+          <div className="field-notes">
+            <div className="field-notes-header">
+              <span>Field notes</span>
+              <small>{3 - usedGameHints.length} left this game</small>
+            </div>
+            <div className="game-hint-actions" aria-label="Game hints">
+              {GAME_HINTS.map((hint) => {
+                const Icon = hint.icon;
+                const used = usedGameHints.includes(hint.id);
+                const active = roundGameHints.includes(hint.id);
+                return (
+                  <button
+                    key={hint.id}
+                    className={`game-hint-button${active ? " active" : ""}`}
+                    type="button"
+                    onClick={() => activateGameHint(hint.id)}
+                    disabled={status !== "playing" || used}
+                    aria-label={`${hint.label}. ${used ? "Already used" : "Available once this game"}.`}
+                    aria-pressed={active}
+                  >
+                    <Icon aria-hidden="true" size={17} />
+                    <span>{hint.shortLabel}</span>
+                    <small>{used ? (active ? "Revealed" : "Spent") : "1 use"}</small>
+                  </button>
+                );
+              })}
+            </div>
+            {roundGameHints.length > 0 && currentFigure ? (
+              <div className="field-note-reveals" aria-live="polite">
+                {roundGameHints.includes("initial") ? (
+                  <p>
+                    <span>{currentFigure.last_name.trim() ? "Surname" : "Name"} starts with</span>
+                    <strong className="initial-reveal">{revealedInitial}</strong>
+                  </p>
+                ) : null}
+                {roundGameHints.includes("category") ? (
+                  <p>
+                    <span>Category</span>
+                    <strong>{currentFigure.category}</strong>
+                  </p>
+                ) : null}
+                {roundGameHints.includes("description") ? (
+                  <p className="description-reveal">
+                    <span>Description</span>
+                    <strong>{currentFigure.description}</strong>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
           <label htmlFor="guess-input">{en.who}</label>
           {suggestions.length > 0 ? (
             <div className="suggestions" role="listbox">

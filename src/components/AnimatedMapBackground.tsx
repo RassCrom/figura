@@ -7,6 +7,9 @@ type MapLibreGL = typeof import("maplibre-gl");
 type MapInstance = import("maplibre-gl").Map;
 
 const ROTATION_DEGREES_PER_SECOND = 1.8;
+const ROTATION_SEGMENT_DEGREES = 54;
+const ROTATION_SEGMENT_DURATION_MS =
+  (ROTATION_SEGMENT_DEGREES / ROTATION_DEGREES_PER_SECOND) * 1_000;
 const START_CENTER: [lng: number, lat: number] = [42, 18];
 const FEATURED_FIGURE_COUNT = 20;
 
@@ -62,8 +65,8 @@ export function AnimatedMapBackground({ figures }: Props) {
 
     let cancelled = false;
     let map: MapInstance | null = null;
-    let animationFrame: number | null = null;
-    let previousTimestamp: number | null = null;
+    let rotationFrame: number | null = null;
+    let onMoveEnd: (() => void) | null = null;
     let onVisibilityChange: (() => void) | null = null;
 
     void (async () => {
@@ -98,36 +101,41 @@ export function AnimatedMapBackground({ figures }: Props) {
           .addTo(map!);
       });
 
-      const rotate = (timestamp: number) => {
-        if (cancelled || !map || reducedMotion || document.hidden) return;
-
-        if (previousTimestamp !== null) {
-          const elapsedSeconds = Math.min((timestamp - previousTimestamp) / 1_000, 0.1);
-          const center = map.getCenter();
-          map.jumpTo({
-            center: [center.lng - ROTATION_DEGREES_PER_SECOND * elapsedSeconds, center.lat],
-          });
-        }
-
-        previousTimestamp = timestamp;
-        animationFrame = window.requestAnimationFrame(rotate);
+      const rotate = () => {
+        rotationFrame = null;
+        if (cancelled || !map || reducedMotion || document.hidden || map.isMoving()) return;
+        const center = map.getCenter();
+        map.easeTo({
+          center: [center.lng - ROTATION_SEGMENT_DEGREES, center.lat],
+          duration: ROTATION_SEGMENT_DURATION_MS,
+          easing: (progress) => progress,
+          essential: false,
+        });
       };
 
+      onMoveEnd = () => {
+        if (cancelled || reducedMotion || document.hidden) return;
+        rotationFrame = window.requestAnimationFrame(rotate);
+      };
+      map.on("moveend", onMoveEnd);
+
       if (!reducedMotion) {
-        animationFrame = window.requestAnimationFrame(rotate);
+        map.once("load", () => {
+          rotationFrame = window.requestAnimationFrame(rotate);
+        });
       }
 
       onVisibilityChange = () => {
         if (!map) return;
 
         if (document.hidden) {
-          if (animationFrame !== null) {
-            window.cancelAnimationFrame(animationFrame);
-            animationFrame = null;
+          if (rotationFrame !== null) {
+            window.cancelAnimationFrame(rotationFrame);
+            rotationFrame = null;
           }
-          previousTimestamp = null;
-        } else if (!reducedMotion && animationFrame === null) {
-          animationFrame = window.requestAnimationFrame(rotate);
+          map.stop();
+        } else if (!reducedMotion && rotationFrame === null) {
+          rotationFrame = window.requestAnimationFrame(rotate);
         }
       };
       document.addEventListener("visibilitychange", onVisibilityChange);
@@ -138,7 +146,8 @@ export function AnimatedMapBackground({ figures }: Props) {
       if (onVisibilityChange) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
       }
-      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
+      if (rotationFrame !== null) window.cancelAnimationFrame(rotationFrame);
+      if (onMoveEnd) map?.off("moveend", onMoveEnd);
       map?.remove();
     };
   }, [figures]);

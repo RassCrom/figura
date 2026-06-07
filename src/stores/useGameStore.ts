@@ -8,6 +8,8 @@ type GameStatus = "idle" | "countdown" | "playing" | "paused" | "revealed" | "en
 
 type GameMode = "classic" | "daily";
 
+export type GameHint = "initial" | "description" | "category";
+
 type StartSessionArgs = {
   nickname: string;
   difficulty: Difficulty;
@@ -37,6 +39,8 @@ type GameState = {
   timeUsed: number;
   extraUsed: number;
   hintsUsed: number;
+  usedGameHints: GameHint[];
+  roundGameHints: GameHint[];
   roundResults: RoundResult[];
   revealedFigure: Figure | null;
   toast: string | null;
@@ -48,6 +52,7 @@ type GameState = {
   setCountdownText: (text: string) => void;
   beginRound: () => void;
   tick: (deltaSeconds: number) => void;
+  activateGameHint: (hint: GameHint) => boolean;
   submitGuess: (guess: string) => boolean;
   skipRound: () => void;
   dismissReveal: () => void;
@@ -77,6 +82,8 @@ const initialState = {
   timeUsed: 0,
   extraUsed: 0,
   hintsUsed: 0,
+  usedGameHints: [] as GameHint[],
+  roundGameHints: [] as GameHint[],
   roundResults: [] as RoundResult[],
   revealedFigure: null as Figure | null,
   toast: null as string | null,
@@ -96,6 +103,7 @@ function freshRoundState(): Pick<
   | "timeUsed"
   | "extraUsed"
   | "hintsUsed"
+  | "roundGameHints"
   | "revealedFigure"
 > {
   return {
@@ -105,6 +113,7 @@ function freshRoundState(): Pick<
     timeUsed: 0,
     extraUsed: 0,
     hintsUsed: 0,
+    roundGameHints: [],
     revealedFigure: null,
   };
 }
@@ -219,6 +228,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       return { roundTimer, timeUsed, extraBank, extraUsed };
     }),
+  activateGameHint: (hint) => {
+    const state = get();
+    if (state.status !== "playing" || state.usedGameHints.includes(hint)) {
+      return false;
+    }
+
+    set({
+      usedGameHints: [...state.usedGameHints, hint],
+      roundGameHints: [...state.roundGameHints, hint],
+      hintsUsed: state.hintsUsed + 1,
+    });
+    return true;
+  },
   submitGuess: (guess) => {
     const state = get();
     const figure = currentFigure(state);
@@ -250,7 +272,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         firstGuessStreak: 0,
         // hintsUsed mirrors wrongGuesses (capped at 3) — used for the
         // round-result summary and achievements.
-        hintsUsed: Math.min(3, wrongGuesses),
+        hintsUsed: Math.min(3, wrongGuesses) + latest.roundGameHints.length,
         vignetteKey: latest.vignetteKey + 1,
         inputShakeKey: latest.inputShakeKey + 1,
       };
