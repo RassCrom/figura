@@ -8,14 +8,19 @@ export const GAME_CONFIG = {
   revealAutoDismissMs: 7000,
   debounceMs: 300,
   countdownMs: 900,
-  anchorPopularityRating: 95,
+  easyEndpointPopularityRating: 97,
   baseScore: 5000,
   wrongPenalty: 1200,
   timeBonusMax: 800,
   streakBonus: 500,
 } as const;
 
-export function calcRoundScore(wrong: number, timeUsed: number, extraUsed: number, streak: boolean): number {
+export function calcRoundScore(
+  wrong: number,
+  timeUsed: number,
+  extraUsed: number,
+  streak: boolean,
+): number {
   const penalty = wrong * GAME_CONFIG.wrongPenalty;
   // timeBonus must clamp at 0. Without the clamp, a player who spilled into
   // the extra-time bank could earn a *negative* time bonus that erased part

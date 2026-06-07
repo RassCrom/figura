@@ -122,29 +122,223 @@ input:focus-visible {
   overflow-x: hidden;
 }
 
-.home-map-bg {
+.home-globe-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
-  filter: blur(6px) saturate(0.7) brightness(0.55);
-  opacity: 0.7;
-  /* Slight scale-up so the blur edges don't peek in */
-  transform: scale(1.08);
-  transition: opacity 600ms ease-out;
+  background:
+    radial-gradient(circle at 73% 46%, rgba(80, 170, 170, 0.13), transparent 29rem),
+    radial-gradient(ellipse at center, rgba(24, 22, 17, 0.42), rgba(7, 7, 6, 0.94) 78%);
 }
 
-.home-map-bg::after {
+.home-globe {
+  position: absolute;
+  top: 50%;
+  right: clamp(-270px, -12vw, -110px);
+  width: min(920px, 77vw);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(130, 218, 210, 0.28);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow:
+    0 0 28px rgba(107, 211, 205, 0.18),
+    0 0 90px rgba(50, 136, 139, 0.18),
+    inset -45px -30px 90px rgba(0, 0, 0, 0.78);
+}
+
+.home-globe-map {
+  position: absolute;
+  inset: -5%;
+}
+
+.home-globe-map canvas {
+  filter: sepia(0.35) saturate(0.64) brightness(0.72) contrast(1.18) hue-rotate(125deg);
+}
+
+.birthplace-marker {
+  --marker-accent: #8fd7ca;
+  --marker-accent-bright: #d6fff5;
+  position: relative;
+  width: 34px;
+  height: 43px;
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.72));
+}
+
+.birthplace-marker-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 100%;
+  animation: birthplace-marker-breathe 3.8s ease-in-out var(--marker-delay) infinite;
+}
+
+.birthplace-marker-medallion {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid var(--marker-accent);
+  border-radius: 50% 50% 46% 46%;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.18), transparent 48%), #152824;
+  box-shadow:
+    0 0 0 2px rgba(6, 12, 10, 0.82),
+    0 0 0 3px color-mix(in srgb, var(--marker-accent) 34%, transparent),
+    0 0 16px color-mix(in srgb, var(--marker-accent) 42%, transparent);
+}
+
+.birthplace-marker-medallion::after {
   content: "";
   position: absolute;
+  inset: 1px;
+  z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: inherit;
+  box-shadow: inset 0 -8px 9px rgba(0, 0, 0, 0.38);
+}
+
+.birthplace-marker-portrait {
+  position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 0%,
-    rgba(10, 10, 9, 0.45) 60%,
-    rgba(10, 10, 9, 0.85) 100%
-  );
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.12) saturate(0.82) contrast(1.08);
+}
+
+.birthplace-marker-initials {
+  color: var(--marker-accent-bright);
+  font-family: var(--font-display);
+  font-size: 0.67rem;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.birthplace-marker-rank {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  z-index: 3;
+  display: grid;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 2px;
+  place-items: center;
+  border: 1px solid rgba(245, 255, 250, 0.7);
+  border-radius: 7px;
+  background: #10231f;
+  color: var(--marker-accent-bright);
+  font-family: var(--font-ui);
+  font-size: 0.43rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.birthplace-marker-pin {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 9px;
+  height: 13px;
+  border-right: 2px solid var(--marker-accent);
+  border-bottom: 2px solid var(--marker-accent);
+  background: #10231f;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.birthplace-marker-pin::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 7px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--marker-accent);
+  box-shadow: 0 0 10px 3px color-mix(in srgb, var(--marker-accent) 55%, transparent);
+  transform: rotate(-45deg);
+}
+
+.birthplace-marker--headliner {
+  --marker-accent: #e9c978;
+  --marker-accent-bright: #fff0b4;
+  width: 42px;
+  height: 52px;
+}
+
+.birthplace-marker--headliner .birthplace-marker-medallion {
+  width: 42px;
+  height: 42px;
+  border-width: 3px;
+}
+
+.birthplace-marker--headliner .birthplace-marker-rank {
+  min-width: 16px;
+  height: 16px;
+  border-color: rgba(255, 244, 194, 0.86);
+  background: #3b2b0e;
+  font-size: 0.5rem;
+}
+
+.birthplace-marker--headliner .birthplace-marker-pin {
+  bottom: 2px;
+  width: 11px;
+  height: 15px;
+  background: #3b2b0e;
+}
+
+@keyframes birthplace-marker-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.96);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.04);
+  }
+}
+
+.home-globe-shade {
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
   pointer-events: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(190, 255, 241, 0.18), transparent 20%),
+    radial-gradient(
+      circle at 38% 42%,
+      transparent 32%,
+      rgba(2, 8, 12, 0.08) 62%,
+      rgba(0, 0, 0, 0.7) 100%
+    ),
+    linear-gradient(112deg, rgba(255, 241, 186, 0.1), transparent 42%, rgba(0, 0, 0, 0.38) 82%);
+  box-shadow:
+    inset 18px 12px 34px rgba(160, 255, 242, 0.08),
+    inset -60px -35px 95px rgba(0, 0, 0, 0.74);
+}
+
+.home-globe-map .maplibregl-marker {
+  z-index: 3;
+}
+
+.home-globe-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(7, 7, 6, 0.94) 0%,
+      rgba(7, 7, 6, 0.52) 42%,
+      rgba(7, 7, 6, 0.06) 76%,
+      rgba(7, 7, 6, 0.3) 100%
+    ),
+    radial-gradient(ellipse at center, transparent 30%, rgba(7, 7, 6, 0.58) 100%);
 }
 
 .home-page > .home-panel {
@@ -155,8 +349,12 @@ input:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-map-bg {
-    opacity: 0.45;
+  .home-globe {
+    opacity: 0.72;
+  }
+
+  .birthplace-marker-body {
+    animation: none;
   }
 }
 
@@ -855,8 +1053,22 @@ h2 {
     padding: 8px 10px;
     font-size: 0.82rem;
   }
-  .home-map-bg {
-    filter: blur(4px) saturate(0.7) brightness(0.55);
+  .home-globe {
+    top: 42%;
+    right: 50%;
+    width: 132vw;
+    transform: translate(50%, -50%);
+    opacity: 0.62;
+  }
+
+  .birthplace-marker-body {
+    scale: 0.82;
+  }
+
+  .home-globe-haze {
+    background:
+      linear-gradient(180deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.82) 72%),
+      radial-gradient(ellipse at center, transparent 12%, rgba(7, 7, 6, 0.72) 100%);
   }
 }
 
@@ -1191,10 +1403,18 @@ input[type="range"] {
   box-shadow: 0 0 16px color-mix(in srgb, var(--level-color), transparent 55%);
 }
 
-.level-badge.level-cartographer { --level-color: #75b7a5; }
-.level-badge.level-historian { --level-color: #d6a85c; }
-.level-badge.level-oracle { --level-color: #ad91db; }
-.level-badge.level-legend { --level-color: #f4d46f; }
+.level-badge.level-cartographer {
+  --level-color: #75b7a5;
+}
+.level-badge.level-historian {
+  --level-color: #d6a85c;
+}
+.level-badge.level-oracle {
+  --level-color: #ad91db;
+}
+.level-badge.level-legend {
+  --level-color: #f4d46f;
+}
 
 .level-badge.emblem {
   min-height: 84px;
@@ -1316,7 +1536,11 @@ input[type="range"] {
   position: absolute;
   width: min(80vw, 680px);
   aspect-ratio: 1;
-  background: repeating-conic-gradient(from 0deg, rgba(239, 199, 90, 0.16) 0 8deg, transparent 8deg 20deg);
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(239, 199, 90, 0.16) 0 8deg,
+    transparent 8deg 20deg
+  );
   mask-image: radial-gradient(circle, #000 0 18%, transparent 68%);
   animation: levelUpSpin 18s linear infinite;
 }
@@ -1331,8 +1555,11 @@ input[type="range"] {
   border: 1px solid rgba(239, 199, 90, 0.7);
   border-radius: 24px;
   color: var(--color-text);
-  background: radial-gradient(circle at 50% 20%, rgba(239, 199, 90, 0.18), transparent 50%), #100d08;
-  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.62), 0 0 80px rgba(239, 199, 90, 0.2);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(239, 199, 90, 0.18), transparent 50%), #100d08;
+  box-shadow:
+    0 30px 100px rgba(0, 0, 0, 0.62),
+    0 0 80px rgba(239, 199, 90, 0.2);
   animation: levelUpCard 700ms var(--ease-out) both;
 }
 
@@ -1441,7 +1668,13 @@ input[type="range"] {
     linear-gradient(90deg, rgba(236, 208, 138, 0.045) 1px, transparent 1px) 0 0 / 120px 120px,
     linear-gradient(0deg, rgba(236, 208, 138, 0.04) 1px, transparent 1px) 0 0 / 120px 120px,
     radial-gradient(circle at center, transparent 32%, rgba(0, 0, 0, 0.42) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.5));
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.28),
+      transparent 28%,
+      transparent 72%,
+      rgba(0, 0, 0, 0.5)
+    );
   box-shadow: inset 0 0 60px rgba(236, 208, 138, 0.08);
 }
 
@@ -2920,18 +3153,32 @@ input[type="range"] {
 }
 
 @keyframes levelUpFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes levelUpSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes levelUpCard {
-  0% { opacity: 0; transform: translateY(24px) scale(0.82); }
-  62% { transform: translateY(-4px) scale(1.03); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.82);
+  }
+  62% {
+    transform: translateY(-4px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

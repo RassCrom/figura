@@ -79,17 +79,18 @@ export function getDailyFigures(
   }
   const seed = fnv1a(`daily:${dateString}`);
   const shuffled = seededShuffle(pool, seed);
-  const anchorIndex = shuffled.findIndex(
-    (figure) => figure.popularity_rating >= GAME_CONFIG.anchorPopularityRating,
+  const endpoints = shuffled.filter(
+    (figure) => figure.popularity_rating >= GAME_CONFIG.easyEndpointPopularityRating,
   );
-  if (anchorIndex <= 0) {
+  if (endpoints.length < 2) {
     return shuffled.slice(0, DAILY_ROUNDS);
   }
-  const anchor = shuffled[anchorIndex];
-  return [anchor, ...shuffled.slice(0, anchorIndex), ...shuffled.slice(anchorIndex + 1)].slice(
-    0,
-    DAILY_ROUNDS,
-  );
+
+  const endpointIds = new Set(endpoints.slice(0, 2).map((figure) => getFullName(figure)));
+  const middle = shuffled
+    .filter((figure) => !endpointIds.has(getFullName(figure)))
+    .slice(0, DAILY_ROUNDS - 2);
+  return [endpoints[0], ...middle, endpoints[1]];
 }
 
 export function getFigureOfTheDay(

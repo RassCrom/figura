@@ -72,7 +72,9 @@ export function HomePage({ figures, categories }: Props) {
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
-    void fetchPlayersToday().then((count) => setPlayersToday(Math.max(count, getLocalPlayersToday())));
+    void fetchPlayersToday().then((count) =>
+      setPlayersToday(Math.max(count, getLocalPlayersToday())),
+    );
   }, []);
 
   function handleNicknameChange(event: ChangeEvent<HTMLInputElement>) {
@@ -124,7 +126,7 @@ export function HomePage({ figures, categories }: Props) {
 
   return (
     <main className="page-shell home-page">
-      <AnimatedMapBackground />
+      <AnimatedMapBackground figures={figures} />
       <section className="home-panel" aria-labelledby="home-title">
         <Logo />
         <h1 id="home-title">Figura</h1>
@@ -134,7 +136,8 @@ export function HomePage({ figures, categories }: Props) {
             {playersToday != null && playersToday > 0 ? (
               <span className="pill players-today" aria-live="polite">
                 <Globe2 aria-hidden="true" size={14} />
-                {playersToday.toLocaleString()} {playersToday === 1 ? "person" : "people"} played today
+                {playersToday.toLocaleString()} {playersToday === 1 ? "person" : "people"} played
+                today
               </span>
             ) : null}
             {dailyStreak > 0 ? (
@@ -182,7 +185,9 @@ export function HomePage({ figures, categories }: Props) {
             <Link className="secondary-button" to="/leaderboard">
               {en.leaderboard}
             </Link>
-            <Link className="secondary-button" to="/profile">My profile</Link>
+            <Link className="secondary-button" to="/profile">
+              My profile
+            </Link>
           </div>
         </form>
       </section>

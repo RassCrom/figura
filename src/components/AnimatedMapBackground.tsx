@@ -1,42 +1,72 @@
 import { useEffect, useRef } from "react";
 
-// Lazy import inside the effect so maplibre-gl stays out of the main chunk
-// and the home page paints instantly even on cold load.
+import type { Figure } from "../types/figure";
+
+// Lazy import inside the effect so maplibre-gl stays out of the main chunk.
 type MapLibreGL = typeof import("maplibre-gl");
 type MapInstance = import("maplibre-gl").Map;
 
-const WAYPOINTS: Array<[lng: number, lat: number]> = [
-  [44.0, 35.0],   // Caspian / Iran
-  [78.0, 27.0],   // Northern India
-  [116.0, 31.0],  // East China
-  [139.0, 35.0],  // Honshu
-  [-43.0, -22.0], // Rio
-  [-100.0, 38.0], // Central US
-  [2.0, 48.0],    // Paris
-  [25.0, 35.0],   // Aegean
-  [30.0, -1.0],   // Equatorial Africa
-];
+const ROTATION_DEGREES_PER_SECOND = 1.8;
+const START_CENTER: [lng: number, lat: number] = [42, 18];
+const FEATURED_FIGURE_COUNT = 20;
 
-const SEGMENT_MS = 12_000;
-const ZOOM = 2.1;
+type Props = {
+  figures: Figure[];
+};
 
-export function AnimatedMapBackground() {
+function createBirthplaceMarker(figure: Figure, rank: number): HTMLDivElement {
+  const marker = document.createElement("div");
+  marker.className = `birthplace-marker${rank <= 3 ? " birthplace-marker--headliner" : ""}`;
+  marker.style.setProperty("--marker-delay", `${(rank % 7) * -0.46}s`);
+  marker.title = `${rank}. ${figure.first_name} ${figure.last_name} — born in ${figure.place_of_birth}`;
+
+  const body = document.createElement("div");
+  body.className = "birthplace-marker-body";
+
+  const medallion = document.createElement("div");
+  medallion.className = "birthplace-marker-medallion";
+
+  const initials = document.createElement("span");
+  initials.className = "birthplace-marker-initials";
+  initials.textContent = `${figure.first_name[0] ?? ""}${figure.last_name[0] ?? ""}`;
+
+  const portrait = document.createElement("img");
+  portrait.className = "birthplace-marker-portrait";
+  portrait.src = figure.photo;
+  portrait.alt = "";
+  portrait.loading = "lazy";
+  portrait.addEventListener("error", () => portrait.remove(), { once: true });
+
+  const rankTab = document.createElement("span");
+  rankTab.className = "birthplace-marker-rank";
+  rankTab.textContent = String(rank);
+
+  const pin = document.createElement("span");
+  pin.className = "birthplace-marker-pin";
+
+  medallion.append(initials, portrait, rankTab);
+  body.append(medallion, pin);
+  marker.append(body);
+  return marker;
+}
+
+export function AnimatedMapBackground({ figures }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
+
     const reducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
     let cancelled = false;
     let map: MapInstance | null = null;
-    let timeoutId: number | null = null;
+    let animationFrame: number | null = null;
+    let previousTimestamp: number | null = null;
     let onVisibilityChange: (() => void) | null = null;
 
     void (async () => {
-      // Load maplibre-gl + the basemap style only after the home screen has
-      // painted — keeps the critical path JS-light.
       const [maplibregl, { getMapStyle }]: [MapLibreGL, typeof import("../lib/mapStyles")] =
         await Promise.all([
           import("maplibre-gl") as Promise<MapLibreGL>,
@@ -44,42 +74,60 @@ export function AnimatedMapBackground() {
         ]);
       if (cancelled || !containerRef.current) return;
 
-      const startIndex = Math.floor(Math.random() * WAYPOINTS.length);
       map = new maplibregl.Map({
         container: containerRef.current,
         style: getMapStyle("Steppe"),
-        center: WAYPOINTS[startIndex],
-        zoom: ZOOM,
+        center: START_CENTER,
+        zoom: 1.35,
         interactive: false,
         attributionControl: false,
         fadeDuration: 0,
       });
 
-      let cursor = startIndex;
-      const step = () => {
-        if (cancelled || !map) return;
-        if (reducedMotion) return;
-        if (document.hidden) {
-          timeoutId = window.setTimeout(step, 2_000);
-          return;
+      const featuredFigures = [...figures]
+        .sort((first, second) => second.popularity_rating - first.popularity_rating)
+        .slice(0, FEATURED_FIGURE_COUNT);
+
+      featuredFigures.forEach((figure, index) => {
+        const [lat, lng] = figure.coordinates_of_the_place_of_birth;
+        new maplibregl.Marker({
+          element: createBirthplaceMarker(figure, index + 1),
+          anchor: "bottom",
+        })
+          .setLngLat([lng, lat])
+          .addTo(map!);
+      });
+
+      const rotate = (timestamp: number) => {
+        if (cancelled || !map || reducedMotion || document.hidden) return;
+
+        if (previousTimestamp !== null) {
+          const elapsedSeconds = Math.min((timestamp - previousTimestamp) / 1_000, 0.1);
+          const center = map.getCenter();
+          map.jumpTo({
+            center: [center.lng - ROTATION_DEGREES_PER_SECOND * elapsedSeconds, center.lat],
+          });
         }
-        cursor = (cursor + 1) % WAYPOINTS.length;
-        map.easeTo({
-          center: WAYPOINTS[cursor],
-          duration: SEGMENT_MS,
-          easing: (t) => t,
-        });
-        timeoutId = window.setTimeout(step, SEGMENT_MS);
+
+        previousTimestamp = timestamp;
+        animationFrame = window.requestAnimationFrame(rotate);
       };
-      timeoutId = window.setTimeout(step, 800);
+
+      if (!reducedMotion) {
+        animationFrame = window.requestAnimationFrame(rotate);
+      }
 
       onVisibilityChange = () => {
         if (!map) return;
+
         if (document.hidden) {
-          map.stop();
-        } else {
-          if (timeoutId) window.clearTimeout(timeoutId);
-          timeoutId = window.setTimeout(step, 600);
+          if (animationFrame !== null) {
+            window.cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+          }
+          previousTimestamp = null;
+        } else if (!reducedMotion && animationFrame === null) {
+          animationFrame = window.requestAnimationFrame(rotate);
         }
       };
       document.addEventListener("visibilitychange", onVisibilityChange);
@@ -90,10 +138,18 @@ export function AnimatedMapBackground() {
       if (onVisibilityChange) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
       }
-      if (timeoutId) window.clearTimeout(timeoutId);
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
       map?.remove();
     };
-  }, []);
+  }, [figures]);
 
-  return <div ref={containerRef} className="home-map-bg" aria-hidden="true" />;
+  return (
+    <div className="home-globe-bg" aria-hidden="true">
+      <div className="home-globe">
+        <div ref={containerRef} className="home-globe-map" />
+        <div className="home-globe-shade" />
+      </div>
+      <div className="home-globe-haze" />
+    </div>
+  );
 }
