@@ -46,6 +46,8 @@ export function FigureProfilePage({ figures, mode }: Props) {
   usePageMetadata(metadata);
 
   const basemap = useSettingsStore((state) => state.basemap);
+  const mapTextures = useSettingsStore((state) => state.mapTextures);
+  const reducedMotionSetting = useSettingsStore((state) => state.reducedMotion);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapEngineRef = useRef<MapEngine | null>(null);
   const mapHandleRef = useRef<GameMapHandle | null>(null);
@@ -96,10 +98,10 @@ export function FigureProfilePage({ figures, mode }: Props) {
       },
       {
         animateFit: true,
-        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        reducedMotion: reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       },
     );
-  }, [figure, mapReady]);
+  }, [figure, mapReady, reducedMotionSetting]);
 
   if (!figure) {
     return <Navigate to="/" replace />;
@@ -142,7 +144,7 @@ export function FigureProfilePage({ figures, mode }: Props) {
           </p>
           <div
             ref={mapContainerRef}
-            className={`figure-map ${basemapClassName}`}
+            className={`figure-map ${basemapClassName}${mapTextures ? "" : " no-map-textures"}`}
             aria-label="Birth and death locations"
           />
         </section>

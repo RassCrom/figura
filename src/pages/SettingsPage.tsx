@@ -24,12 +24,20 @@ export function SettingsPage({ categories }: { categories: string[] }) {
   const basemap = useSettingsStore((state) => state.basemap);
   const musicVol = useSettingsStore((state) => state.musicVol);
   const sfxVol = useSettingsStore((state) => state.sfxVol);
+  const showSuggestions = useSettingsStore((state) => state.showSuggestions);
+  const autoAdvanceReveal = useSettingsStore((state) => state.autoAdvanceReveal);
+  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const mapTextures = useSettingsStore((state) => state.mapTextures);
   const setDifficulty = useSettingsStore((state) => state.setDifficulty);
   const setSelectedCategories = useSettingsStore((state) => state.setSelectedCategories);
   const toggleCategory = useSettingsStore((state) => state.toggleCategory);
   const setBasemap = useSettingsStore((state) => state.setBasemap);
   const setMusicVol = useSettingsStore((state) => state.setMusicVol);
   const setSfxVol = useSettingsStore((state) => state.setSfxVol);
+  const setShowSuggestions = useSettingsStore((state) => state.setShowSuggestions);
+  const setAutoAdvanceReveal = useSettingsStore((state) => state.setAutoAdvanceReveal);
+  const setReducedMotion = useSettingsStore((state) => state.setReducedMotion);
+  const setMapTextures = useSettingsStore((state) => state.setMapTextures);
 
   useEffect(() => {
     if (selectedCategories.length === 0) {
@@ -123,6 +131,27 @@ export function SettingsPage({ categories }: { categories: string[] }) {
             />
             <output>{sfxVol}</output>
           </label>
+        </fieldset>
+        <fieldset>
+          <legend>Gameplay & accessibility</legend>
+          <div className="settings-toggle-list">
+            <label className="settings-toggle">
+              <span><strong>Name suggestions</strong><small>Show matching figures while typing.</small></span>
+              <input type="checkbox" checked={showSuggestions} onChange={(event) => setShowSuggestions(event.target.checked)} />
+            </label>
+            <label className="settings-toggle">
+              <span><strong>Auto-advance reveals</strong><small>Move to the next round after the reveal timer.</small></span>
+              <input type="checkbox" checked={autoAdvanceReveal} onChange={(event) => setAutoAdvanceReveal(event.target.checked)} />
+            </label>
+            <label className="settings-toggle">
+              <span><strong>Reduce motion</strong><small>Disable cinematic map and level-up motion.</small></span>
+              <input type="checkbox" checked={reducedMotion} onChange={(event) => setReducedMotion(event.target.checked)} />
+            </label>
+            <label className="settings-toggle">
+              <span><strong>Map textures</strong><small>Show grain, paper fibers, and scanline overlays.</small></span>
+              <input type="checkbox" checked={mapTextures} onChange={(event) => setMapTextures(event.target.checked)} />
+            </label>
+          </div>
         </fieldset>
         <Link className="primary-button" to="/">
           Done

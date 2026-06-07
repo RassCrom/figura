@@ -31,6 +31,9 @@ const LeaderboardPage = lazy(() =>
 const PublicProfilePage = lazy(() =>
   import("./pages/PublicProfilePage").then((module) => ({ default: module.PublicProfilePage })),
 );
+const MyProfilePage = lazy(() =>
+  import("./pages/MyProfilePage").then((module) => ({ default: module.MyProfilePage })),
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage })),
 );
@@ -100,6 +103,7 @@ export function App() {
             element={<FigureProfilePage figures={figures} mode="slug" />}
           />
           <Route path="/profile/:nickname" element={<PublicProfilePage />} />
+          <Route path="/profile" element={<MyProfilePage />} />
           <Route path="/game" element={<GamePage figures={figures} />} />
           <Route path="/end" element={<EndPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

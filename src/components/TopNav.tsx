@@ -9,6 +9,7 @@ export function TopNav() {
         <Logo />
       </Link>
       <nav>
+        <Link to="/profile">Profile</Link>
         <Link to="/settings">Settings</Link>
         <Link to="/leaderboard">Leaderboard</Link>
       </nav>

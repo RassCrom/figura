@@ -1,9 +1,10 @@
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import { AchievementBadge } from "../components/AchievementBadge";
 import { LeaderboardTable } from "../components/LeaderboardTable";
 import { LevelBadge } from "../components/LevelBadge";
+import { LevelUpCelebration } from "../components/LevelUpCelebration";
 import { TopNav } from "../components/TopNav";
 import { useCountUp } from "../hooks/useCountUp";
 import { en } from "../i18n/en";
@@ -14,8 +15,10 @@ import { buildFigureQueue } from "../lib/session";
 import { useGameStore } from "../stores/useGameStore";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
 import { useProfileStore } from "../stores/useProfileStore";
+import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Figure, RoundResult } from "../types/figure";
 import type { GameMapHandle } from "../lib/mapEngine";
+import type { ProfileAward } from "../lib/progression";
 
 type MapEngine = typeof import("../lib/mapEngine");
 
@@ -153,10 +156,15 @@ export function EndPage() {
   const unlockedAchievements = useProfileStore((state) => state.unlockedAchievements);
   const animatedScore = useCountUp(score, 1200);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [runAward, setRunAward] = useState<ProfileAward | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const reducedMotion = useSettingsStore((state) => state.reducedMotion);
+  const dismissLevelUp = useCallback(() => setShowLevelUp(false), []);
   const shareText = useMemo(
     () => (mode === "daily" && dailyDate ? buildShareText(getDayNumber(dailyDate), score, results) : ""),
     [dailyDate, mode, results, score],
   );
+  const displayAward = runAward ?? lastAward;
 
   async function handleCopyShare() {
     if (!shareText) return;
@@ -182,6 +190,8 @@ export function EndPage() {
         { mode, dailyDate: dailyDate ?? undefined },
       );
       if (cancelled) return;
+      setRunAward(award);
+      setShowLevelUp(award.leveledUp && !reducedMotion);
       const achievements = [...new Set([...unlockedAchievements, ...award.unlockedNow])];
       if (mode === "classic") {
         addEntry({ nickname, score, difficulty, categories, levelName: award.levelName, achievements });
@@ -208,6 +218,7 @@ export function EndPage() {
     sessionId,
     status,
     unlockedAchievements,
+    reducedMotion,
   ]);
 
   if (status !== "ended" && results.length === 0) {
@@ -233,27 +244,27 @@ export function EndPage() {
         </p>
         <h1 id="end-title">{animatedScore.toLocaleString()}</h1>
         <p className="rank-badge">{rankName(score)}</p>
-        {lastAward ? (
+        {displayAward ? (
           <div className="run-delta">
-            <span>Your best: {lastAward.previousBest.toLocaleString()}</span>
+            <span>Your best: {displayAward.previousBest.toLocaleString()}</span>
             <span>This run: {score.toLocaleString()}</span>
             <strong>
-              {lastAward.bestDelta >= 0 ? "+" : ""}
-              {lastAward.bestDelta.toLocaleString()}
+              {displayAward.bestDelta >= 0 ? "+" : ""}
+              {displayAward.bestDelta.toLocaleString()}
             </strong>
           </div>
         ) : null}
-        {lastAward ? (
+        {displayAward ? (
           <div className="profile-award">
-            <LevelBadge level={lastAward.levelName} />
-            <span>+{lastAward.xpAwarded.toLocaleString()} XP</span>
+            <LevelBadge level={displayAward.levelName} />
+            <span>+{displayAward.xpAwarded.toLocaleString()} XP</span>
           </div>
         ) : null}
-        {lastAward?.unlockedNow.length ? (
+        {displayAward?.unlockedNow.length ? (
           <section className="achievement-section" aria-labelledby="new-achievements-title">
             <h2 id="new-achievements-title">Unlocked Achievements</h2>
             <div className="achievement-grid">
-              {lastAward.unlockedNow.map((id) => (
+              {displayAward.unlockedNow.map((id) => (
                 <AchievementBadge key={id} id={id} />
               ))}
             </div>
@@ -323,6 +334,9 @@ export function EndPage() {
           </Link>
         </div>
       </section>
+      {showLevelUp && runAward?.leveledUp ? (
+        <LevelUpCelebration level={runAward.levelName} onDismiss={dismissLevelUp} />
+      ) : null}
     </main>
   );
 }

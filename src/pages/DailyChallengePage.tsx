@@ -13,6 +13,7 @@ import {
 } from "../lib/dailyChallenge";
 import { useGameStore } from "../stores/useGameStore";
 import { useProfileStore } from "../stores/useProfileStore";
+import { recordLocalPlay } from "../lib/playerActivity";
 import type { Figure } from "../types/figure";
 
 type Props = {
@@ -59,6 +60,7 @@ export function DailyChallengePage({ figures }: Props) {
       mode: "daily",
       dailyDate: today,
     });
+    recordLocalPlay();
     navigate("/game");
   }
 

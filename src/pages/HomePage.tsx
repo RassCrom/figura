@@ -7,6 +7,7 @@ import { LevelProgress } from "../components/LevelProgress";
 import { Logo } from "../components/Logo";
 import { en } from "../i18n/en";
 import { claimNickname, fetchPlayersToday } from "../lib/api";
+import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useGameStore } from "../stores/useGameStore";
@@ -50,7 +51,7 @@ export function HomePage({ figures, categories }: Props) {
   const [touched, setTouched] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
-  const [playersToday, setPlayersToday] = useState<number | null>(null);
+  const [playersToday, setPlayersToday] = useState(() => getLocalPlayersToday());
   const startSession = useGameStore((state) => state.startSession);
   const setToast = useGameStore((state) => state.setToast);
   const difficulty = useSettingsStore((state) => state.difficulty);
@@ -71,7 +72,7 @@ export function HomePage({ figures, categories }: Props) {
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
-    void fetchPlayersToday().then((count) => setPlayersToday(count));
+    void fetchPlayersToday().then((count) => setPlayersToday(Math.max(count, getLocalPlayersToday())));
   }, []);
 
   function handleNicknameChange(event: ChangeEvent<HTMLInputElement>) {
@@ -113,6 +114,7 @@ export function HomePage({ figures, categories }: Props) {
     }
 
     localStorage.setItem("gtf_nickname", nickname);
+    recordLocalPlay();
     startSession({ nickname, difficulty, categories: effectiveCategories, queue });
     navigate("/game");
   }
@@ -132,7 +134,7 @@ export function HomePage({ figures, categories }: Props) {
             {playersToday != null && playersToday > 0 ? (
               <span className="pill players-today" aria-live="polite">
                 <Globe2 aria-hidden="true" size={14} />
-                {playersToday.toLocaleString()} {playersToday === 1 ? "person" : "people"} today
+                {playersToday.toLocaleString()} {playersToday === 1 ? "person" : "people"} played today
               </span>
             ) : null}
             {dailyStreak > 0 ? (
@@ -180,11 +182,7 @@ export function HomePage({ figures, categories }: Props) {
             <Link className="secondary-button" to="/leaderboard">
               {en.leaderboard}
             </Link>
-            {nickname && isValid ? (
-              <Link className="secondary-button" to={`/profile/${nickname}`}>
-                My profile
-              </Link>
-            ) : null}
+            <Link className="secondary-button" to="/profile">My profile</Link>
           </div>
         </form>
       </section>

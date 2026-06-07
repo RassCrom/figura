@@ -26,6 +26,8 @@ export type ProfileAward = {
   bestDelta: number;
   unlockedNow: AchievementId[];
   levelName: PlayerLevel;
+  previousLevelName: PlayerLevel;
+  leveledUp: boolean;
   nextLevelName: PlayerLevel | null;
   levelProgress: number;
 };

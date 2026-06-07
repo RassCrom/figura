@@ -145,11 +145,13 @@ function PersonCard({
   roundScore,
   onDismiss,
   cinematic,
+  autoAdvance,
 }: {
   figure: Figure;
   roundScore: number;
   onDismiss: () => void;
   cinematic: boolean;
+  autoAdvance: boolean;
 }) {
   const [remainingMs, setRemainingMs] = useState<number>(GAME_CONFIG.revealAutoDismissMs);
   const journey = distanceKm(
@@ -159,6 +161,10 @@ function PersonCard({
   const dates = getLifeDateRange(figure);
 
   useEffect(() => {
+    if (!autoAdvance) {
+      setRemainingMs(0);
+      return;
+    }
     const startedAt = performance.now();
     const timer = window.setTimeout(onDismiss, GAME_CONFIG.revealAutoDismissMs);
     const interval = window.setInterval(() => {
@@ -170,7 +176,7 @@ function PersonCard({
       window.clearTimeout(timer);
       window.clearInterval(interval);
     };
-  }, [onDismiss]);
+  }, [autoAdvance, onDismiss]);
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -193,7 +199,7 @@ function PersonCard({
         className={cinematic ? "person-card cinematic-card" : "person-card"}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="reveal-progress" aria-hidden="true" />
+        {autoAdvance ? <div className="reveal-progress" aria-hidden="true" /> : null}
         <button
           className="icon-button close-button"
           type="button"
@@ -218,7 +224,7 @@ function PersonCard({
             <strong>{journey.toLocaleString()} km</strong>
           </div>
           <div className="reveal-controls">
-            <span>Next in {Math.ceil(remainingMs / 1000)}s</span>
+            <span>{autoAdvance ? `Next in ${Math.ceil(remainingMs / 1000)}s` : "Ready when you are"}</span>
             <button className="primary-button" type="button" onClick={onDismiss}>
               Next
             </button>
@@ -257,6 +263,10 @@ export default function GamePage({ figures }: Props) {
     place: string;
   } | null>(null);
   const basemap = useSettingsStore((state) => state.basemap);
+  const showSuggestions = useSettingsStore((state) => state.showSuggestions);
+  const autoAdvanceReveal = useSettingsStore((state) => state.autoAdvanceReveal);
+  const reducedMotionSetting = useSettingsStore((state) => state.reducedMotion);
+  const mapTextures = useSettingsStore((state) => state.mapTextures);
   const status = useGameStore((state) => state.status);
   const queue = useGameStore((state) => state.queue);
   const roundIndex = useGameStore((state) => state.roundIndex);
@@ -304,6 +314,7 @@ export default function GamePage({ figures }: Props) {
     `basemap-${basemap.toLowerCase().replace(/\s+/g, "-")}`,
     keyboardLayoutActive ? "keyboard-open" : "",
     revealFlightActive ? "reveal-flight" : "",
+    mapTextures ? "" : "no-map-textures",
   ]
     .filter(Boolean)
     .join(" ");
@@ -318,10 +329,13 @@ export default function GamePage({ figures }: Props) {
       return [] as Figure[];
     }
 
+    if (!showSuggestions) {
+      return [] as Figure[];
+    }
     return figures
       .filter((figure) => normalizeName(getFullName(figure)).includes(query))
       .slice(0, GAME_CONFIG.maxSuggestions);
-  }, [debouncedGuess, figures]);
+  }, [debouncedGuess, figures, showSuggestions]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedGuess(guess), GAME_CONFIG.debounceMs);
@@ -466,13 +480,14 @@ export default function GamePage({ figures }: Props) {
       },
     };
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion =
+      reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     engine.renderJourney(map, currentFigure, hints, {
       animateFit: !reducedMotion && (status === "countdown" || status === "playing"),
       reducedMotion,
       compact: isSmallViewport,
     });
-  }, [currentFigure, isSmallViewport, mapReady, wrongGuesses, status]);
+  }, [currentFigure, isSmallViewport, mapReady, reducedMotionSetting, wrongGuesses, status]);
 
   useEffect(() => {
     if (!mapEngineRef.current || !mapRef.current) {
@@ -545,7 +560,8 @@ export default function GamePage({ figures }: Props) {
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion =
+      reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cinematic = revealWasCorrect && !reducedMotion;
     if (mapEngineRef.current && mapRef.current) {
       mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, {
@@ -567,7 +583,7 @@ export default function GamePage({ figures }: Props) {
       setShowRevealCard(true);
     }, 620);
     return () => window.clearTimeout(timer);
-  }, [isSmallViewport, revealWasCorrect, revealedFigure]);
+  }, [isSmallViewport, reducedMotionSetting, revealWasCorrect, revealedFigure]);
 
   // Round transition: clear local UI state that's only meaningful within the
   // round just ended (the typed guess, the wrong-figure toast).
@@ -828,6 +844,7 @@ export default function GamePage({ figures }: Props) {
           roundScore={currentRoundScore}
           onDismiss={dismissReveal}
           cinematic={revealWasCorrect}
+          autoAdvance={autoAdvanceReveal}
         />
       ) : null}
     </main>

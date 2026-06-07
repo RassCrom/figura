@@ -91,6 +91,7 @@ export const useProfileStore = create<ProfileState>()(
         });
         const unlockedAchievements = [...new Set([...state.unlockedAchievements, ...unlockedNow])];
         const nextXp = state.xp + xpAwarded;
+        const previousLevelName = getLevelInfo(state.xp).levelName;
         const levelInfo = getLevelInfo(nextXp);
         const award: ProfileAward = {
           xpAwarded,
@@ -99,6 +100,8 @@ export const useProfileStore = create<ProfileState>()(
           bestDelta: summary.score - previousBest,
           unlockedNow,
           levelName: levelInfo.levelName,
+          previousLevelName,
+          leveledUp: previousLevelName !== levelInfo.levelName,
           nextLevelName: levelInfo.nextLevelName,
           levelProgress: levelInfo.progress,
         };

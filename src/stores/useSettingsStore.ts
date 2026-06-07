@@ -9,12 +9,20 @@ type SettingsState = {
   basemap: Basemap;
   musicVol: number;
   sfxVol: number;
+  showSuggestions: boolean;
+  autoAdvanceReveal: boolean;
+  reducedMotion: boolean;
+  mapTextures: boolean;
   setDifficulty: (difficulty: Difficulty) => void;
   setSelectedCategories: (categories: string[]) => void;
   toggleCategory: (category: string) => void;
   setBasemap: (basemap: Basemap) => void;
   setMusicVol: (volume: number) => void;
   setSfxVol: (volume: number) => void;
+  setShowSuggestions: (enabled: boolean) => void;
+  setAutoAdvanceReveal: (enabled: boolean) => void;
+  setReducedMotion: (enabled: boolean) => void;
+  setMapTextures: (enabled: boolean) => void;
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -25,6 +33,10 @@ export const useSettingsStore = create<SettingsState>()(
       basemap: "Steppe",
       musicVol: 45,
       sfxVol: 60,
+      showSuggestions: true,
+      autoAdvanceReveal: true,
+      reducedMotion: false,
+      mapTextures: true,
       setDifficulty: (difficulty) => set({ difficulty }),
       setSelectedCategories: (selectedCategories) => set({ selectedCategories }),
       toggleCategory: (category) =>
@@ -38,10 +50,14 @@ export const useSettingsStore = create<SettingsState>()(
       setBasemap: (basemap) => set({ basemap }),
       setMusicVol: (musicVol) => set({ musicVol }),
       setSfxVol: (sfxVol) => set({ sfxVol }),
+      setShowSuggestions: (showSuggestions) => set({ showSuggestions }),
+      setAutoAdvanceReveal: (autoAdvanceReveal) => set({ autoAdvanceReveal }),
+      setReducedMotion: (reducedMotion) => set({ reducedMotion }),
+      setMapTextures: (mapTextures) => set({ mapTextures }),
     }),
     {
       name: "gtf_settings",
-      version: 1,
+      version: 2,
     },
   ),
 );

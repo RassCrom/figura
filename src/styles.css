@@ -778,6 +778,28 @@ h2 {
   font-size: 0.86rem;
 }
 
+.level-path {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.level-path-item {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 14px;
+  opacity: 0.42;
+  background: rgba(10, 10, 9, 0.42);
+}
+
+.level-path-item.reached {
+  opacity: 1;
+  background: rgba(200, 150, 42, 0.08);
+}
+
 .share-card {
   margin: 18px 0;
   padding: 16px;
@@ -1068,6 +1090,40 @@ fieldset {
   gap: 12px;
 }
 
+.settings-toggle-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.settings-toggle {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 200, 80, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.settings-toggle > span {
+  display: grid;
+  gap: 3px;
+}
+
+.settings-toggle small {
+  color: var(--color-text-muted);
+}
+
+.settings-toggle input {
+  width: 42px;
+  height: 24px;
+  flex: 0 0 auto;
+  accent-color: var(--color-primary);
+}
+
 input[type="range"] {
   min-height: 44px;
   padding: 0;
@@ -1121,6 +1177,37 @@ input[type="range"] {
 
 .level-badge {
   padding: 0 10px;
+  --level-color: #b9aa86;
+}
+
+.level-badge-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #100e09;
+  background: var(--level-color);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--level-color), transparent 55%);
+}
+
+.level-badge.level-cartographer { --level-color: #75b7a5; }
+.level-badge.level-historian { --level-color: #d6a85c; }
+.level-badge.level-oracle { --level-color: #ad91db; }
+.level-badge.level-legend { --level-color: #f4d46f; }
+
+.level-badge.emblem {
+  min-height: 84px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 18px;
+}
+
+.level-badge.emblem .level-badge-icon {
+  width: 50px;
+  height: 50px;
 }
 
 .achievement-badge {
@@ -1211,6 +1298,53 @@ input[type="range"] {
 .profile-award > span {
   color: var(--color-primary-strong);
   font-weight: 900;
+}
+
+.level-up-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(3, 3, 2, 0.8);
+  backdrop-filter: blur(10px);
+  animation: levelUpFade 420ms var(--ease-out) both;
+}
+
+.level-up-rays {
+  position: absolute;
+  width: min(80vw, 680px);
+  aspect-ratio: 1;
+  background: repeating-conic-gradient(from 0deg, rgba(239, 199, 90, 0.16) 0 8deg, transparent 8deg 20deg);
+  mask-image: radial-gradient(circle, #000 0 18%, transparent 68%);
+  animation: levelUpSpin 18s linear infinite;
+}
+
+.level-up-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-width: min(86vw, 330px);
+  padding: 32px 28px 24px;
+  border: 1px solid rgba(239, 199, 90, 0.7);
+  border-radius: 24px;
+  color: var(--color-text);
+  background: radial-gradient(circle at 50% 20%, rgba(239, 199, 90, 0.18), transparent 50%), #100d08;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.62), 0 0 80px rgba(239, 199, 90, 0.2);
+  animation: levelUpCard 700ms var(--ease-out) both;
+}
+
+.level-up-card strong {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.level-up-card small {
+  color: var(--color-text-muted);
 }
 
 .achievement-section {
@@ -1429,6 +1563,11 @@ input[type="range"] {
 :is(.basemap-dark-night-blue, .basemap-historic, .basemap-custom-vector) .map-vignette {
   background: var(--basemap-noise), var(--basemap-texture);
   background-blend-mode: soft-light, normal;
+}
+
+.no-map-textures .map-vignette,
+.figure-map.no-map-textures::after {
+  background: transparent;
 }
 
 .game-screen.reveal-flight::after {
@@ -2777,6 +2916,29 @@ input[type="range"] {
   }
   to {
     background-position: 0 0;
+  }
+}
+
+@keyframes levelUpFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes levelUpSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes levelUpCard {
+  0% { opacity: 0; transform: translateY(24px) scale(0.82); }
+  62% { transform: translateY(-4px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-up-backdrop,
+  .level-up-card,
+  .level-up-rays {
+    animation: none;
   }
 }
 
