@@ -1016,6 +1016,107 @@ h2 {
   margin: 0 0 12px;
 }
 
+/* Share buttons */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    background 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
+  white-space: nowrap;
+}
+
+.share-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.share-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Copy */
+.share-btn--copy {
+  color: #e8dfc8;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.share-btn--copy:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Save Image / Download */
+.share-btn--image {
+  color: #efc75a;
+  background: rgba(239, 199, 90, 0.08);
+  border-color: rgba(239, 199, 90, 0.28);
+}
+.share-btn--image:hover:not(:disabled) {
+  border-color: rgba(239, 199, 90, 0.6);
+  background: rgba(239, 199, 90, 0.14);
+}
+
+/* Native share (mobile apps) */
+.share-btn--native {
+  color: #7ecfce;
+  background: rgba(126, 207, 206, 0.08);
+  border-color: rgba(126, 207, 206, 0.28);
+}
+.share-btn--native:hover:not(:disabled) {
+  border-color: rgba(126, 207, 206, 0.6);
+  background: rgba(126, 207, 206, 0.14);
+}
+
+/* X / Twitter */
+.share-btn--twitter {
+  color: #e7e7e7;
+  background: rgba(231, 231, 231, 0.06);
+  border-color: rgba(231, 231, 231, 0.18);
+}
+.share-btn--twitter:hover {
+  border-color: rgba(231, 231, 231, 0.45);
+  background: rgba(231, 231, 231, 0.1);
+}
+
+/* Threads */
+.share-btn--threads {
+  color: #e8dfc8;
+  background: rgba(232, 223, 200, 0.06);
+  border-color: rgba(232, 223, 200, 0.18);
+}
+.share-btn--threads:hover {
+  border-color: rgba(232, 223, 200, 0.45);
+  background: rgba(232, 223, 200, 0.1);
+}
+
+/* LinkedIn */
+.share-btn--linkedin {
+  color: #77b5e8;
+  background: rgba(119, 181, 232, 0.08);
+  border-color: rgba(119, 181, 232, 0.28);
+}
+.share-btn--linkedin:hover {
+  border-color: rgba(119, 181, 232, 0.55);
+  background: rgba(119, 181, 232, 0.14);
+}
+
 @media (max-width: 540px) {
   .figure-header {
     grid-template-columns: 1fr;
@@ -1456,7 +1557,8 @@ input[type="range"] {
 }
 
 .pager,
-.action-row {
+.action-row,
+.share-actions {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1851,6 +1953,54 @@ input[type="range"] {
 }
 
 .game-screen.keyboard-open .custom-compass {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.92);
+}
+
+.custom-zoom-controls {
+  position: fixed;
+  top: max(162px, calc(env(safe-area-inset-top) + 162px));
+  right: 14px;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-zoom-controls button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(236, 208, 138, 0.48);
+  border-radius: 999px;
+  color: var(--color-primary-strong);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(236, 208, 138, 0.14), transparent 58%),
+    linear-gradient(145deg, rgba(28, 21, 13, 0.92), rgba(8, 7, 5, 0.9));
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.36),
+    inset 0 0 0 4px rgba(236, 208, 138, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  transition:
+    transform 180ms var(--ease-out),
+    border-color 180ms var(--ease-out);
+  cursor: pointer;
+}
+
+.custom-zoom-controls button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(236, 208, 138, 0.72);
+}
+
+.custom-zoom-controls button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.game-screen.keyboard-open .custom-zoom-controls {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-8px) scale(0.92);

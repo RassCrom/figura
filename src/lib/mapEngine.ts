@@ -444,9 +444,9 @@ export function createGameMap(container: HTMLElement, basemap: Basemap): GameMap
     center: [45, 35],
     zoom: 1.3,
     attributionControl: false,
+    preserveDrawingBuffer: true,
   });
 
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
   map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
   return {

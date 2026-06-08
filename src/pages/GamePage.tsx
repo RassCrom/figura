@@ -14,6 +14,8 @@ import {
   ScrollText,
   Tag,
   X,
+  Plus,
+  Minus,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -683,6 +685,14 @@ export default function GamePage({ figures }: Props) {
     map.easeTo({ bearing: 0, pitch: 0, duration: 420, essential: true });
   }
 
+  function handleZoomIn() {
+    mapRef.current?.map.zoomIn({ duration: 300 });
+  }
+
+  function handleZoomOut() {
+    mapRef.current?.map.zoomOut({ duration: 300 });
+  }
+
   if (!currentFigure && status !== "ended") {
     return <Navigate to="/" replace />;
   }
@@ -710,6 +720,15 @@ export default function GamePage({ figures }: Props) {
           <span className="compass-needle" />
         </span>
       </button>
+
+      <div className="custom-zoom-controls">
+        <button type="button" onClick={handleZoomIn} aria-label="Zoom in" disabled={!mapReady}>
+          <Plus size={24} />
+        </button>
+        <button type="button" onClick={handleZoomOut} aria-label="Zoom out" disabled={!mapReady}>
+          <Minus size={24} />
+        </button>
+      </div>
 
       <section
         className={status === "revealed" ? "game-hud hidden" : "game-hud"}
