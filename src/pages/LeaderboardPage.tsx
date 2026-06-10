@@ -8,14 +8,19 @@ import { LevelBadge } from "../components/LevelBadge";
 import { TopNav } from "../components/TopNav";
 import { en } from "../i18n/en";
 import {
+  fetchDailyLeaderboard,
   fetchHallOfFame,
+  fetchTopLeaderboard,
   fetchWeeklyLeaderboard,
+  type DailyLeaderboardEntry,
   type WeeklyArchive,
   type WeeklyEntry,
 } from "../lib/api";
+import { getUtcDateString } from "../lib/dailyChallenge";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
+import type { Difficulty, LeaderboardEntry } from "../types/figure";
 
-type Tab = "alltime" | "week" | "hof";
+type Tab = "daily" | "alltime" | "week" | "hof";
 
 function SkeletonTable({ cols = 5, rows = 5 }: { cols?: number; rows?: number }) {
   return (
@@ -45,7 +50,7 @@ function nextMondayUtc(now: Date = new Date()): Date {
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0),
   );
   const day = next.getUTCDay() || 7;
-  const daysUntil = day === 1 ? 7 : ((8 - day) % 7);
+  const daysUntil = day === 1 ? 7 : (8 - day) % 7;
   next.setUTCDate(next.getUTCDate() + daysUntil);
   return next;
 }
@@ -125,7 +130,8 @@ function HallOfFameList({ archives }: { archives: WeeklyArchive[] }) {
           <article key={archive.weekStart} className="hof-entry">
             <header>
               <h3>
-                Week of {new Date(archive.weekStart).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                Week of{" "}
+                {new Date(archive.weekStart).toLocaleDateString(undefined, { dateStyle: "medium" })}
               </h3>
               <span className="hof-range">
                 {archive.weekStart} - {weekEnd.toISOString().slice(0, 10)}
@@ -159,16 +165,35 @@ function HallOfFameList({ archives }: { archives: WeeklyArchive[] }) {
 }
 
 export function LeaderboardPage() {
-  const [tab, setTab] = useState<Tab>("alltime");
+  const [tab, setTab] = useState<Tab>("daily");
+  const [difficulty, setDifficulty] = useState<Difficulty | "All">("All");
+  const nickname = localStorage.getItem("gtf_nickname") ?? "";
   const entries = useLeaderboardStore((state) => state.entries);
   const refresh = useLeaderboardStore((state) => state.refresh);
   const [weekly, setWeekly] = useState<WeeklyEntry[] | null>(null);
   const [hof, setHof] = useState<WeeklyArchive[] | null>(null);
+  const [daily, setDaily] = useState<DailyLeaderboardEntry[] | null>(null);
+  const [alltime, setAlltime] = useState<LeaderboardEntry[] | null>(null);
   const [countdown, setCountdown] = useState(() => formatCountdown(nextMondayUtc()));
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (tab !== "daily") return;
+    setDaily(null);
+    void fetchDailyLeaderboard(
+      getUtcDateString(),
+      difficulty === "All" ? undefined : difficulty,
+    ).then(setDaily);
+  }, [difficulty, tab]);
+
+  useEffect(() => {
+    if (tab !== "alltime") return;
+    setAlltime(null);
+    void fetchTopLeaderboard(100, difficulty === "All" ? undefined : difficulty).then(setAlltime);
+  }, [difficulty, tab]);
 
   useEffect(() => {
     if (tab !== "week") return;
@@ -184,12 +209,16 @@ export function LeaderboardPage() {
 
   useEffect(() => {
     if (tab !== "week") return;
-    const interval = window.setInterval(() => setCountdown(formatCountdown(nextMondayUtc())), 60_000);
+    const interval = window.setInterval(
+      () => setCountdown(formatCountdown(nextMondayUtc())),
+      60_000,
+    );
     return () => window.clearInterval(interval);
   }, [tab]);
 
   const tabs: Array<{ id: Tab; label: string }> = useMemo(
     () => [
+      { id: "daily", label: "Today" },
       { id: "alltime", label: "All-time" },
       { id: "week", label: "This Week" },
       { id: "hof", label: "Hall of Fame" },
@@ -218,17 +247,56 @@ export function LeaderboardPage() {
           ))}
         </div>
 
-        {tab === "alltime" ? <LeaderboardTable entries={entries} /> : null}
+        {tab !== "hof" ? (
+          <div className="difficulty-filter" aria-label="Filter leaderboard by difficulty">
+            {(["All", "Explorer", "Scholar", "Conqueror"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={difficulty === item ? "chip selected" : "chip"}
+                onClick={() => setDifficulty(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {tab === "daily" ? (
+          daily === null ? (
+            <SkeletonTable cols={8} />
+          ) : (
+            <LeaderboardTable entries={daily} currentNickname={nickname} />
+          )
+        ) : null}
+
+        {tab === "alltime" ? (
+          <LeaderboardTable entries={alltime ?? entries} currentNickname={nickname} />
+        ) : null}
 
         {tab === "week" ? (
           <>
             <p className="week-meta">Resets in {countdown} (Monday 00:00 UTC).</p>
-            {weekly === null ? <SkeletonTable cols={7} /> : <WeeklyTable entries={weekly} />}
+            {weekly === null ? (
+              <SkeletonTable cols={7} />
+            ) : (
+              <WeeklyTable
+                entries={
+                  difficulty === "All"
+                    ? weekly
+                    : weekly.filter((entry) => entry.difficulty === difficulty)
+                }
+              />
+            )}
           </>
         ) : null}
 
         {tab === "hof" ? (
-          hof === null ? <SkeletonTable cols={1} rows={3} /> : <HallOfFameList archives={hof} />
+          hof === null ? (
+            <SkeletonTable cols={1} rows={3} />
+          ) : (
+            <HallOfFameList archives={hof} />
+          )
         ) : null}
 
         <Link className="primary-button compact-action" to="/">

@@ -1,4 +1,4 @@
-import type { Figure } from "../types/figure";
+import type { Figure, FigureIndex } from "../types/figure";
 import { GAME_CONFIG } from "../config/gameConfig";
 import { getFullName, normalizeName } from "./figures";
 
@@ -65,14 +65,14 @@ function seededShuffle<T>(items: T[], seed: number): T[] {
 
 // Daily pool excludes the longest tail of obscure figures to keep the shared
 // experience approachable.
-function getDailyPool(figures: Figure[]): Figure[] {
+function getDailyPool<T extends FigureIndex>(figures: T[]): T[] {
   return figures.filter((figure) => figure.popularity_rating >= 70);
 }
 
 export function getDailyFigures(
-  figures: Figure[],
+  figures: FigureIndex[],
   dateString: string = getUtcDateString(),
-): Figure[] {
+): FigureIndex[] {
   const pool = getDailyPool(figures);
   if (pool.length === 0) {
     return [];
@@ -94,18 +94,18 @@ export function getDailyFigures(
 }
 
 export function getFigureOfTheDay(
-  figures: Figure[],
+  figures: FigureIndex[],
   dateString: string = getUtcDateString(),
-): Figure | null {
+): FigureIndex | null {
   const daily = getDailyFigures(figures, dateString);
   return daily[0] ?? null;
 }
 
-export function getFigureSlug(figure: Figure): string {
+export function getFigureSlug(figure: Pick<Figure, "first_name" | "last_name">): string {
   return normalizeName(getFullName(figure)).replace(/\s+/g, "-");
 }
 
-export function findFigureBySlug(figures: Figure[], slug: string): Figure | null {
+export function findFigureBySlug(figures: FigureIndex[], slug: string): FigureIndex | null {
   const normalized = slug.toLowerCase();
   return figures.find((figure) => getFigureSlug(figure) === normalized) ?? null;
 }

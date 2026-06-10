@@ -20,6 +20,7 @@ const basemaps: Array<{ name: Basemap; description: string }> = [
 
 export function SettingsPage({ categories }: { categories: string[] }) {
   const difficulty = useSettingsStore((state) => state.difficulty);
+  const gameMode = useSettingsStore((state) => state.gameMode);
   const selectedCategories = useSettingsStore((state) => state.selectedCategories);
   const basemap = useSettingsStore((state) => state.basemap);
   const musicVol = useSettingsStore((state) => state.musicVol);
@@ -29,6 +30,7 @@ export function SettingsPage({ categories }: { categories: string[] }) {
   const reducedMotion = useSettingsStore((state) => state.reducedMotion);
   const mapTextures = useSettingsStore((state) => state.mapTextures);
   const setDifficulty = useSettingsStore((state) => state.setDifficulty);
+  const setGameMode = useSettingsStore((state) => state.setGameMode);
   const setSelectedCategories = useSettingsStore((state) => state.setSelectedCategories);
   const toggleCategory = useSettingsStore((state) => state.toggleCategory);
   const setBasemap = useSettingsStore((state) => state.setBasemap);
@@ -51,6 +53,29 @@ export function SettingsPage({ categories }: { categories: string[] }) {
       <section className="content-panel settings-panel" aria-labelledby="settings-title">
         <h1 id="settings-title">{en.settings}</h1>
         <fieldset>
+          <legend>Game mode</legend>
+          <div className="chip-grid">
+            <button
+              type="button"
+              className={gameMode === "classic" ? "chip selected" : "chip"}
+              aria-pressed={gameMode === "classic"}
+              onClick={() => setGameMode("classic")}
+            >
+              <span>Who?</span>
+              <small>Follow the journey and name the figure.</small>
+            </button>
+            <button
+              type="button"
+              className={gameMode === "reverse" ? "chip selected" : "chip"}
+              aria-pressed={gameMode === "reverse"}
+              onClick={() => setGameMode("reverse")}
+            >
+              <span>Where?</span>
+              <small>See the figure and click their birthplace.</small>
+            </button>
+          </div>
+        </fieldset>
+        <fieldset>
           <legend>Difficulty</legend>
           <div className="chip-grid">
             {difficulties.map((item) => (
@@ -64,10 +89,10 @@ export function SettingsPage({ categories }: { categories: string[] }) {
                 <span>{item}</span>
                 <small>
                   {item === "Explorer"
-                    ? "Famous faces — great for beginners"
+                    ? "30s + 30s bank, 3 hints, full suggestions"
                     : item === "Scholar"
-                      ? "Lesser-known but significant figures"
-                      : "The deepest cut — for true historians"}
+                      ? "24s + 15s bank, 2 hints, name-only suggestions"
+                      : "18s, no bank, 1 hint, no suggestions or easy rounds"}
                 </small>
               </button>
             ))}
@@ -136,20 +161,48 @@ export function SettingsPage({ categories }: { categories: string[] }) {
           <legend>Gameplay & accessibility</legend>
           <div className="settings-toggle-list">
             <label className="settings-toggle">
-              <span><strong>Name suggestions</strong><small>Show matching figures while typing.</small></span>
-              <input type="checkbox" checked={showSuggestions} onChange={(event) => setShowSuggestions(event.target.checked)} />
+              <span>
+                <strong>Name suggestions</strong>
+                <small>Show matching figures while typing.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={showSuggestions}
+                onChange={(event) => setShowSuggestions(event.target.checked)}
+              />
             </label>
             <label className="settings-toggle">
-              <span><strong>Auto-advance reveals</strong><small>Move to the next round after the reveal timer.</small></span>
-              <input type="checkbox" checked={autoAdvanceReveal} onChange={(event) => setAutoAdvanceReveal(event.target.checked)} />
+              <span>
+                <strong>Auto-advance reveals</strong>
+                <small>Move to the next round after the reveal timer.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={autoAdvanceReveal}
+                onChange={(event) => setAutoAdvanceReveal(event.target.checked)}
+              />
             </label>
             <label className="settings-toggle">
-              <span><strong>Reduce motion</strong><small>Disable cinematic map and level-up motion.</small></span>
-              <input type="checkbox" checked={reducedMotion} onChange={(event) => setReducedMotion(event.target.checked)} />
+              <span>
+                <strong>Reduce motion</strong>
+                <small>Disable cinematic map and level-up motion.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={reducedMotion}
+                onChange={(event) => setReducedMotion(event.target.checked)}
+              />
             </label>
             <label className="settings-toggle">
-              <span><strong>Map textures</strong><small>Show grain, paper fibers, and scanline overlays.</small></span>
-              <input type="checkbox" checked={mapTextures} onChange={(event) => setMapTextures(event.target.checked)} />
+              <span>
+                <strong>Map textures</strong>
+                <small>Show grain, paper fibers, and scanline overlays.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={mapTextures}
+                onChange={(event) => setMapTextures(event.target.checked)}
+              />
             </label>
           </div>
         </fieldset>

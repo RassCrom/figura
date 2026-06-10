@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import type { Figure } from "../types/figure";
+import type { FeaturedFigure } from "../types/figure";
 
 // Lazy import inside the effect so maplibre-gl stays out of the main chunk.
 type MapLibreGL = typeof import("maplibre-gl");
@@ -14,10 +14,10 @@ const START_CENTER: [lng: number, lat: number] = [42, 18];
 const FEATURED_FIGURE_COUNT = 20;
 
 type Props = {
-  figures: Figure[];
+  figures: FeaturedFigure[];
 };
 
-function createBirthplaceMarker(figure: Figure, rank: number): HTMLDivElement {
+function createBirthplaceMarker(figure: FeaturedFigure, rank: number): HTMLDivElement {
   const marker = document.createElement("div");
   marker.className = `birthplace-marker${rank <= 3 ? " birthplace-marker--headliner" : ""}`;
   marker.style.setProperty("--marker-delay", `${(rank % 7) * -0.46}s`);

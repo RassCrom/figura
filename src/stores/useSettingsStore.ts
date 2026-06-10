@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { Basemap, Difficulty } from "../types/figure";
+import type { Basemap, Difficulty, GameMode } from "../types/figure";
 
 type SettingsState = {
   difficulty: Difficulty;
+  gameMode: Exclude<GameMode, "daily">;
   selectedCategories: string[];
   basemap: Basemap;
   musicVol: number;
@@ -14,6 +15,7 @@ type SettingsState = {
   reducedMotion: boolean;
   mapTextures: boolean;
   setDifficulty: (difficulty: Difficulty) => void;
+  setGameMode: (gameMode: Exclude<GameMode, "daily">) => void;
   setSelectedCategories: (categories: string[]) => void;
   toggleCategory: (category: string) => void;
   setBasemap: (basemap: Basemap) => void;
@@ -29,6 +31,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       difficulty: "Explorer",
+      gameMode: "classic",
       selectedCategories: [],
       basemap: "Steppe",
       musicVol: 45,
@@ -38,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
       reducedMotion: false,
       mapTextures: true,
       setDifficulty: (difficulty) => set({ difficulty }),
+      setGameMode: (gameMode) => set({ gameMode }),
       setSelectedCategories: (selectedCategories) => set({ selectedCategories }),
       toggleCategory: (category) =>
         set((state) => {
@@ -57,7 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "gtf_settings",
-      version: 2,
+      version: 3,
     },
   ),
 );

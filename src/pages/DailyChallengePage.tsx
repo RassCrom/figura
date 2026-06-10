@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { TopNav } from "../components/TopNav";
+import { getDifficultyRules } from "../config/gameConfig";
 import { en } from "../i18n/en";
 import {
   DAILY_ROUNDS,
@@ -14,22 +15,24 @@ import {
 import { useGameStore } from "../stores/useGameStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { recordLocalPlay } from "../lib/playerActivity";
-import type { Figure } from "../types/figure";
+import { loadFigureRecords } from "../lib/figures";
+import type { FigureIndex } from "../types/figure";
 
 type Props = {
-  figures: Figure[];
+  figureIndex: FigureIndex[];
 };
 
-export function DailyChallengePage({ figures }: Props) {
+export function DailyChallengePage({ figureIndex }: Props) {
   const navigate = useNavigate();
   const nickname = useMemo(() => localStorage.getItem("gtf_nickname") ?? "", []);
   const today = useMemo(() => getUtcDateString(), []);
   const dayNumber = useMemo(() => getDayNumber(today), [today]);
-  const dailyFigures = useMemo(() => getDailyFigures(figures, today), [figures, today]);
+  const dailyFigures = useMemo(() => getDailyFigures(figureIndex, today), [figureIndex, today]);
   const startSession = useGameStore((state) => state.startSession);
   const setToast = useGameStore((state) => state.setToast);
   const lastDailyPlayedOn = useProfileStore((state) => state.lastDailyPlayedOn);
   const dailyStreak = useProfileStore((state) => state.dailyStreak);
+  const streakFreezesUsed = useProfileStore((state) => state.streakFreezesUsed);
   const [countdown, setCountdown] = useState(() => timeUntilNextDaily());
 
   const alreadyPlayed = lastDailyPlayedOn === today;
@@ -41,7 +44,7 @@ export function DailyChallengePage({ figures }: Props) {
     return () => window.clearInterval(interval);
   }, [alreadyPlayed]);
 
-  function handleStart() {
+  async function handleStart() {
     if (!nickname) {
       setToast("Pick a nickname on the home screen first.");
       navigate("/");
@@ -52,11 +55,12 @@ export function DailyChallengePage({ figures }: Props) {
       return;
     }
     const categories = [...new Set(dailyFigures.map((figure) => figure.category))];
+    const queue = await loadFigureRecords(dailyFigures);
     startSession({
       nickname,
       difficulty: "Scholar",
       categories,
-      queue: dailyFigures,
+      queue,
       mode: "daily",
       dailyDate: today,
     });
@@ -80,6 +84,9 @@ export function DailyChallengePage({ figures }: Props) {
             {dailyStreak} day streak
           </p>
         ) : null}
+        <p className="week-meta">
+          Weekly streak freeze: {streakFreezesUsed < 1 ? "ready" : "used"}
+        </p>
 
         {alreadyPlayed ? (
           <div className="daily-locked">
@@ -94,7 +101,10 @@ export function DailyChallengePage({ figures }: Props) {
           </div>
         ) : (
           <div className="daily-cta">
-            <p className="daily-rounds">{dailyFigures.length} figures - 30s per round</p>
+            <p className="daily-rounds">
+              {dailyFigures.length} figures - {getDifficultyRules("Scholar").roundSeconds}s per
+              round
+            </p>
             <button className="primary-button" type="button" onClick={handleStart}>
               Start Today's Challenge
             </button>

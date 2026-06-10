@@ -28,7 +28,7 @@ export type SubmitRunInput = {
   results: RoundResult[];
   achievements: AchievementId[];
   levelName: PlayerLevel;
-  mode?: "classic" | "daily";
+  mode?: "classic" | "daily" | "reverse";
   dailyDate?: string;
 };
 
@@ -36,9 +36,7 @@ export type SubmitRunResult =
   | { ok: true; runId: string; score: number; xpAwarded: number; idempotent: boolean }
   | { ok: false; error: string };
 
-export type ClaimNicknameResult =
-  | { ok: true; nickname: string }
-  | { ok: false; error: string };
+export type ClaimNicknameResult = { ok: true; nickname: string } | { ok: false; error: string };
 
 export async function fetchProfile(): Promise<ServerProfile | null> {
   if (!supabase) return null;
@@ -83,23 +81,46 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
   const userId = await ensureAnonymousUser();
   if (!userId) return { ok: false, error: "AUTH_REQUIRED" };
 
+  const serverAchievementIds: AchievementId[] = [
+    "first_blood",
+    "lightning_round",
+    "ice_cold",
+    "around_the_world",
+    "on_fire",
+    "silk_road",
+    "great_khan",
+  ];
+  const serverResults = input.results.map((result) => ({
+    round: result.round,
+    figureName: result.figureName,
+    score: result.score,
+    hintsUsed: result.hintsUsed,
+    timeUsed: result.timeUsed,
+    category: result.category,
+    continent: result.continent,
+    correct: result.correct,
+    firstGuess: result.firstGuess,
+  }));
   const { data, error } = await supabase.rpc("submit_run", {
-    p_results: input.results as unknown as never,
+    p_results: serverResults as unknown as never,
     p_difficulty: input.difficulty,
     p_categories: input.categories,
     p_session_id: input.sessionId,
     p_mode: input.mode ?? "classic",
     p_daily_date: input.dailyDate,
-    p_achievements: input.achievements,
+    p_achievements: input.achievements.filter((id) => serverAchievementIds.includes(id)),
     p_level_name: input.levelName,
   });
 
   if (error) {
     return { ok: false, error: parseRpcError(error.message) };
   }
-  const obj = data as
-    | { run_id: string; score: number; xp_awarded: number; idempotent?: boolean }
-    | null;
+  const obj = data as {
+    run_id: string;
+    score: number;
+    xp_awarded: number;
+    idempotent?: boolean;
+  } | null;
   if (!obj) {
     return { ok: false, error: "EMPTY_RESPONSE" };
   }
@@ -112,17 +133,21 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
   };
 }
 
-export async function fetchTopLeaderboard(limit = 100): Promise<LeaderboardEntry[]> {
+export async function fetchTopLeaderboard(
+  limit = 100,
+  difficulty?: Difficulty,
+): Promise<LeaderboardEntry[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  let query = supabase
     .from("runs")
     .select(
       "id, score, difficulty, categories, level_name, achievements, created_at, mode, user_id, profiles!inner(nickname)",
     )
     .eq("mode", "classic")
     .not("profiles.nickname", "is", null)
-    .order("score", { ascending: false })
-    .limit(limit);
+    .order("score", { ascending: false });
+  if (difficulty) query = query.eq("difficulty", difficulty);
+  const { data, error } = await query.limit(limit);
   if (error || !data) return [];
   return data.flatMap((row) => {
     const profileJoin = row.profiles as unknown as { nickname: string | null } | null;
@@ -141,6 +166,67 @@ export async function fetchTopLeaderboard(limit = 100): Promise<LeaderboardEntry
       } satisfies LeaderboardEntry,
     ];
   });
+}
+
+export type DailyLeaderboardEntry = LeaderboardEntry & { rank: number };
+
+export async function fetchDailyLeaderboard(
+  dailyDate: string,
+  difficulty?: Difficulty,
+  limit = 100,
+): Promise<DailyLeaderboardEntry[]> {
+  if (!supabase) return [];
+  let query = supabase
+    .from("runs")
+    .select(
+      "id, score, difficulty, categories, level_name, achievements, created_at, user_id, profiles!inner(nickname)",
+    )
+    .eq("mode", "daily")
+    .eq("daily_date", dailyDate)
+    .not("profiles.nickname", "is", null)
+    .order("score", { ascending: false });
+  if (difficulty) query = query.eq("difficulty", difficulty);
+  const { data, error } = await query.limit(limit);
+  if (error || !data) return [];
+  return data.flatMap((row, index) => {
+    const nickname = (row.profiles as unknown as { nickname: string | null } | null)?.nickname;
+    if (!nickname) return [];
+    return [
+      {
+        id: row.id,
+        rank: index + 1,
+        nickname,
+        score: row.score,
+        difficulty: row.difficulty as Difficulty,
+        categories: row.categories,
+        levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
+        achievements: (row.achievements ?? []) as AchievementId[],
+        date: row.created_at,
+      },
+    ];
+  });
+}
+
+export async function fetchDailyPercentile(
+  dailyDate: string,
+  score: number,
+): Promise<number | null> {
+  if (!supabase) return null;
+  const [totalResult, belowResult] = await Promise.all([
+    supabase
+      .from("runs")
+      .select("id", { count: "exact", head: true })
+      .eq("mode", "daily")
+      .eq("daily_date", dailyDate),
+    supabase
+      .from("runs")
+      .select("id", { count: "exact", head: true })
+      .eq("mode", "daily")
+      .eq("daily_date", dailyDate)
+      .lt("score", score),
+  ]);
+  if (totalResult.error || belowResult.error || !totalResult.count) return null;
+  return Math.round(((belowResult.count ?? 0) / totalResult.count) * 100);
 }
 
 export type WeeklyEntry = {
@@ -201,14 +287,15 @@ export async function fetchHallOfFame(limit = 20): Promise<WeeklyArchive[]> {
     .limit(limit);
   if (error || !data) return [];
   return data.map((row) => {
-    const winners = (row.winners as unknown as Array<{
-      nickname: string;
-      best_score: number;
-      difficulty: string;
-      level_name: string | null;
-      achievements: string[] | null;
-      played_at: string;
-    }>) ?? [];
+    const winners =
+      (row.winners as unknown as Array<{
+        nickname: string;
+        best_score: number;
+        difficulty: string;
+        level_name: string | null;
+        achievements: string[] | null;
+        played_at: string;
+      }>) ?? [];
     return {
       weekStart: row.week_start,
       winners: winners.map((w) => ({

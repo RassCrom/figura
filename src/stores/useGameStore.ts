@@ -1,12 +1,21 @@
 import { create } from "zustand";
 
-import { calcRoundScore, GAME_CONFIG } from "../config/gameConfig";
-import type { Difficulty, Figure, RoundResult } from "../types/figure";
-import { getFullName, inferContinent, normalizeName } from "../lib/figures";
+import {
+  calcReverseScore,
+  calcRoundScore,
+  GAME_CONFIG,
+  getDifficultyRules,
+} from "../config/gameConfig";
+import type { Coordinates, Difficulty, Figure, GameMode, RoundResult } from "../types/figure";
+import {
+  distanceKm,
+  getFullName,
+  inferContinent,
+  normalizeName,
+  parseHistoricalYear,
+} from "../lib/figures";
 
 type GameStatus = "idle" | "countdown" | "playing" | "paused" | "revealed" | "ended";
-
-type GameMode = "classic" | "daily";
 
 export type GameHint = "initial" | "description" | "category";
 
@@ -17,6 +26,18 @@ type StartSessionArgs = {
   queue: Figure[];
   mode?: GameMode;
   dailyDate?: string;
+};
+
+export type ReverseEstimate = {
+  birthYear: number;
+  deathYear: number;
+};
+
+export type ReverseGuessResult = {
+  distanceKm: number;
+  birthYearError: number | null;
+  deathYearError: number | null;
+  score: number;
 };
 
 type GameState = {
@@ -54,6 +75,10 @@ type GameState = {
   tick: (deltaSeconds: number) => void;
   activateGameHint: (hint: GameHint) => boolean;
   submitGuess: (guess: string) => boolean;
+  submitLocation: (
+    coordinates: Coordinates,
+    estimate: ReverseEstimate,
+  ) => ReverseGuessResult | null;
   skipRound: () => void;
   dismissReveal: () => void;
   pause: () => void;
@@ -95,7 +120,9 @@ const initialState = {
 // Per-round state that must be wiped at every round boundary. Everything
 // cumulative (score, queue, roundIndex, firstGuessStreak, roundResults) is
 // deliberately NOT in here.
-function freshRoundState(): Pick<
+function freshRoundState(
+  difficulty: Difficulty,
+): Pick<
   GameState,
   | "roundTimer"
   | "wrongGuesses"
@@ -107,7 +134,7 @@ function freshRoundState(): Pick<
   | "revealedFigure"
 > {
   return {
-    roundTimer: GAME_CONFIG.roundSeconds,
+    roundTimer: getDifficultyRules(difficulty).roundSeconds,
     wrongGuesses: 0,
     currentRoundScore: 0,
     timeUsed: 0,
@@ -125,13 +152,26 @@ function currentFigure(state: GameState): Figure | null {
 // Single entry point into the "revealed" state. Always writes the same set
 // of fields explicitly so currentRoundScore, score, and streak can never
 // be stale from the previous round.
-function reveal(state: GameState, score: number, correct: boolean): Partial<GameState> {
+function reveal(
+  state: GameState,
+  score: number,
+  correct: boolean,
+  reverseResult?: Pick<
+    RoundResult,
+    | "distanceKm"
+    | "birthYearError"
+    | "deathYearError"
+    | "locationScore"
+    | "timelineScore"
+    | "speedScore"
+  >,
+): Partial<GameState> {
   const figure = currentFigure(state);
   if (!figure) {
     return { status: "ended" };
   }
 
-  const isFirstGuess = correct && state.wrongGuesses === 0;
+  const isFirstGuess = state.mode !== "reverse" && correct && state.wrongGuesses === 0;
   // Streak counts CONSECUTIVE first-try-correct rounds; any non-first-guess
   // outcome (wrong guess, skip, timeout) resets it.
   const nextFirstGuessStreak = isFirstGuess ? state.firstGuessStreak + 1 : 0;
@@ -146,6 +186,7 @@ function reveal(state: GameState, score: number, correct: boolean): Partial<Game
       ...state.roundResults,
       {
         round: state.roundIndex + 1,
+        figureId: figure.id,
         figureName: getFullName(figure),
         score,
         hintsUsed: state.hintsUsed,
@@ -154,6 +195,7 @@ function reveal(state: GameState, score: number, correct: boolean): Partial<Game
         continent: inferContinent(figure.coordinates_of_the_place_of_birth),
         correct,
         firstGuess: isFirstGuess,
+        ...reverseResult,
       },
     ],
   };
@@ -171,6 +213,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       mode,
       dailyDate: dailyDate ?? null,
       queue,
+      roundTimer: getDifficultyRules(difficulty).roundSeconds,
+      extraBank: getDifficultyRules(difficulty).extraBankSeconds,
       status: "countdown",
       countdownText: "3",
     }),
@@ -185,7 +229,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         return state;
       }
       return {
-        ...freshRoundState(),
+        ...freshRoundState(state.difficulty),
         status: "playing",
         countdownText: "",
       };
@@ -230,7 +274,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     }),
   activateGameHint: (hint) => {
     const state = get();
-    if (state.status !== "playing" || state.usedGameHints.includes(hint)) {
+    const rules = getDifficultyRules(state.difficulty);
+    if (
+      state.status !== "playing" ||
+      state.usedGameHints.includes(hint) ||
+      state.usedGameHints.length >= rules.maxHints
+    ) {
       return false;
     }
 
@@ -258,6 +307,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         state.timeUsed,
         state.extraUsed,
         streak,
+        getDifficultyRules(state.difficulty).roundSeconds,
       );
       set(reveal(state, roundScore, true));
       return true;
@@ -278,6 +328,43 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
     });
     return false;
+  },
+  submitLocation: (coordinates, estimate) => {
+    const state = get();
+    const figure = currentFigure(state);
+    if (!figure || state.status !== "playing" || state.mode !== "reverse") {
+      return null;
+    }
+    const distance = distanceKm(coordinates, figure.coordinates_of_the_place_of_birth);
+    const actualBirthYear = parseHistoricalYear(figure.birth_date);
+    const actualDeathYear = parseHistoricalYear(figure.death_date);
+    const birthYearError =
+      actualBirthYear == null ? null : Math.abs(estimate.birthYear - actualBirthYear);
+    const deathYearError =
+      actualDeathYear == null ? null : Math.abs(estimate.deathYear - actualDeathYear);
+    const breakdown = calcReverseScore(
+      distance,
+      birthYearError,
+      deathYearError,
+      state.timeUsed + state.extraUsed,
+      getDifficultyRules(state.difficulty).roundSeconds,
+    );
+    set(
+      reveal(state, breakdown.total, true, {
+        distanceKm: distance,
+        birthYearError: birthYearError ?? undefined,
+        deathYearError: deathYearError ?? undefined,
+        locationScore: breakdown.location,
+        timelineScore: breakdown.timeline,
+        speedScore: breakdown.speed,
+      }),
+    );
+    return {
+      distanceKm: distance,
+      birthYearError,
+      deathYearError,
+      score: breakdown.total,
+    };
   },
   skipRound: () =>
     set((state) => {
@@ -302,7 +389,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
 
       return {
-        ...freshRoundState(),
+        ...freshRoundState(state.difficulty),
         status: "countdown",
         countdownText: "3",
         roundIndex: nextRound,

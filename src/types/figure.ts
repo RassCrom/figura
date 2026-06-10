@@ -1,8 +1,10 @@
 export type Coordinates = [lat: number, lng: number];
 
 export type Figure = {
+  id: string;
   first_name: string;
   last_name: string;
+  aliases: string[];
   nationality: string;
   country_of_origin: string;
   flag: string;
@@ -19,6 +21,23 @@ export type Figure = {
 };
 
 export type Difficulty = "Explorer" | "Scholar" | "Conqueror";
+export type GameMode = "classic" | "daily" | "reverse";
+
+export type FigureIndex = Pick<
+  Figure,
+  "id" | "first_name" | "last_name" | "aliases" | "category" | "popularity_rating" | "birth_date"
+>;
+
+export type FeaturedFigure = Pick<
+  Figure,
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "place_of_birth"
+  | "coordinates_of_the_place_of_birth"
+  | "popularity_rating"
+  | "photo"
+>;
 
 export type Basemap =
   | "Steppe"
@@ -41,6 +60,7 @@ export type Continent =
 
 export type RoundResult = {
   round: number;
+  figureId: string;
   figureName: string;
   score: number;
   hintsUsed: number;
@@ -49,6 +69,12 @@ export type RoundResult = {
   continent: Continent;
   correct: boolean;
   firstGuess: boolean;
+  distanceKm?: number;
+  birthYearError?: number;
+  deathYearError?: number;
+  locationScore?: number;
+  timelineScore?: number;
+  speedScore?: number;
 };
 
 export type AchievementId =
@@ -58,7 +84,15 @@ export type AchievementId =
   | "around_the_world"
   | "on_fire"
   | "silk_road"
-  | "great_khan";
+  | "great_khan"
+  | "collector_10"
+  | "collector_50"
+  | "collector_100"
+  | "veteran_25"
+  | "veteran_100"
+  | "daily_7"
+  | "daily_30"
+  | "category_ace";
 
 export type PlayerLevel = "Traveler" | "Cartographer" | "Historian" | "Oracle" | "Legend";
 

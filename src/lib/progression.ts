@@ -76,6 +76,18 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     name: "Great Khan",
     description: "Reach 30,000 points in one run.",
   },
+  { id: "collector_10", name: "Codex Initiate", description: "Identify 10 unique figures." },
+  { id: "collector_50", name: "Codex Curator", description: "Identify 50 unique figures." },
+  { id: "collector_100", name: "Codex Keeper", description: "Identify 100 unique figures." },
+  { id: "veteran_25", name: "Seasoned Traveler", description: "Complete 25 games." },
+  { id: "veteran_100", name: "Century of Runs", description: "Complete 100 games." },
+  { id: "daily_7", name: "Seven Suns", description: "Build a 7-day daily streak." },
+  { id: "daily_30", name: "Calendar Scholar", description: "Build a 30-day daily streak." },
+  {
+    id: "category_ace",
+    name: "Field Specialist",
+    description: "Reach 80% accuracy across 20 attempts in one category.",
+  },
 ];
 
 export function getLevelInfo(xp: number): {
@@ -117,6 +129,10 @@ export function resolveAchievementUnlocks(args: {
   unlocked: AchievementId[];
   correctEver: boolean;
   scholarWinStreak: number;
+  totalGames: number;
+  collectionSize: number;
+  dailyStreak: number;
+  categoryStats: Record<string, { correct: number; attempts: number }>;
 }): AchievementId[] {
   const unlocked = new Set(args.unlocked);
   const next: AchievementId[] = [];
@@ -130,7 +146,10 @@ export function resolveAchievementUnlocks(args: {
   }
 
   unlock("first_blood", !args.correctEver && correctResults.length > 0);
-  unlock("lightning_round", correctResults.some((result) => result.timeUsed < 5));
+  unlock(
+    "lightning_round",
+    correctResults.some((result) => result.timeUsed < 5),
+  );
   unlock(
     "ice_cold",
     args.summary.difficulty === "Conqueror" &&
@@ -138,7 +157,11 @@ export function resolveAchievementUnlocks(args: {
   );
   unlock(
     "around_the_world",
-    new Set(correctResults.map((result) => result.continent).filter((continent) => continent !== "Unknown")).size >= 5,
+    new Set(
+      correctResults
+        .map((result) => result.continent)
+        .filter((continent) => continent !== "Unknown"),
+    ).size >= 5,
   );
   unlock("on_fire", args.scholarWinStreak >= 5);
 
@@ -149,6 +172,19 @@ export function resolveAchievementUnlocks(args: {
       names.some((name) => name.includes("al farabi") || name.includes("muhammad al farabi")),
   );
   unlock("great_khan", args.summary.score >= 30000);
+  unlock("collector_10", args.collectionSize >= 10);
+  unlock("collector_50", args.collectionSize >= 50);
+  unlock("collector_100", args.collectionSize >= 100);
+  unlock("veteran_25", args.totalGames >= 25);
+  unlock("veteran_100", args.totalGames >= 100);
+  unlock("daily_7", args.dailyStreak >= 7);
+  unlock("daily_30", args.dailyStreak >= 30);
+  unlock(
+    "category_ace",
+    Object.values(args.categoryStats).some(
+      (stats) => stats.attempts >= 20 && stats.correct / stats.attempts >= 0.8,
+    ),
+  );
 
   return next;
 }

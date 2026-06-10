@@ -25,6 +25,8 @@ export const en = {
   guessLabel: "Guess the historical figure",
   guessPlaceholder: "Type a name...",
   who: "Who is this figure?",
+  where: "Where was this figure born?",
+  clickBirthplace: "Click the map to place your birthplace guess.",
   extraBank: "Extra Time Bank",
   streak: "Streak",
   inARow: "in a row",
@@ -34,4 +36,13 @@ export const en = {
   categoriesRequired: "Select at least one category.",
   noLeaderboard: "No scores recorded yet.",
   currentRun: "Current run",
+  centuryUnknown: "Century unknown",
+  century: (century: number, bc: boolean) =>
+    `${century}${ordinalSuffix(century)} c.${bc ? " BC" : ""}`,
 };
+
+function ordinalSuffix(value: number): string {
+  const mod100 = value % 100;
+  if (mod100 >= 11 && mod100 <= 13) return "th";
+  return value % 10 === 1 ? "st" : value % 10 === 2 ? "nd" : value % 10 === 3 ? "rd" : "th";
+}

@@ -13,11 +13,12 @@ import {
   Play,
   ScrollText,
   Tag,
-  X,
   Plus,
   Minus,
   type LucideIcon,
 } from "lucide-react";
+import { PersonCard } from "../components/game/PersonCard";
+import { TimerArc } from "../components/game/TimerArc";
 import {
   type CSSProperties,
   FormEvent,
@@ -29,7 +30,7 @@ import {
 } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { GAME_CONFIG } from "../config/gameConfig";
+import { GAME_CONFIG, getDifficultyRules } from "../config/gameConfig";
 import { useCountUp } from "../hooks/useCountUp";
 import { useSoundManager } from "../hooks/useSoundManager";
 import { en } from "../i18n/en";
@@ -40,15 +41,17 @@ import {
   getFullName,
   getWikipediaUrl,
   normalizeName,
+  parseHistoricalYear,
+  resolveFigureGuess,
 } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
 import { type GameHint, useGameStore } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { Figure } from "../types/figure";
+import type { Figure, FigureIndex, RoundResult } from "../types/figure";
 
 type Props = {
-  figures: Figure[];
+  figureIndex: FigureIndex[];
 };
 
 type MapEngine = typeof import("../lib/mapEngine");
@@ -80,188 +83,27 @@ const GAME_HINTS: Array<{
   { id: "category", icon: Tag, label: "Show person category", shortLabel: "Category" },
 ];
 
-function toRoman(value: number): string {
-  const numerals: Array<[number, string]> = [
-    [1000, "M"],
-    [900, "CM"],
-    [500, "D"],
-    [400, "CD"],
-    [100, "C"],
-    [90, "XC"],
-    [50, "L"],
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"],
-  ];
-  let remaining = value;
-  let out = "";
-  for (const [amount, numeral] of numerals) {
-    while (remaining >= amount) {
-      out += numeral;
-      remaining -= amount;
-    }
-  }
-  return out;
+const MIN_TIMELINE_YEAR = -3000;
+const MAX_TIMELINE_YEAR = new Date().getUTCFullYear();
+const DEFAULT_REVERSE_ESTIMATE = { birthYear: 1800, deathYear: 1900 };
+
+function formatHistoricalYear(year: number): string {
+  return year < 0 ? `${Math.abs(year)} BC` : `${year}`;
 }
 
-function parseHistoricalYear(value: string): number | null {
-  const century = value.match(/\b(\d+)(?:st|nd|rd|th)\s+century\s+BC\b/i);
-  if (century) {
-    return -(Number(century[1]) - 1) * 100 - 1;
-  }
-
-  const year = value.match(/\b\d{1,4}\b/);
-  if (!year) {
-    return null;
-  }
-  const numericYear = Number(year[0]);
-  return /\bBC\b/i.test(value) ? -numericYear : numericYear;
-}
-
-function getCenturyLabel(figure: Figure): string {
+function getCenturyLabel(figure: FigureIndex): string {
   const year = parseHistoricalYear(figure.birth_date);
   if (year == null) {
-    return "Century unknown";
+    return en.centuryUnknown;
   }
   const century = Math.floor((Math.abs(year) - 1) / 100) + 1;
-  return year < 0 ? `${toRoman(century)} в. до н.э.` : `${toRoman(century)} в.`;
+  return en.century(century, year < 0);
 }
 
-function TimerArc({ seconds }: { seconds: number }) {
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const progress = Math.max(0, Math.min(1, seconds / GAME_CONFIG.roundSeconds));
-  const dashOffset = circumference * (1 - progress);
-  const statusClass = seconds <= 5 ? "danger" : seconds <= 10 ? "warning" : "";
 
-  return (
-    <div
-      className={`timer-arc ${statusClass}`}
-      aria-label={`${Math.ceil(seconds)} seconds remaining`}
-    >
-      <svg viewBox="0 0 96 96" aria-hidden="true">
-        <circle cx="48" cy="48" r={radius} className="timer-track" />
-        <circle
-          cx="48"
-          cy="48"
-          r={radius}
-          className="timer-progress"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-        />
-      </svg>
-      <span className="timer-value">
-        <strong>{Math.ceil(seconds)}</strong>
-        <span>sec</span>
-      </span>
-    </div>
-  );
-}
 
-function PersonCard({
-  figure,
-  roundScore,
-  onDismiss,
-  cinematic,
-  autoAdvance,
-}: {
-  figure: Figure;
-  roundScore: number;
-  onDismiss: () => void;
-  cinematic: boolean;
-  autoAdvance: boolean;
-}) {
-  const [remainingMs, setRemainingMs] = useState<number>(GAME_CONFIG.revealAutoDismissMs);
-  const journey = distanceKm(
-    figure.coordinates_of_the_place_of_birth,
-    figure.coordinates_of_the_place_of_death,
-  );
-  const dates = getLifeDateRange(figure);
 
-  useEffect(() => {
-    if (!autoAdvance) {
-      setRemainingMs(0);
-      return;
-    }
-    const startedAt = performance.now();
-    const timer = window.setTimeout(onDismiss, GAME_CONFIG.revealAutoDismissMs);
-    const interval = window.setInterval(() => {
-      const elapsed = performance.now() - startedAt;
-      setRemainingMs(Math.max(0, GAME_CONFIG.revealAutoDismissMs - elapsed));
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.clearInterval(interval);
-    };
-  }, [autoAdvance, onDismiss]);
-
-  useEffect(() => {
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape" || event.key === " " || event.key === "Enter") {
-        event.preventDefault();
-        onDismiss();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onDismiss]);
-
-  return (
-    <div
-      className={cinematic ? "reveal-backdrop cinematic" : "reveal-backdrop"}
-      onClick={onDismiss}
-      role="presentation"
-    >
-      <article
-        className={cinematic ? "person-card cinematic-card" : "person-card"}
-        onClick={(event) => event.stopPropagation()}
-      >
-        {autoAdvance ? <div className="reveal-progress" aria-hidden="true" /> : null}
-        <button
-          className="icon-button close-button"
-          type="button"
-          onClick={onDismiss}
-          aria-label="Dismiss card"
-        >
-          <X aria-hidden="true" size={18} />
-        </button>
-        <img src={figure.photo} alt={getFullName(figure)} loading="eager" />
-        <div className="person-details">
-          <p className="eyebrow">Round score +{roundScore.toLocaleString()}</p>
-          <h2>{getFullName(figure)}</h2>
-          <p className="date-line">{dates}</p>
-          <div className="tag-row">
-            <span>{figure.nationality}</span>
-            <span>{figure.country_of_origin}</span>
-          </div>
-          <p className="description-label">{en.description}</p>
-          <p>{figure.description}</p>
-          <div className="distance-block">
-            <span>{en.journeyDistance}</span>
-            <strong>{journey.toLocaleString()} km</strong>
-          </div>
-          <div className="reveal-controls">
-            <span>
-              {autoAdvance ? `Next in ${Math.ceil(remainingMs / 1000)}s` : "Ready when you are"}
-            </span>
-            <button className="primary-button" type="button" onClick={onDismiss}>
-              Next
-            </button>
-          </div>
-          <a className="wiki-link" href={getWikipediaUrl(figure)} target="_blank" rel="noreferrer">
-            {en.wikipedia}
-          </a>
-        </div>
-      </article>
-    </div>
-  );
-}
-
-export default function GamePage({ figures }: Props) {
+export default function GamePage({ figureIndex }: Props) {
   const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapEngineRef = useRef<MapEngine | null>(null);
@@ -280,17 +122,23 @@ export default function GamePage({ figures }: Props) {
   const [isSmallViewport, setIsSmallViewport] = useState(false);
   const [showRevealCard, setShowRevealCard] = useState(false);
   const [revealFlightActive, setRevealFlightActive] = useState(false);
+  const [birthYearEstimate, setBirthYearEstimate] = useState(DEFAULT_REVERSE_ESTIMATE.birthYear);
+  const [deathYearEstimate, setDeathYearEstimate] = useState(DEFAULT_REVERSE_ESTIMATE.deathYear);
+  const reverseEstimateRef = useRef(DEFAULT_REVERSE_ESTIMATE);
   const [wrongPlace, setWrongPlace] = useState<{
     key: number;
     name: string;
     place: string;
   } | null>(null);
   const basemap = useSettingsStore((state) => state.basemap);
+  const initialBasemapRef = useRef(basemap);
   const showSuggestions = useSettingsStore((state) => state.showSuggestions);
   const autoAdvanceReveal = useSettingsStore((state) => state.autoAdvanceReveal);
   const reducedMotionSetting = useSettingsStore((state) => state.reducedMotion);
   const mapTextures = useSettingsStore((state) => state.mapTextures);
   const status = useGameStore((state) => state.status);
+  const mode = useGameStore((state) => state.mode);
+  const difficulty = useGameStore((state) => state.difficulty);
   const queue = useGameStore((state) => state.queue);
   const roundIndex = useGameStore((state) => state.roundIndex);
   const countdownText = useGameStore((state) => state.countdownText);
@@ -318,6 +166,7 @@ export default function GamePage({ figures }: Props) {
   const tick = useGameStore((state) => state.tick);
   const activateGameHint = useGameStore((state) => state.activateGameHint);
   const submitGuess = useGameStore((state) => state.submitGuess);
+  const submitLocation = useGameStore((state) => state.submitLocation);
   const skipRound = useGameStore((state) => state.skipRound);
   const dismissReveal = useGameStore((state) => state.dismissReveal);
   const pause = useGameStore((state) => state.pause);
@@ -326,6 +175,7 @@ export default function GamePage({ figures }: Props) {
   const { play, crossfadeTo } = useSoundManager();
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
+  const difficultyRules = getDifficultyRules(difficulty);
   const initialSource = currentFigure?.last_name.trim() || currentFigure?.first_name.trim() || "";
   const revealedInitial = initialSource.charAt(0).toLocaleUpperCase();
   const keyboardLayoutActive = guessPanelFocused && isSmallViewport && status === "playing";
@@ -334,8 +184,11 @@ export default function GamePage({ figures }: Props) {
     revealedFigure && revealResult?.round === roundIndex + 1 && revealResult.correct,
   );
   const historyRoutes = useMemo(
-    () => buildRoundRouteOverlays(roundResults, queue, { correctOnly: true, ghost: true }),
-    [queue, roundResults],
+    () =>
+      mode === "reverse"
+        ? []
+        : buildRoundRouteOverlays(roundResults, queue, { correctOnly: true, ghost: true }),
+    [mode, queue, roundResults],
   );
   const screenClassName = [
     "game-screen",
@@ -354,16 +207,16 @@ export default function GamePage({ figures }: Props) {
   const suggestions = useMemo(() => {
     const query = normalizeName(debouncedGuess);
     if (!query) {
-      return [] as Figure[];
+      return [] as FigureIndex[];
     }
 
-    if (!showSuggestions) {
-      return [] as Figure[];
+    if (!showSuggestions || !difficultyRules.suggestions || mode === "reverse") {
+      return [] as FigureIndex[];
     }
-    return figures
+    return figureIndex
       .filter((figure) => normalizeName(getFullName(figure)).includes(query))
       .slice(0, GAME_CONFIG.maxSuggestions);
-  }, [debouncedGuess, figures, showSuggestions]);
+  }, [debouncedGuess, difficultyRules.suggestions, figureIndex, mode, showSuggestions]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedGuess(guess), GAME_CONFIG.debounceMs);
@@ -445,7 +298,7 @@ export default function GamePage({ figures }: Props) {
       }
 
       mapEngineRef.current = engine;
-      mapRef.current = engine.createGameMap(mapContainerRef.current, basemap);
+      mapRef.current = engine.createGameMap(mapContainerRef.current, initialBasemapRef.current);
       setMapReady(true);
     });
 
@@ -490,21 +343,75 @@ export default function GamePage({ figures }: Props) {
   }, [mapReady]);
 
   useEffect(() => {
+    const handle = mapRef.current;
+    if (!mapReady || !handle || mode !== "reverse") return;
+    const map = handle.map;
+    const onClick = (event: { lngLat: { lat: number; lng: number } }) => {
+      if (status !== "playing") return;
+      const result = submitLocation(
+        [event.lngLat.lat, event.lngLat.lng],
+        reverseEstimateRef.current,
+      );
+      if (result == null) return;
+      play(result.distanceKm <= 500 ? "correct" : "wrong");
+      crossfadeTo("reveal-flourish");
+    };
+    map.getCanvas().style.cursor = status === "playing" ? "crosshair" : "";
+    map.on("click", onClick);
+    return () => {
+      map.getCanvas().style.cursor = "";
+      map.off("click", onClick);
+    };
+  }, [crossfadeTo, mapReady, mode, play, status, submitLocation]);
+
+  useEffect(() => {
     const engine = mapEngineRef.current;
     const map = mapRef.current;
     if (!engine || !map || !currentFigure || !mapReady) {
       return;
     }
 
+    if (mode === "reverse" && status !== "revealed") {
+      engine.clearJourney(map, false);
+      if (status === "countdown") {
+        map.map.easeTo({
+          center: [45, 20],
+          zoom: 1.3,
+          bearing: 0,
+          pitch: 0,
+          duration: reducedMotionSetting ? 0 : 420,
+          essential: true,
+        });
+      }
+      return;
+    }
+
     const lifeDates = getLifeDateHints(currentFigure);
+    const revealReverse = mode === "reverse" && status === "revealed";
     const hints: JourneyHints = {
       birth: {
-        primary: wrongGuesses >= 1 ? lifeDates.birthDate : null,
-        secondary: wrongGuesses >= 2 ? currentFigure.place_of_birth : null,
+        primary: revealReverse
+          ? currentFigure.place_of_birth
+          : wrongGuesses >= 1
+            ? lifeDates.birthDate
+            : null,
+        secondary: revealReverse
+          ? lifeDates.birthDate
+          : wrongGuesses >= 2
+            ? currentFigure.place_of_birth
+            : null,
       },
       death: {
-        primary: wrongGuesses >= 1 ? lifeDates.deathDate : null,
-        secondary: wrongGuesses >= 2 ? currentFigure.place_of_death : null,
+        primary: revealReverse
+          ? currentFigure.place_of_death
+          : wrongGuesses >= 1
+            ? lifeDates.deathDate
+            : null,
+        secondary: revealReverse
+          ? lifeDates.deathDate
+          : wrongGuesses >= 2
+            ? currentFigure.place_of_death
+            : null,
       },
     };
 
@@ -515,7 +422,7 @@ export default function GamePage({ figures }: Props) {
       reducedMotion,
       compact: isSmallViewport,
     });
-  }, [currentFigure, isSmallViewport, mapReady, reducedMotionSetting, wrongGuesses, status]);
+  }, [currentFigure, isSmallViewport, mapReady, mode, reducedMotionSetting, wrongGuesses, status]);
 
   useEffect(() => {
     if (!mapEngineRef.current || !mapRef.current) {
@@ -620,16 +527,32 @@ export default function GamePage({ figures }: Props) {
     setDebouncedGuess("");
     setActiveSuggestion(0);
     setWrongPlace(null);
+    setBirthYearEstimate(DEFAULT_REVERSE_ESTIMATE.birthYear);
+    setDeathYearEstimate(DEFAULT_REVERSE_ESTIMATE.deathYear);
+    reverseEstimateRef.current = DEFAULT_REVERSE_ESTIMATE;
   }, [roundIndex]);
+
+  function updateBirthYearEstimate(year: number) {
+    const birthYear = Math.min(year, deathYearEstimate);
+    setBirthYearEstimate(birthYear);
+    reverseEstimateRef.current = { ...reverseEstimateRef.current, birthYear };
+  }
+
+  function updateDeathYearEstimate(year: number) {
+    const deathYear = Math.max(year, birthYearEstimate);
+    setDeathYearEstimate(deathYear);
+    reverseEstimateRef.current = { ...reverseEstimateRef.current, deathYear };
+  }
 
   function submitValue(value: string) {
     if (!value.trim()) {
       return;
     }
-    const guessedFigure = figures.find(
-      (figure) => normalizeName(getFullName(figure)) === normalizeName(value),
-    );
-    const correct = submitGuess(value);
+    const resolvedGuess = resolveFigureGuess(value, figureIndex);
+    const guessedFigure = resolvedGuess
+      ? queue.find((figure) => figure.id === resolvedGuess.id)
+      : undefined;
+    const correct = submitGuess(resolvedGuess ? getFullName(resolvedGuess) : value);
     setGuess("");
     setActiveSuggestion(0);
     if (correct) {
@@ -646,7 +569,7 @@ export default function GamePage({ figures }: Props) {
       wrongPlaceCounter.current += 1;
       setWrongPlace({
         key: wrongPlaceCounter.current,
-        name: getFullName(guessedFigure),
+        name: getFullName(resolvedGuess ?? guessedFigure),
         place: guessedFigure.place_of_birth,
       });
     }
@@ -765,7 +688,7 @@ export default function GamePage({ figures }: Props) {
         </div>
 
         <div className="hud-middle">
-          <TimerArc seconds={roundTimer} />
+          <TimerArc seconds={roundTimer} maxSeconds={difficultyRules.roundSeconds} />
           {extraBank > 0 ? (
             <div className="extra-pill">
               <span>{en.extraBank}</span>
@@ -783,7 +706,7 @@ export default function GamePage({ figures }: Props) {
 
         <form
           ref={guessPanelRef}
-          className="guess-panel"
+          className={mode === "reverse" ? "guess-panel reverse-mode" : "guess-panel"}
           onSubmit={handleSubmit}
           onFocusCapture={() => setGuessPanelFocused(true)}
           onBlurCapture={() => {
@@ -794,57 +717,110 @@ export default function GamePage({ figures }: Props) {
             }, 0);
           }}
         >
-          <div className="field-notes">
-            <div className="field-notes-header">
-              <span>Field notes</span>
-              <small>{3 - usedGameHints.length} left this game</small>
-            </div>
-            <div className="game-hint-actions" aria-label="Game hints">
-              {GAME_HINTS.map((hint) => {
-                const Icon = hint.icon;
-                const used = usedGameHints.includes(hint.id);
-                const active = roundGameHints.includes(hint.id);
-                return (
-                  <button
-                    key={hint.id}
-                    className={`game-hint-button${active ? " active" : ""}`}
-                    type="button"
-                    onClick={() => activateGameHint(hint.id)}
-                    disabled={status !== "playing" || used}
-                    aria-label={`${hint.label}. ${used ? "Already used" : "Available once this game"}.`}
-                    aria-pressed={active}
-                  >
-                    <Icon aria-hidden="true" size={17} />
-                    <span>{hint.shortLabel}</span>
-                    <small>{used ? (active ? "Revealed" : "Spent") : "1 use"}</small>
-                  </button>
-                );
-              })}
-            </div>
-            {roundGameHints.length > 0 && currentFigure ? (
-              <div className="field-note-reveals" aria-live="polite">
-                {roundGameHints.includes("initial") ? (
-                  <p>
-                    <span>{currentFigure.last_name.trim() ? "Surname" : "Name"} starts with</span>
-                    <strong className="initial-reveal">{revealedInitial}</strong>
-                  </p>
-                ) : null}
-                {roundGameHints.includes("category") ? (
-                  <p>
-                    <span>Category</span>
-                    <strong>{currentFigure.category}</strong>
-                  </p>
-                ) : null}
-                {roundGameHints.includes("description") ? (
-                  <p className="description-reveal">
-                    <span>Description</span>
-                    <strong>{currentFigure.description}</strong>
-                  </p>
-                ) : null}
+          {mode !== "reverse" ? (
+            <div className="field-notes">
+              <div className="field-notes-header">
+                <span>Field notes</span>
+                <small>{difficultyRules.maxHints - usedGameHints.length} left this game</small>
               </div>
-            ) : null}
-          </div>
-          <label htmlFor="guess-input">{en.who}</label>
+              <div className="game-hint-actions" aria-label="Game hints">
+                {GAME_HINTS.map((hint) => {
+                  const Icon = hint.icon;
+                  const used = usedGameHints.includes(hint.id);
+                  const active = roundGameHints.includes(hint.id);
+                  return (
+                    <button
+                      key={hint.id}
+                      className={`game-hint-button${active ? " active" : ""}`}
+                      type="button"
+                      onClick={() => activateGameHint(hint.id)}
+                      disabled={
+                        status !== "playing" ||
+                        used ||
+                        usedGameHints.length >= difficultyRules.maxHints
+                      }
+                      aria-label={`${hint.label}. ${used ? "Already used" : "Available once this game"}.`}
+                      aria-pressed={active}
+                    >
+                      <Icon aria-hidden="true" size={17} />
+                      <span>{hint.shortLabel}</span>
+                      <small>{used ? (active ? "Revealed" : "Spent") : "1 use"}</small>
+                    </button>
+                  );
+                })}
+              </div>
+              {roundGameHints.length > 0 && currentFigure ? (
+                <div className="field-note-reveals" aria-live="polite">
+                  {roundGameHints.includes("initial") ? (
+                    <p>
+                      <span>{currentFigure.last_name.trim() ? "Surname" : "Name"} starts with</span>
+                      <strong className="initial-reveal">{revealedInitial}</strong>
+                    </p>
+                  ) : null}
+                  {roundGameHints.includes("category") ? (
+                    <p>
+                      <span>Category</span>
+                      <strong>{currentFigure.category}</strong>
+                    </p>
+                  ) : null}
+                  {roundGameHints.includes("description") ? (
+                    <p className="description-reveal">
+                      <span>Description</span>
+                      <strong>{currentFigure.description}</strong>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <label htmlFor={mode === "reverse" ? undefined : "guess-input"}>
+            {mode === "reverse" ? en.where : en.who}
+          </label>
+          {mode === "reverse" && currentFigure ? (
+            <>
+              <div className="reverse-prompt">
+                <img src={currentFigure.photo} alt="" />
+                <div>
+                  <strong>{getFullName(currentFigure)}</strong>
+                  <span>Estimate their lifetime, then {en.clickBirthplace.toLowerCase()}</span>
+                </div>
+              </div>
+              <div className="reverse-timeline" role="group" aria-label="Lifetime estimate">
+                <label htmlFor="birth-year-estimate">
+                  <span>Birth estimate</span>
+                  <strong>{formatHistoricalYear(birthYearEstimate)}</strong>
+                </label>
+                <input
+                  id="birth-year-estimate"
+                  type="range"
+                  min={MIN_TIMELINE_YEAR}
+                  max={MAX_TIMELINE_YEAR}
+                  step="1"
+                  value={birthYearEstimate}
+                  onChange={(event) => updateBirthYearEstimate(Number(event.target.value))}
+                  disabled={status !== "playing"}
+                />
+                <label htmlFor="death-year-estimate">
+                  <span>Death estimate</span>
+                  <strong>{formatHistoricalYear(deathYearEstimate)}</strong>
+                </label>
+                <input
+                  id="death-year-estimate"
+                  type="range"
+                  min={MIN_TIMELINE_YEAR}
+                  max={MAX_TIMELINE_YEAR}
+                  step="1"
+                  value={deathYearEstimate}
+                  onChange={(event) => updateDeathYearEstimate(Number(event.target.value))}
+                  disabled={status !== "playing"}
+                />
+                <div className="timeline-scale" aria-hidden="true">
+                  <span>3000 BC</span>
+                  <span>Present</span>
+                </div>
+              </div>
+            </>
+          ) : null}
           {suggestions.length > 0 ? (
             <div className="suggestions" role="listbox">
               {suggestions.map((figure, index) => {
@@ -862,39 +838,47 @@ export default function GamePage({ figures }: Props) {
                     role="option"
                     aria-selected={index === activeSuggestion}
                   >
-                    <span className="suggestion-icon" aria-hidden="true">
-                      <Icon size={16} />
-                    </span>
+                    {difficultyRules.suggestionMetadata ? (
+                      <span className="suggestion-icon" aria-hidden="true">
+                        <Icon size={16} />
+                      </span>
+                    ) : null}
                     <span className="suggestion-copy">
                       <strong>{getFullName(figure)}</strong>
-                      <small>
-                        {getCenturyLabel(figure)} · {meta.label}
-                      </small>
+                      {difficultyRules.suggestionMetadata ? (
+                        <small>
+                          {getCenturyLabel(figure)} · {meta.label}
+                        </small>
+                      ) : null}
                     </span>
                   </button>
                 );
               })}
             </div>
           ) : null}
-          <input
-            key={inputShakeKey}
-            ref={inputRef}
-            id="guess-input"
-            className={inputShakeKey > 0 ? "shake" : undefined}
-            value={guess}
-            onChange={(event) => setGuess(event.target.value)}
-            onKeyDown={handleKeyDown}
-            aria-label={en.guessLabel}
-            placeholder={en.guessPlaceholder}
-            autoComplete="off"
-            disabled={status !== "playing"}
-          />
-          <div className="hint-live" aria-live="polite">
-            {wrongGuesses === 1
-              ? "Hint added: life dates are visible near the birth marker."
-              : null}
-            {wrongGuesses === 2 ? "Hint added: place names are visible near the markers." : null}
-          </div>
+          {mode !== "reverse" ? (
+            <input
+              key={inputShakeKey}
+              ref={inputRef}
+              id="guess-input"
+              className={inputShakeKey > 0 ? "shake" : undefined}
+              value={guess}
+              onChange={(event) => setGuess(event.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label={en.guessLabel}
+              placeholder={en.guessPlaceholder}
+              autoComplete="off"
+              disabled={status !== "playing"}
+            />
+          ) : null}
+          {mode !== "reverse" ? (
+            <div className="hint-live" aria-live="polite">
+              {wrongGuesses === 1
+                ? "Hint added: life dates are visible near the birth marker."
+                : null}
+              {wrongGuesses === 2 ? "Hint added: place names are visible near the markers." : null}
+            </div>
+          ) : null}
         </form>
       </section>
 
@@ -940,6 +924,7 @@ export default function GamePage({ figures }: Props) {
           onDismiss={dismissReveal}
           cinematic={revealWasCorrect}
           autoAdvance={autoAdvanceReveal}
+          roundResult={revealResult}
         />
       ) : null}
     </main>

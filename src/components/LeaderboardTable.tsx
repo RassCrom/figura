@@ -10,6 +10,7 @@ import { LevelBadge } from "./LevelBadge";
 type Props = {
   entries: LeaderboardEntry[];
   full?: boolean;
+  currentNickname?: string;
 };
 
 function runFingerprint(entry: LeaderboardEntry): string {
@@ -34,7 +35,7 @@ function collapseDuplicateCurrentRuns(entries: LeaderboardEntry[]): LeaderboardE
   });
 }
 
-export function LeaderboardTable({ entries, full = false }: Props) {
+export function LeaderboardTable({ entries, full = false, currentNickname }: Props) {
   const [page, setPage] = useState(0);
   const sorted = useMemo(
     () => collapseDuplicateCurrentRuns(entries).sort((a, b) => b.score - a.score),
@@ -49,7 +50,14 @@ export function LeaderboardTable({ entries, full = false }: Props) {
   const pageCount = Math.max(1, Math.ceil(sorted.length / GAME_CONFIG.leaderboardPageSize));
   const visible = full
     ? sorted
-    : sorted.slice(page * GAME_CONFIG.leaderboardPageSize, (page + 1) * GAME_CONFIG.leaderboardPageSize);
+    : sorted.slice(
+        page * GAME_CONFIG.leaderboardPageSize,
+        (page + 1) * GAME_CONFIG.leaderboardPageSize,
+      );
+  const currentEntry = currentNickname
+    ? sorted.find((entry) => entry.nickname.toLowerCase() === currentNickname.toLowerCase())
+    : sorted.find((entry) => entry.current);
+  const currentOffScreen = currentEntry && !visible.some((entry) => entry.id === currentEntry.id);
 
   if (sorted.length === 0) {
     return <p className="empty-state">{en.noLeaderboard}</p>;
@@ -74,7 +82,16 @@ export function LeaderboardTable({ entries, full = false }: Props) {
           {visible.map((entry) => {
             const rank = rankMap.get(entry.id) ?? 0;
             return (
-              <tr key={entry.id} className={entry.current ? "current-row" : undefined}>
+              <tr
+                key={entry.id}
+                className={
+                  entry.current ||
+                  (currentNickname &&
+                    entry.nickname.toLowerCase() === currentNickname.toLowerCase())
+                    ? "current-row"
+                    : undefined
+                }
+              >
                 <td>{rank}</td>
                 <td>
                   <Link to={`/profile/${entry.nickname}`} className="leaderboard-nick">
@@ -102,9 +119,30 @@ export function LeaderboardTable({ entries, full = false }: Props) {
           })}
         </tbody>
       </table>
+      {currentOffScreen ? (
+        <button
+          className="your-rank-row"
+          type="button"
+          onClick={() =>
+            setPage(
+              Math.floor((rankMap.get(currentEntry.id)! - 1) / GAME_CONFIG.leaderboardPageSize),
+            )
+          }
+        >
+          <strong>Your rank: #{rankMap.get(currentEntry.id)}</strong>
+          <span>
+            {currentEntry.nickname} · {currentEntry.score.toLocaleString()} pts ·{" "}
+            {currentEntry.difficulty}
+          </span>
+        </button>
+      ) : null}
       {!full && pageCount > 1 ? (
         <div className="pager">
-          <button className="ghost-button" type="button" onClick={() => setPage((value) => Math.max(0, value - 1))}>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => setPage((value) => Math.max(0, value - 1))}
+          >
             Previous
           </button>
           <span>

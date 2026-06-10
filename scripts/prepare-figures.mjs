@@ -1,11 +1,40 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "src", "data", "figures.json");
-const outputPath = path.join(root, "public", "data", "figures.json");
+const dataDirectory = path.join(root, "public", "data");
+const legacyOutputPath = path.join(dataDirectory, "figures.json");
+const indexPath = path.join(dataDirectory, "figure-index.json");
+const featuredPath = path.join(dataDirectory, "featured-figures.json");
+const recordsDirectory = path.join(dataDirectory, "figures");
 const checkOnly = process.argv.includes("--check");
+
+async function writeIfChanged(filePath, output) {
+  const current = await readFile(filePath, "utf8").catch(() => "");
+  if (current !== output) {
+    await writeFile(filePath, output);
+    return true;
+  }
+  return false;
+}
+
+async function removeGeneratedFile(filePath) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      await rm(filePath, { force: true });
+      return true;
+    } catch (error) {
+      if (!["EBUSY", "EPERM"].includes(error.code) || attempt === 3) {
+        console.warn(`Unable to remove stale generated file: ${filePath} (${error.code})`);
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 80 * (attempt + 1)));
+    }
+  }
+  return false;
+}
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -68,10 +97,34 @@ function validateFigure(figure) {
   return issues;
 }
 
+const aliasesByName = new Map([
+  ["genghis khan", ["Chinggis Khan"]],
+  ["chinggis khan", ["Genghis Khan"]],
+  ["leonardo da vinci", ["Da Vinci", "Leonardo"]],
+]);
+
+function normalizeName(value) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[_\W]+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function figureId(figure) {
+  return normalizeName(`${figure.first_name} ${figure.last_name}`).replace(/\s+/g, "-");
+}
+
 function compactFigure(figure) {
+  const id = figureId(figure);
+  const aliases =
+    aliasesByName.get(normalizeName(`${figure.first_name} ${figure.last_name}`)) ?? [];
   return {
+    id,
     first_name: figure.first_name,
     last_name: figure.last_name,
+    aliases,
     nationality: figure.nationality,
     country_of_origin: figure.country_of_origin,
     flag: figure.flag,
@@ -110,15 +163,94 @@ if (valid.length < 5) {
   throw new Error(`Dataset has only ${valid.length} valid figures; at least 5 are required.`);
 }
 
-const output = `${JSON.stringify(valid)}\n`;
+const index = valid.map(
+  ({ id, first_name, last_name, aliases, category, popularity_rating, birth_date }) => ({
+    id,
+    first_name,
+    last_name,
+    aliases,
+    category,
+    popularity_rating,
+    birth_date,
+  }),
+);
+const featured = [...valid]
+  .sort((left, right) => right.popularity_rating - left.popularity_rating)
+  .slice(0, 20)
+  .map(
+    ({
+      id,
+      first_name,
+      last_name,
+      place_of_birth,
+      coordinates_of_the_place_of_birth,
+      popularity_rating,
+      photo,
+    }) => ({
+      id,
+      first_name,
+      last_name,
+      place_of_birth,
+      coordinates_of_the_place_of_birth,
+      popularity_rating,
+      photo,
+    }),
+  );
+const indexOutput = `${JSON.stringify(index)}\n`;
+const featuredOutput = `${JSON.stringify(featured)}\n`;
 if (checkOnly) {
-  const current = await readFile(outputPath, "utf8").catch(() => "");
-  if (current !== output) {
-    throw new Error("Generated figure dataset is stale. Run `pnpm run prepare:data`.");
+  const [currentIndex, currentFeatured] = await Promise.all([
+    readFile(indexPath, "utf8").catch(() => ""),
+    readFile(featuredPath, "utf8").catch(() => ""),
+  ]);
+  if (currentIndex !== indexOutput || currentFeatured !== featuredOutput) {
+    throw new Error("Generated figure data is stale. Run `pnpm run prepare:data`.");
+  }
+  for (const figure of valid) {
+    const current = await readFile(path.join(recordsDirectory, `${figure.id}.json`), "utf8").catch(
+      () => "",
+    );
+    if (current !== `${JSON.stringify(figure)}\n`) {
+      throw new Error(`Generated record is stale: ${figure.id}. Run \`pnpm run prepare:data\`.`);
+    }
+  }
+  const expectedRecordNames = new Set(valid.map((figure) => `${figure.id}.json`));
+  const existingRecordNames = await readdir(recordsDirectory).catch(() => []);
+  const staleRecord = existingRecordNames.find((name) => !expectedRecordNames.has(name));
+  if (staleRecord) {
+    throw new Error(
+      `Stale generated record exists: ${staleRecord}. Run \`pnpm run prepare:data\`.`,
+    );
+  }
+  if (
+    await access(legacyOutputPath)
+      .then(() => true)
+      .catch(() => false)
+  ) {
+    throw new Error("Legacy public/data/figures.json still exists. Run `pnpm run prepare:data`.");
   }
 } else {
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, output);
+  await mkdir(dataDirectory, { recursive: true });
+  await mkdir(recordsDirectory, { recursive: true });
+  const expectedRecordNames = new Set(valid.map((figure) => `${figure.id}.json`));
+  const existingRecordNames = await readdir(recordsDirectory).catch(() => []);
+  const staleRecordNames = existingRecordNames.filter((name) => !expectedRecordNames.has(name));
+
+  const changed = await Promise.all([
+    writeIfChanged(indexPath, indexOutput),
+    writeIfChanged(featuredPath, featuredOutput),
+    ...valid.map((figure) =>
+      writeIfChanged(
+        path.join(recordsDirectory, `${figure.id}.json`),
+        `${JSON.stringify(figure)}\n`,
+      ),
+    ),
+  ]);
+  await Promise.all([
+    removeGeneratedFile(legacyOutputPath),
+    ...staleRecordNames.map((name) => removeGeneratedFile(path.join(recordsDirectory, name))),
+  ]);
+  console.log(`Generated files updated: ${changed.filter(Boolean).length}.`);
 }
 
 const rejected = source.length - valid.length;

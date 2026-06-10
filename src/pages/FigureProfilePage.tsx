@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import { TopNav } from "../components/TopNav";
+import { LoadingScreen } from "../components/LoadingScreen";
 import {
   findFigureBySlug,
   getDayNumber,
@@ -9,28 +10,52 @@ import {
   getFigureSlug,
   getUtcDateString,
 } from "../lib/dailyChallenge";
-import { distanceKm, getFullName, getLifeDateRange, getWikipediaUrl } from "../lib/figures";
+import {
+  distanceKm,
+  getFullName,
+  getLifeDateRange,
+  getWikipediaUrl,
+  loadFigureRecord,
+} from "../lib/figures";
 import { usePageMetadata } from "../hooks/usePageMetadata";
 import type { GameMapHandle } from "../lib/mapEngine";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { Figure } from "../types/figure";
+import type { Figure, FigureIndex } from "../types/figure";
 
 type MapEngine = typeof import("../lib/mapEngine");
 
 type Props = {
-  figures: Figure[];
+  figureIndex: FigureIndex[];
   mode: "today" | "slug";
 };
 
-export function FigureProfilePage({ figures, mode }: Props) {
+export function FigureProfilePage({ figureIndex, mode }: Props) {
   const params = useParams<{ slug?: string }>();
   const today = useMemo(() => getUtcDateString(), []);
-  const figure = useMemo(() => {
+  const selectedIndex = useMemo(() => {
     if (mode === "today") {
-      return getFigureOfTheDay(figures, today);
+      return getFigureOfTheDay(figureIndex, today);
     }
-    return params.slug ? findFigureBySlug(figures, params.slug) : null;
-  }, [figures, mode, params.slug, today]);
+    return params.slug ? findFigureBySlug(figureIndex, params.slug) : null;
+  }, [figureIndex, mode, params.slug, today]);
+  const [figure, setFigure] = useState<Figure | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setFigure(null);
+    setLoadFailed(false);
+    if (!selectedIndex) return;
+    void loadFigureRecord(selectedIndex.id)
+      .then((record) => {
+        if (!cancelled) setFigure(record);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedIndex]);
   const metadata = useMemo(() => {
     if (!figure) return null;
     const fullName = getFullName(figure);
@@ -46,6 +71,7 @@ export function FigureProfilePage({ figures, mode }: Props) {
   usePageMetadata(metadata);
 
   const basemap = useSettingsStore((state) => state.basemap);
+  const initialBasemapRef = useRef(basemap);
   const mapTextures = useSettingsStore((state) => state.mapTextures);
   const reducedMotionSetting = useSettingsStore((state) => state.reducedMotion);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -63,7 +89,10 @@ export function FigureProfilePage({ figures, mode }: Props) {
         return;
       }
       mapEngineRef.current = engine;
-      mapHandleRef.current = engine.createGameMap(mapContainerRef.current, basemap);
+      mapHandleRef.current = engine.createGameMap(
+        mapContainerRef.current,
+        initialBasemapRef.current,
+      );
       engine.setMapLocked(mapHandleRef.current, false);
       setMapReady(true);
     });
@@ -77,7 +106,7 @@ export function FigureProfilePage({ figures, mode }: Props) {
       setMapReady(false);
     };
     // basemap intentionally excluded — handled in its own effect
-  }, []);
+  }, [figure]);
 
   useEffect(() => {
     if (mapEngineRef.current && mapHandleRef.current) {
@@ -98,14 +127,16 @@ export function FigureProfilePage({ figures, mode }: Props) {
       },
       {
         animateFit: true,
-        reducedMotion: reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        reducedMotion:
+          reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       },
     );
   }, [figure, mapReady, reducedMotionSetting]);
 
-  if (!figure) {
+  if (!selectedIndex || loadFailed) {
     return <Navigate to="/" replace />;
   }
+  if (!figure) return <LoadingScreen />;
 
   const fullName = getFullName(figure);
   const journey = distanceKm(

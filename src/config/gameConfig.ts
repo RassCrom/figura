@@ -1,3 +1,5 @@
+import type { Difficulty } from "../types/figure";
+
 export const GAME_CONFIG = {
   roundCount: 5,
   roundSeconds: 30,
@@ -15,11 +17,68 @@ export const GAME_CONFIG = {
   streakBonus: 500,
 } as const;
 
+export const REVERSE_SCORING = {
+  accuracyPoints: 4600,
+  locationPoints: 3000,
+  yearPoints: 800,
+  speedPoints: 400,
+  distanceDecayKm: 2500,
+  yearDecay: 125,
+} as const;
+
+export type ReverseScoreBreakdown = {
+  total: number;
+  location: number;
+  timeline: number;
+  speed: number;
+};
+
+export type DifficultyRules = {
+  roundSeconds: number;
+  extraBankSeconds: number;
+  maxHints: number;
+  suggestions: boolean;
+  easyEndpoints: boolean;
+  suggestionMetadata: boolean;
+};
+
+export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRules> = {
+  Explorer: {
+    roundSeconds: 30,
+    extraBankSeconds: 30,
+    maxHints: 3,
+    suggestions: true,
+    easyEndpoints: true,
+    suggestionMetadata: true,
+  },
+  Scholar: {
+    roundSeconds: 24,
+    extraBankSeconds: 15,
+    maxHints: 2,
+    suggestions: true,
+    easyEndpoints: true,
+    suggestionMetadata: false,
+  },
+  Conqueror: {
+    roundSeconds: 18,
+    extraBankSeconds: 0,
+    maxHints: 1,
+    suggestions: false,
+    easyEndpoints: false,
+    suggestionMetadata: false,
+  },
+};
+
+export function getDifficultyRules(difficulty: Difficulty): DifficultyRules {
+  return DIFFICULTY_RULES[difficulty];
+}
+
 export function calcRoundScore(
   wrong: number,
   timeUsed: number,
   extraUsed: number,
   streak: boolean,
+  roundSeconds: number = GAME_CONFIG.roundSeconds,
 ): number {
   const penalty = wrong * GAME_CONFIG.wrongPenalty;
   // timeBonus must clamp at 0. Without the clamp, a player who spilled into
@@ -27,10 +86,44 @@ export function calcRoundScore(
   // of their base score — surprising and almost certainly unintentional.
   const timeBonus = Math.max(
     0,
-    Math.round(
-      (1 - (timeUsed + extraUsed * 0.5) / GAME_CONFIG.roundSeconds) * GAME_CONFIG.timeBonusMax,
-    ),
+    Math.round((1 - (timeUsed + extraUsed * 0.5) / roundSeconds) * GAME_CONFIG.timeBonusMax),
   );
   const streakBonus = streak ? GAME_CONFIG.streakBonus : 0;
   return Math.max(0, GAME_CONFIG.baseScore - penalty + timeBonus + streakBonus);
+}
+
+export function calcReverseScore(
+  distance: number,
+  birthYearError: number | null,
+  deathYearError: number | null,
+  timeUsed: number,
+  roundSeconds: number = GAME_CONFIG.roundSeconds,
+): ReverseScoreBreakdown {
+  const availableYearErrors = [birthYearError, deathYearError].filter(
+    (error): error is number => error != null,
+  );
+  const locationMax =
+    REVERSE_SCORING.accuracyPoints - availableYearErrors.length * REVERSE_SCORING.yearPoints;
+  const location = Math.round(
+    locationMax * Math.exp(-Math.max(0, distance) / REVERSE_SCORING.distanceDecayKm),
+  );
+  const timeline = availableYearErrors.reduce(
+    (score, error) =>
+      score +
+      Math.round(
+        REVERSE_SCORING.yearPoints * Math.exp(-Math.max(0, error) / REVERSE_SCORING.yearDecay),
+      ),
+    0,
+  );
+  const speed = Math.round(
+    REVERSE_SCORING.speedPoints *
+      Math.max(0, Math.min(1, 1 - Math.max(0, timeUsed) / roundSeconds)),
+  );
+
+  return {
+    total: location + timeline + speed,
+    location,
+    timeline,
+    speed,
+  };
 }

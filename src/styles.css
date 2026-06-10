@@ -1473,6 +1473,104 @@ input[type="range"] {
   background: rgba(200, 150, 42, 0.14);
 }
 
+.difficulty-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.difficulty-filter .chip {
+  min-height: 38px;
+  padding: 7px 14px;
+}
+
+.your-rank-row {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: 10px;
+  color: var(--color-text);
+  background: rgba(36, 27, 12, 0.96);
+}
+
+.daily-percentile {
+  margin: 8px 0 16px;
+  color: var(--color-primary-strong);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.freeze-pill {
+  padding: 5px 9px;
+  border: 1px solid rgba(125, 184, 224, 0.45);
+  border-radius: 999px;
+  color: #b9ddf3;
+  background: rgba(58, 126, 168, 0.12);
+  font-size: 0.72rem;
+}
+
+.category-progress-grid,
+.codex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.category-progress-card,
+.codex-entry {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: rgba(10, 10, 9, 0.5);
+}
+
+.category-progress-card span,
+.codex-entry span,
+.codex-header p {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.category-progress-card progress {
+  width: 100%;
+  accent-color: var(--color-primary);
+}
+
+.codex-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.codex-header h2,
+.codex-header p {
+  margin-bottom: 0;
+}
+
+.codex-header input {
+  width: min(280px, 100%);
+}
+
+.codex-entry {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.codex-entry:hover {
+  border-color: var(--color-primary);
+  background: rgba(200, 150, 42, 0.1);
+}
+
 .level-badge,
 .achievement-badge {
   min-height: 30px;
@@ -2103,10 +2201,12 @@ input[type="range"] {
   transform: translateY(18px);
 }
 
-.hud-top,
-.hud-middle,
 .guess-panel,
 .skip-button {
+  pointer-events: auto;
+}
+
+.hud-top .pause-button {
   pointer-events: auto;
 }
 
@@ -2357,6 +2457,116 @@ input[type="range"] {
   gap: 10px;
   padding: 16px;
   border-radius: 20px;
+}
+
+.guess-panel.reverse-mode {
+  width: min(520px, calc(100vw - 28px));
+}
+
+.reverse-prompt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reverse-prompt img {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reverse-prompt div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.reverse-prompt strong {
+  overflow: hidden;
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reverse-prompt span,
+.reverse-distance {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.reverse-distance strong {
+  color: var(--color-accent);
+}
+
+.reverse-result-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.reverse-score-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reverse-score-breakdown span {
+  padding: 5px 8px;
+  border: 1px solid rgba(226, 194, 125, 0.18);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  background: rgba(226, 194, 125, 0.05);
+  font-size: 0.7rem;
+}
+
+.reverse-timeline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 194, 125, 0.16);
+}
+
+.reverse-timeline label {
+  min-width: 112px;
+  display: grid;
+  gap: 1px;
+}
+
+.reverse-timeline label span {
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+}
+
+.reverse-timeline label strong {
+  color: var(--color-accent);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.reverse-timeline input[type="range"] {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  accent-color: var(--color-primary-strong);
+  cursor: ew-resize;
+}
+
+.timeline-scale {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .field-notes {
@@ -3026,10 +3236,6 @@ input[type="range"] {
     z-index: 13;
     padding: 0;
     pointer-events: none;
-  }
-
-  .hud-middle > * {
-    pointer-events: auto;
   }
 
   .timer-arc {

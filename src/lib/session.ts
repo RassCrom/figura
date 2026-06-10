@@ -1,12 +1,12 @@
-import { GAME_CONFIG } from "../config/gameConfig";
-import type { Difficulty, Figure } from "../types/figure";
-import { getDifficultyPool, getFullName, getRelaxedPool, shuffle } from "./figures";
+import { GAME_CONFIG, getDifficultyRules } from "../config/gameConfig";
+import type { Difficulty, FigureIndex } from "../types/figure";
+import { getDifficultyPool, getRelaxedPool, shuffle } from "./figures";
 
-function figureId(figure: Figure): string {
-  return getFullName(figure).toLowerCase();
+function figureId(figure: FigureIndex): string {
+  return figure.id;
 }
 
-function uniqueFigures(figures: Figure[]): Figure[] {
+function uniqueFigures(figures: FigureIndex[]): FigureIndex[] {
   const seen = new Set<string>();
   return figures.filter((figure) => {
     const id = figureId(figure);
@@ -16,7 +16,7 @@ function uniqueFigures(figures: Figure[]): Figure[] {
   });
 }
 
-function getEasyEndpoints(figures: Figure[], selectedCategories: string[]): Figure[] {
+function getEasyEndpoints(figures: FigureIndex[], selectedCategories: string[]): FigureIndex[] {
   const easyFigures = figures.filter(
     (figure) => figure.popularity_rating >= GAME_CONFIG.easyEndpointPopularityRating,
   );
@@ -28,10 +28,23 @@ function getEasyEndpoints(figures: Figure[], selectedCategories: string[]): Figu
 }
 
 export function buildFigureQueue(
-  figures: Figure[],
+  figures: FigureIndex[],
   difficulty: Difficulty,
   selectedCategories: string[],
-): { queue: Figure[]; relaxed: boolean } {
+): { queue: FigureIndex[]; relaxed: boolean } {
+  const rules = getDifficultyRules(difficulty);
+  if (!rules.easyEndpoints) {
+    const strictPool = getDifficultyPool(figures, difficulty, selectedCategories);
+    const relaxed = strictPool.length < GAME_CONFIG.roundCount;
+    const preferred = relaxed ? getRelaxedPool(figures, selectedCategories) : strictPool;
+    return {
+      queue: uniqueFigures([...shuffle(preferred), ...shuffle(figures)]).slice(
+        0,
+        GAME_CONFIG.roundCount,
+      ),
+      relaxed,
+    };
+  }
   const middleRoundCount = Math.max(0, GAME_CONFIG.roundCount - 2);
   const endpoints = getEasyEndpoints(figures, selectedCategories);
   const endpointIds = new Set(endpoints.map(figureId));

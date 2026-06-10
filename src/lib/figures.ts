@@ -1,35 +1,63 @@
-import type { Continent, Difficulty, Figure } from "../types/figure";
+import type { Continent, Difficulty, FeaturedFigure, Figure, FigureIndex } from "../types/figure";
 
-let loadedFigures: Figure[] | null = null;
-let loadPromise: Promise<Figure[]> | null = null;
+let loadedIndex: FigureIndex[] | null = null;
+let indexPromise: Promise<FigureIndex[]> | null = null;
+const recordCache = new Map<string, Figure>();
+let featuredPromise: Promise<FeaturedFigure[]> | null = null;
 
-export function loadFigures(): Promise<Figure[]> {
-  if (loadedFigures) {
-    return Promise.resolve(loadedFigures);
+export function loadFigureIndex(): Promise<FigureIndex[]> {
+  if (loadedIndex) {
+    return Promise.resolve(loadedIndex);
   }
-  loadPromise ??= fetch(`${import.meta.env.BASE_URL}data/figures.json`)
+  indexPromise ??= fetch(`${import.meta.env.BASE_URL}data/figure-index.json`)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`Unable to load figures: ${response.status}`);
       }
-      return response.json() as Promise<Figure[]>;
+      return response.json() as Promise<FigureIndex[]>;
     })
     .then((figures) => {
-      loadedFigures = figures;
+      loadedIndex = figures;
       return figures;
     });
-  return loadPromise;
+  return indexPromise;
 }
 
-export function getValidatedFigures(): Figure[] {
-  return loadedFigures ?? [];
+export async function loadFigureRecord(id: string): Promise<Figure> {
+  const cached = recordCache.get(id);
+  if (cached) return cached;
+  const response = await fetch(
+    `${import.meta.env.BASE_URL}data/figures/${encodeURIComponent(id)}.json`,
+  );
+  if (!response.ok) throw new Error(`Unable to load figure ${id}: ${response.status}`);
+  const figure = (await response.json()) as Figure;
+  recordCache.set(id, figure);
+  return figure;
 }
 
-export function getCategories(figures: Figure[] = loadedFigures ?? []): string[] {
+export function loadFigureRecords(figures: FigureIndex[]): Promise<Figure[]> {
+  return Promise.all(figures.map((figure) => loadFigureRecord(figure.id)));
+}
+
+export function loadFeaturedFigures(): Promise<FeaturedFigure[]> {
+  featuredPromise ??= fetch(`${import.meta.env.BASE_URL}data/featured-figures.json`).then(
+    (response) => {
+      if (!response.ok) throw new Error(`Unable to load featured figures: ${response.status}`);
+      return response.json() as Promise<FeaturedFigure[]>;
+    },
+  );
+  return featuredPromise;
+}
+
+export function getValidatedFigureIndex(): FigureIndex[] {
+  return loadedIndex ?? [];
+}
+
+export function getCategories(figures: FigureIndex[] = loadedIndex ?? []): string[] {
   return [...new Set(figures.map((figure) => figure.category))].sort((a, b) => a.localeCompare(b));
 }
 
-export function getFullName(figure: Figure): string {
+export function getFullName(figure: Pick<Figure, "first_name" | "last_name">): string {
   return `${figure.first_name} ${figure.last_name}`.trim();
 }
 
@@ -42,7 +70,21 @@ export function normalizeName(value: string): string {
     .toLowerCase();
 }
 
-export function figureMatchesDifficulty(figure: Figure, difficulty: Difficulty): boolean {
+export function parseHistoricalYear(value: string): number | null {
+  const century = value.match(/\b(\d+)(?:st|nd|rd|th)\s+century\s+BC\b/i);
+  if (century) {
+    return -(Number(century[1]) - 1) * 100 - 1;
+  }
+
+  const year = value.match(/\b\d{1,4}\b/);
+  if (!year) {
+    return null;
+  }
+  const numericYear = Number(year[0]);
+  return /\bBC\b/i.test(value) ? -numericYear : numericYear;
+}
+
+export function figureMatchesDifficulty(figure: FigureIndex, difficulty: Difficulty): boolean {
   if (difficulty === "Explorer") {
     return figure.popularity_rating >= 90;
   }
@@ -55,19 +97,70 @@ export function figureMatchesDifficulty(figure: Figure, difficulty: Difficulty):
 }
 
 export function getDifficultyPool(
-  figures: Figure[],
+  figures: FigureIndex[],
   difficulty: Difficulty,
   selectedCategories: string[],
-): Figure[] {
+): FigureIndex[] {
   return figures.filter(
     (figure) =>
       figureMatchesDifficulty(figure, difficulty) && selectedCategories.includes(figure.category),
   );
 }
 
-export function getRelaxedPool(figures: Figure[], selectedCategories: string[]): Figure[] {
+export function getRelaxedPool(
+  figures: FigureIndex[],
+  selectedCategories: string[],
+): FigureIndex[] {
   const categoryPool = figures.filter((figure) => selectedCategories.includes(figure.category));
   return categoryPool.length >= 5 ? categoryPool : figures;
+}
+
+export function levenshteinDistance(left: string, right: string): number {
+  if (left === right) return 0;
+  if (!left.length) return right.length;
+  if (!right.length) return left.length;
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    let diagonal = previous[0];
+    previous[0] = leftIndex;
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const above = previous[rightIndex];
+      previous[rightIndex] = Math.min(
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + 1,
+        diagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      );
+      diagonal = above;
+    }
+  }
+  return previous[right.length];
+}
+
+function typoTolerance(value: string): number {
+  return value.length >= 10 ? 2 : value.length >= 5 ? 1 : 0;
+}
+
+export function resolveFigureGuess(guess: string, figures: FigureIndex[]): FigureIndex | null {
+  const query = normalizeName(guess);
+  if (!query) return null;
+
+  const exact = figures.filter((figure) =>
+    [getFullName(figure), ...figure.aliases].some((name) => normalizeName(name) === query),
+  );
+  if (exact.length === 1) return exact[0];
+
+  const lastName = figures.filter(
+    (figure) => figure.last_name && normalizeName(figure.last_name) === query,
+  );
+  if (lastName.length === 1) return lastName[0];
+
+  const fuzzy = figures.filter((figure) =>
+    [getFullName(figure), figure.last_name, ...figure.aliases].filter(Boolean).some((name) => {
+      const normalized = normalizeName(name);
+      return levenshteinDistance(query, normalized) <= typoTolerance(normalized);
+    }),
+  );
+  return fuzzy.length === 1 ? fuzzy[0] : null;
 }
 
 export function shuffle<T>(items: T[]): T[] {

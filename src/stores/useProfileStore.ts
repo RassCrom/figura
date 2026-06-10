@@ -11,6 +11,13 @@ import {
 import { fetchProfile, submitRun, type ServerProfile } from "../lib/api";
 import type { AchievementId } from "../types/figure";
 
+function getUtcWeekKey(dateString: string): string {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() - day + 1);
+  return date.toISOString().slice(0, 10);
+}
+
 type ProfileState = {
   xp: number;
   personalBest: number;
@@ -20,6 +27,10 @@ type ProfileState = {
   dailyStreak: number;
   lastDailyPlayedOn: string | null;
   totalGames: number;
+  collectedFigureIds: string[];
+  categoryStats: Record<string, { correct: number; attempts: number }>;
+  streakFreezeWeek: string | null;
+  streakFreezesUsed: number;
   processedSessionIds: string[];
   lastAward: ProfileAward | null;
   hydrated: boolean;
@@ -27,7 +38,7 @@ type ProfileState = {
   recordGame: (
     summary: GameProgressSummary,
     categories: string[],
-    options?: { mode?: "classic" | "daily"; dailyDate?: string },
+    options?: { mode?: "classic" | "daily" | "reverse"; dailyDate?: string },
   ) => Promise<ProfileAward>;
 };
 
@@ -58,6 +69,10 @@ export const useProfileStore = create<ProfileState>()(
       dailyStreak: 0,
       lastDailyPlayedOn: null,
       totalGames: 0,
+      collectedFigureIds: [],
+      categoryStats: {},
+      streakFreezeWeek: null,
+      streakFreezesUsed: 0,
       processedSessionIds: [],
       lastAward: null,
       hydrated: false,
@@ -79,20 +94,73 @@ export const useProfileStore = create<ProfileState>()(
 
         const xpAwarded = calculateXpAward(summary.score);
         const winningScholarRun =
-          summary.score > 0 && (summary.difficulty === "Scholar" || summary.difficulty === "Conqueror");
+          summary.score > 0 &&
+          (summary.difficulty === "Scholar" || summary.difficulty === "Conqueror");
         const scholarWinStreak = winningScholarRun ? state.scholarWinStreak + 1 : 0;
         const previousBest = state.personalBest;
         const personalBest = Math.max(previousBest, summary.score);
+        const nextXp = state.xp + xpAwarded;
+        const previousLevelName = getLevelInfo(state.xp).levelName;
+        const levelInfo = getLevelInfo(nextXp);
+        // Local daily streak update — mirrors server logic. If the server submit
+        // succeeds, the next hydrateFromServer call will reconcile to authority.
+        let nextDailyStreak = state.dailyStreak;
+        let nextLastDaily = state.lastDailyPlayedOn;
+        let nextFreezeWeek = state.streakFreezeWeek;
+        let nextFreezesUsed = state.streakFreezesUsed;
+        if (mode === "daily" && dailyDate && dailyDate !== state.lastDailyPlayedOn) {
+          const prevDate = new Date(`${dailyDate}T00:00:00Z`);
+          prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+          const yesterdayISO = prevDate.toISOString().slice(0, 10);
+          const week = getUtcWeekKey(dailyDate);
+          if (week !== state.streakFreezeWeek) {
+            nextFreezeWeek = week;
+            nextFreezesUsed = 0;
+          }
+          const gapDays = state.lastDailyPlayedOn
+            ? Math.round(
+                (new Date(`${dailyDate}T00:00:00Z`).getTime() -
+                  new Date(`${state.lastDailyPlayedOn}T00:00:00Z`).getTime()) /
+                  86_400_000,
+              )
+            : 0;
+          if (state.lastDailyPlayedOn === yesterdayISO) {
+            nextDailyStreak = state.dailyStreak + 1;
+          } else if (gapDays === 2 && nextFreezesUsed < 1) {
+            nextDailyStreak = state.dailyStreak + 1;
+            nextFreezesUsed = 1;
+          } else {
+            nextDailyStreak = 1;
+          }
+          nextLastDaily = dailyDate;
+        }
+
+        const collectedFigureIds = [
+          ...new Set([
+            ...state.collectedFigureIds,
+            ...summary.results.filter((result) => result.correct).map((result) => result.figureId),
+          ]),
+        ];
+        const categoryStats = { ...state.categoryStats };
+        for (const result of summary.results) {
+          const previous = categoryStats[result.category] ?? { correct: 0, attempts: 0 };
+          categoryStats[result.category] = {
+            correct: previous.correct + (result.correct ? 1 : 0),
+            attempts: previous.attempts + 1,
+          };
+        }
+        const nextTotalGames = state.totalGames + 1;
         const unlockedNow = resolveAchievementUnlocks({
           summary,
           unlocked: state.unlockedAchievements,
           correctEver: state.correctEver,
           scholarWinStreak,
+          totalGames: nextTotalGames,
+          collectionSize: collectedFigureIds.length,
+          dailyStreak: nextDailyStreak,
+          categoryStats,
         });
         const unlockedAchievements = [...new Set([...state.unlockedAchievements, ...unlockedNow])];
-        const nextXp = state.xp + xpAwarded;
-        const previousLevelName = getLevelInfo(state.xp).levelName;
-        const levelInfo = getLevelInfo(nextXp);
         const award: ProfileAward = {
           xpAwarded,
           previousBest,
@@ -106,18 +174,6 @@ export const useProfileStore = create<ProfileState>()(
           levelProgress: levelInfo.progress,
         };
 
-        // Local daily streak update — mirrors server logic. If the server submit
-        // succeeds, the next hydrateFromServer call will reconcile to authority.
-        let nextDailyStreak = state.dailyStreak;
-        let nextLastDaily = state.lastDailyPlayedOn;
-        if (mode === "daily" && dailyDate && dailyDate !== state.lastDailyPlayedOn) {
-          const prevDate = new Date(`${dailyDate}T00:00:00Z`);
-          prevDate.setUTCDate(prevDate.getUTCDate() - 1);
-          const yesterdayISO = prevDate.toISOString().slice(0, 10);
-          nextDailyStreak = state.lastDailyPlayedOn === yesterdayISO ? state.dailyStreak + 1 : 1;
-          nextLastDaily = dailyDate;
-        }
-
         set({
           xp: nextXp,
           personalBest,
@@ -126,7 +182,11 @@ export const useProfileStore = create<ProfileState>()(
           scholarWinStreak,
           dailyStreak: nextDailyStreak,
           lastDailyPlayedOn: nextLastDaily,
-          totalGames: state.totalGames + 1,
+          totalGames: nextTotalGames,
+          collectedFigureIds,
+          categoryStats,
+          streakFreezeWeek: nextFreezeWeek,
+          streakFreezesUsed: nextFreezesUsed,
           processedSessionIds: [...state.processedSessionIds, summary.sessionId].slice(-50),
           lastAward: award,
         });
@@ -163,7 +223,7 @@ export const useProfileStore = create<ProfileState>()(
     }),
     {
       name: "gtf_profile",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         xp: state.xp,
         personalBest: state.personalBest,
@@ -173,6 +233,10 @@ export const useProfileStore = create<ProfileState>()(
         dailyStreak: state.dailyStreak,
         lastDailyPlayedOn: state.lastDailyPlayedOn,
         totalGames: state.totalGames,
+        collectedFigureIds: state.collectedFigureIds,
+        categoryStats: state.categoryStats,
+        streakFreezeWeek: state.streakFreezeWeek,
+        streakFreezesUsed: state.streakFreezesUsed,
         processedSessionIds: state.processedSessionIds,
         lastAward: state.lastAward,
       }),

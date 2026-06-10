@@ -6,8 +6,10 @@ import { buildFigureQueue } from "./session";
 
 function figure(name: string, popularity: number, category = "Scientist"): Figure {
   return {
+    id: name.toLowerCase().replace(/\s+/g, "-"),
     first_name: name,
     last_name: "Figure",
+    aliases: [],
     nationality: "Test",
     country_of_origin: "Test",
     flag: "",
@@ -50,5 +52,20 @@ describe("five-round figure queues", () => {
     expect(queue[0].popularity_rating).toBeGreaterThanOrEqual(98);
     expect(queue[4].popularity_rating).toBeGreaterThanOrEqual(98);
     expect(queue[0].first_name).not.toBe(queue[4].first_name);
+  });
+
+  it("does not add easy bookends on Conqueror", () => {
+    const conquerorFigures = [
+      ...figures,
+      figure("Obscure One", 70),
+      figure("Obscure Two", 69),
+      figure("Obscure Three", 68),
+      figure("Obscure Four", 67),
+      figure("Obscure Five", 66),
+    ];
+    const { queue } = buildFigureQueue(conquerorFigures, "Conqueror", ["Scientist"]);
+    expect(queue).toHaveLength(5);
+    expect(queue[0].popularity_rating).toBeLessThan(98);
+    expect(queue[4].popularity_rating).toBeLessThan(98);
   });
 });

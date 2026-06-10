@@ -9,17 +9,19 @@ import { en } from "../i18n/en";
 import { claimNickname, fetchPlayersToday } from "../lib/api";
 import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
+import { loadFigureRecords } from "../lib/figures";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useGameStore } from "../stores/useGameStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { Figure } from "../types/figure";
+import type { FeaturedFigure, FigureIndex } from "../types/figure";
 
 const nicknamePattern = /^[A-Za-z0-9_.\- ]{2,20}$/;
 const nicknameFormatGuard = /^[._\- ]|[._\- ]$|[._\- ]{2,}/;
 
 type Props = {
-  figures: Figure[];
+  figureIndex: FigureIndex[];
+  featuredFigures: FeaturedFigure[];
   categories: string[];
 };
 
@@ -44,7 +46,7 @@ function nicknameErrorMessage(code: string): string {
   }
 }
 
-export function HomePage({ figures, categories }: Props) {
+export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [nickname, setNickname] = useState(() => localStorage.getItem("gtf_nickname") ?? "");
@@ -55,6 +57,7 @@ export function HomePage({ figures, categories }: Props) {
   const startSession = useGameStore((state) => state.startSession);
   const setToast = useGameStore((state) => state.setToast);
   const difficulty = useSettingsStore((state) => state.difficulty);
+  const gameMode = useSettingsStore((state) => state.gameMode);
   const selectedCategories = useSettingsStore((state) => state.selectedCategories);
   const setSelectedCategories = useSettingsStore((state) => state.setSelectedCategories);
   const xp = useProfileStore((state) => state.xp);
@@ -104,8 +107,12 @@ export function HomePage({ figures, categories }: Props) {
       }
     }
 
-    const { queue, relaxed } = buildFigureQueue(figures, difficulty, effectiveCategories);
-    if (queue.length === 0) {
+    const { queue: queueIndex, relaxed } = buildFigureQueue(
+      figureIndex,
+      difficulty,
+      effectiveCategories,
+    );
+    if (queueIndex.length === 0) {
       setToast("No figures match the selected filters.");
       return;
     }
@@ -115,9 +122,10 @@ export function HomePage({ figures, categories }: Props) {
       window.setTimeout(() => setToast(null), 4200);
     }
 
+    const queue = await loadFigureRecords(queueIndex);
     localStorage.setItem("gtf_nickname", nickname);
     recordLocalPlay();
-    startSession({ nickname, difficulty, categories: effectiveCategories, queue });
+    startSession({ nickname, difficulty, categories: effectiveCategories, queue, mode: gameMode });
     navigate("/game");
   }
 
@@ -126,7 +134,7 @@ export function HomePage({ figures, categories }: Props) {
 
   return (
     <main className="page-shell home-page">
-      <AnimatedMapBackground figures={figures} />
+      <AnimatedMapBackground figures={featuredFigures} />
       <section className="home-panel" aria-labelledby="home-title">
         <Logo />
         <h1 id="home-title">Figura</h1>
