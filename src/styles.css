@@ -38,9 +38,20 @@ body,
   margin: 0;
 }
 
+/* No horizontal scrolling, ever. `clip` (unlike `hidden`) forbids scrolling
+   the clipped axis entirely — including touch panning on iOS Safari, which
+   ignores `overflow-x: hidden` on body when an element overhangs the edge
+   (the decorative home globe does). `hidden` stays as the fallback for
+   browsers without `clip` support. */
+html {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 body {
   min-width: 320px;
   overflow-x: hidden;
+  overflow-x: clip;
   scrollbar-color: rgba(191, 141, 50, 0.72) rgba(15, 14, 12, 0.86);
   scrollbar-width: thin;
 }
@@ -119,7 +130,10 @@ input:focus-visible {
   flex-direction: column;
   align-items: center;
   position: relative;
+  /* `clip` instead of `hidden`: hidden would force overflow-y to `auto`,
+     turning the page into its own nested vertical scroll container. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .home-globe-bg {
@@ -3624,6 +3638,10 @@ input[type="range"] {
   }
 
   .menu-actions {
+    /* Four actions don't fit on one row at phone widths — a 2x2 grid keeps
+       the labels from colliding. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -4020,5 +4038,128 @@ input[type="range"] {
 @media (max-width: 520px) {
   .skeleton-stats-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ─── Short-viewport home compression ───────────────────────
+   Target the home panel only so game/profile pages are
+   unaffected. Two tiers:
+     ≤700px  moderate (iPhone SE portrait + most landscape phones)
+     ≤560px  aggressive (landscape-only, very little room)        */
+
+@media (max-height: 700px) {
+  .home-panel h1 {
+    font-size: clamp(1.7rem, 6vw, 2.6rem);
+    margin: 6px 0 2px;
+  }
+
+  .home-subtitle {
+    margin: 0 0 8px;
+  }
+
+  .home-pills {
+    margin: 0 0 8px;
+  }
+
+  .level-progress {
+    margin: 0 0 8px;
+    padding: 7px 12px;
+    gap: 4px;
+  }
+
+  /* Drop the "X XP to next level" line — header + bar convey enough. */
+  .level-progress p {
+    display: none;
+  }
+
+  .daily-cta-card {
+    margin: 2px 0 8px;
+    padding: 8px 12px;
+  }
+
+  .home-panel .menu-form {
+    gap: 7px;
+  }
+
+  .home-panel .menu-form input {
+    min-height: 42px;
+  }
+
+  /* Compact touch targets on home only — still meets 40 px minimum. */
+  .home-panel .primary-button,
+  .home-panel .secondary-button {
+    min-height: 42px;
+  }
+
+  /* Always use 2×2 grid for the four nav actions — prevents the
+     awkward 3+1 flex-wrap layout that appears in landscape where
+     the max-width: 480px grid rule doesn't fire. */
+  .menu-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 2px;
+    gap: 5px;
+  }
+
+  .menu-actions .secondary-button {
+    min-width: 0;
+  }
+}
+
+@media (max-height: 560px) {
+  .page-shell.home-page {
+    padding: 10px;
+  }
+
+  .home-panel {
+    padding: 10px 14px 8px;
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+  }
+
+  .home-panel h1 {
+    font-size: 1.4rem;
+    margin: 4px 0 1px;
+  }
+
+  /* Subtitle and level bar are secondary chrome — hide them to save
+     the two full rows they each occupy in landscape. */
+  .home-subtitle {
+    display: none;
+  }
+
+  .level-progress {
+    display: none;
+  }
+
+  .home-pills {
+    margin: 0 0 6px;
+  }
+
+  .daily-cta-card {
+    margin: 0 0 6px;
+    padding: 6px 10px;
+  }
+
+  .home-panel .menu-form {
+    gap: 4px;
+  }
+
+  .home-panel .primary-button,
+  .home-panel .secondary-button {
+    min-height: 40px;
+  }
+
+  .menu-actions {
+    gap: 4px;
+  }
+
+  /* Help text is non-critical in ultra-compact landscape — hide it
+     to reclaim ~23 px. The label stays visible for accessibility. */
+  .home-panel .field-help {
+    display: none;
   }
 }
