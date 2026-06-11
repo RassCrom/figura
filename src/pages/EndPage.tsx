@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   Twitter,
@@ -24,21 +24,14 @@ import { en } from "../i18n/en";
 import { getDayNumber } from "../lib/dailyChallenge";
 import { fetchDailyPercentile } from "../lib/api";
 import { getValidatedFigureIndex, loadFigureRecords } from "../lib/figures";
-import {
-  buildRoundRouteOverlays,
-  getRoundRouteColor,
-  getRoundRouteLabel,
-} from "../lib/routeOverlays";
+import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
 import { buildFigureQueue } from "../lib/session";
 import { useGameStore } from "../stores/useGameStore";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { Figure, RoundResult } from "../types/figure";
-import type { GameMapHandle } from "../lib/mapEngine";
+import type { RoundResult } from "../types/figure";
 import type { ProfileAward } from "../lib/progression";
-
-type MapEngine = typeof import("../lib/mapEngine");
 
 /** Plain-text symbol for clipboard / social text posts */
 function symbolForResult(result: RoundResult): string {
@@ -62,6 +55,17 @@ function buildShareText(
   return `Guess The Figure\n${grid}\n${score.toLocaleString()} pts · ${rank}\n${url}`;
 }
 
+
+function syncErrorMessage(code: string): string {
+  switch (code) {
+    case "DAILY_ALREADY_PLAYED":
+      return "You already submitted today's challenge — this score was not synced.";
+    case "RATE_LIMIT":
+      return "Too many runs in a row — this score was not saved to the leaderboard.";
+    default:
+      return "This score could not be saved online. Your local progress is kept.";
+  }
+}
 
 function rankName(score: number): string {
   if (score >= 27000) {
@@ -243,13 +247,15 @@ export function EndPage() {
       getValidatedFigureIndex(),
       difficulty,
       categories,
+      getRecentFigureIds(),
     );
     if (queueIndex.length === 0) {
       setToast("No figures match the selected filters. Try adjusting your settings.");
       return;
     }
+    recordRecentFigures(queueIndex.map((figure) => figure.id));
     const nextQueue = await loadFigureRecords(queueIndex);
-    startSession({ nickname, difficulty, categories, queue: nextQueue });
+    startSession({ nickname, difficulty, categories, queue: nextQueue, mode });
     navigate("/game");
   }
 
@@ -296,6 +302,11 @@ export function EndPage() {
           <p className="rank-badge">{rank}</p>
           {mode === "daily" && dailyPercentile != null ? (
             <p className="daily-percentile">You beat {dailyPercentile}% of today's players</p>
+          ) : null}
+          {displayAward?.syncError ? (
+            <p className="sync-warning" role="status">
+              {syncErrorMessage(displayAward.syncError)}
+            </p>
           ) : null}
           {displayAward ? (
             <div className="run-delta">
@@ -451,7 +462,7 @@ export function EndPage() {
               <small>
                 {result.distanceKm != null
                   ? `${result.score.toLocaleString()} pts, ${result.distanceKm.toLocaleString()} km away, ${result.birthYearError ?? "-"}y / ${result.deathYearError ?? "-"}y off`
-                  : `${result.score.toLocaleString()} pts, ${result.hintsUsed} hints, ${result.timeUsed}s`}
+                  : `${result.score.toLocaleString()} pts, ${result.wrongGuesses ?? 0} wrong, ${result.hintsUsed} hints, ${Math.round(result.timeUsed)}s`}
               </small>
             </article>
           ))}

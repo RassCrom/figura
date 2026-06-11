@@ -8,8 +8,10 @@ const result: RoundResult = {
   figureId: "ada-lovelace",
   figureName: "Ada Lovelace",
   score: 5000,
+  wrongGuesses: 0,
   hintsUsed: 0,
   timeUsed: 4,
+  extraUsed: 0,
   category: "Scientist",
   continent: "Europe",
   correct: true,
@@ -46,5 +48,39 @@ describe("progression tiers", () => {
         "category_ace",
       ]),
     );
+  });
+
+  it("requires a clean first-try round for ice_cold", () => {
+    const base = {
+      unlocked: [] as never[],
+      correctEver: true,
+      scholarWinStreak: 0,
+      totalGames: 1,
+      collectionSize: 1,
+      dailyStreak: 0,
+      categoryStats: {},
+    };
+
+    const dirty = resolveAchievementUnlocks({
+      ...base,
+      summary: {
+        sessionId: "session",
+        score: 3800,
+        difficulty: "Conqueror",
+        results: [{ ...result, wrongGuesses: 1 }],
+      },
+    });
+    expect(dirty).not.toContain("ice_cold");
+
+    const clean = resolveAchievementUnlocks({
+      ...base,
+      summary: {
+        sessionId: "session",
+        score: 5000,
+        difficulty: "Conqueror",
+        results: [result],
+      },
+    });
+    expect(clean).toContain("ice_cold");
   });
 });

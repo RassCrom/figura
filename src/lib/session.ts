@@ -16,7 +16,22 @@ function uniqueFigures(figures: FigureIndex[]): FigureIndex[] {
   });
 }
 
-function getEasyEndpoints(figures: FigureIndex[], selectedCategories: string[]): FigureIndex[] {
+// Shuffle that floats figures the player hasn't seen recently to the front.
+// Recent figures stay in the pool as a fallback so small pools still fill.
+function freshFirst(pool: FigureIndex[], recentIds?: ReadonlySet<string>): FigureIndex[] {
+  if (!recentIds || recentIds.size === 0) {
+    return shuffle(pool);
+  }
+  const fresh = pool.filter((figure) => !recentIds.has(figureId(figure)));
+  const recent = pool.filter((figure) => recentIds.has(figureId(figure)));
+  return [...shuffle(fresh), ...shuffle(recent)];
+}
+
+function getEasyEndpoints(
+  figures: FigureIndex[],
+  selectedCategories: string[],
+  recentIds?: ReadonlySet<string>,
+): FigureIndex[] {
   const easyFigures = figures.filter(
     (figure) => figure.popularity_rating >= GAME_CONFIG.easyEndpointPopularityRating,
   );
@@ -24,13 +39,17 @@ function getEasyEndpoints(figures: FigureIndex[], selectedCategories: string[]):
     selectedCategories.includes(figure.category),
   );
 
-  return uniqueFigures([...shuffle(selectedEasyFigures), ...shuffle(easyFigures)]).slice(0, 2);
+  return uniqueFigures([
+    ...freshFirst(selectedEasyFigures, recentIds),
+    ...freshFirst(easyFigures, recentIds),
+  ]).slice(0, 2);
 }
 
 export function buildFigureQueue(
   figures: FigureIndex[],
   difficulty: Difficulty,
   selectedCategories: string[],
+  recentIds?: ReadonlySet<string>,
 ): { queue: FigureIndex[]; relaxed: boolean } {
   const rules = getDifficultyRules(difficulty);
   if (!rules.easyEndpoints) {
@@ -38,15 +57,15 @@ export function buildFigureQueue(
     const relaxed = strictPool.length < GAME_CONFIG.roundCount;
     const preferred = relaxed ? getRelaxedPool(figures, selectedCategories) : strictPool;
     return {
-      queue: uniqueFigures([...shuffle(preferred), ...shuffle(figures)]).slice(
-        0,
-        GAME_CONFIG.roundCount,
-      ),
+      queue: uniqueFigures([
+        ...freshFirst(preferred, recentIds),
+        ...freshFirst(figures, recentIds),
+      ]).slice(0, GAME_CONFIG.roundCount),
       relaxed,
     };
   }
   const middleRoundCount = Math.max(0, GAME_CONFIG.roundCount - 2);
-  const endpoints = getEasyEndpoints(figures, selectedCategories);
+  const endpoints = getEasyEndpoints(figures, selectedCategories, recentIds);
   const endpointIds = new Set(endpoints.map(figureId));
   const strictPool = getDifficultyPool(figures, difficulty, selectedCategories);
   const strictMiddlePool = strictPool.filter((figure) => !endpointIds.has(figureId(figure)));
@@ -58,8 +77,8 @@ export function buildFigureQueue(
     : strictMiddlePool;
   const fallbackMiddlePool = figures.filter((figure) => !endpointIds.has(figureId(figure)));
   const middle = uniqueFigures([
-    ...shuffle(preferredMiddlePool),
-    ...shuffle(fallbackMiddlePool),
+    ...freshFirst(preferredMiddlePool, recentIds),
+    ...freshFirst(fallbackMiddlePool, recentIds),
   ]).slice(0, middleRoundCount);
 
   const queue =

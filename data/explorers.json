@@ -1,0 +1,412 @@
+[
+  {
+    "id": "Q1035",
+    "name": "Charles Darwin",
+    "sitelinks": 277
+  },
+  {
+    "id": "Q7322",
+    "name": "Christopher Columbus",
+    "sitelinks": 242
+  },
+  {
+    "id": "Q6101",
+    "name": "Marco Polo",
+    "sitelinks": 210
+  },
+  {
+    "id": "Q7327",
+    "name": "Yuri Gagarin",
+    "sitelinks": 202
+  },
+  {
+    "id": "Q1496",
+    "name": "Ferdinand Magellan",
+    "sitelinks": 195
+  },
+  {
+    "id": "Q33866",
+    "name": "Theodore Roosevelt",
+    "sitelinks": 191
+  },
+  {
+    "id": "Q926",
+    "name": "Roald Amundsen",
+    "sitelinks": 188
+  },
+  {
+    "id": "Q7324",
+    "name": "James Cook",
+    "sitelinks": 185
+  },
+  {
+    "id": "Q7328",
+    "name": "Vasco da Gama",
+    "sitelinks": 180
+  },
+  {
+    "id": "Q7326",
+    "name": "Hernán Cortés",
+    "sitelinks": 170
+  },
+  {
+    "id": "Q7331",
+    "name": "Ibn Battuta",
+    "sitelinks": 164
+  },
+  {
+    "id": "Q7321",
+    "name": "Jacques Cartier",
+    "sitelinks": 159
+  },
+  {
+    "id": "Q34836",
+    "name": "Ulysses S. Grant",
+    "sitelinks": 157
+  },
+  {
+    "id": "Q7333",
+    "name": "Zheng He",
+    "sitelinks": 152
+  },
+  {
+    "id": "Q493",
+    "name": "Arthur Rimbaud",
+    "sitelinks": 141
+  },
+  {
+    "id": "Q6694",
+    "name": "Alexander von Humboldt",
+    "sitelinks": 140
+  },
+  {
+    "id": "Q33817",
+    "name": "Edmund Hillary",
+    "sitelinks": 134
+  },
+  {
+    "id": "Q47087",
+    "name": "Arthur C. Clarke",
+    "sitelinks": 126
+  },
+  {
+    "id": "Q36517",
+    "name": "Francis Drake",
+    "sitelinks": 119
+  },
+  {
+    "id": "Q42574",
+    "name": "James Cameron",
+    "sitelinks": 119
+  },
+  {
+    "id": "Q5752",
+    "name": "Peter Kropotkin",
+    "sitelinks": 116
+  },
+  {
+    "id": "Q47674",
+    "name": "Américo Vespucio",
+    "sitelinks": 114
+  },
+  {
+    "id": "Q134942",
+    "name": "William Somerset Maugham",
+    "sitelinks": 114
+  },
+  {
+    "id": "Q72292",
+    "name": "Fridtjof Nansen",
+    "sitelinks": 112
+  },
+  {
+    "id": "Q160627",
+    "name": "Alfred Russel Wallace",
+    "sitelinks": 106
+  },
+  {
+    "id": "Q48246",
+    "name": "Ernst Haeckel",
+    "sitelinks": 104
+  },
+  {
+    "id": "Q42838",
+    "name": "Leif Erikson",
+    "sitelinks": 103
+  },
+  {
+    "id": "Q42188",
+    "name": "Abel Tasman",
+    "sitelinks": 102
+  },
+  {
+    "id": "Q83233",
+    "name": "Jacques Cousteau",
+    "sitelinks": 101
+  },
+  {
+    "id": "Q48373",
+    "name": "David Livingstone",
+    "sitelinks": 100
+  },
+  {
+    "id": "Q19825",
+    "name": "Cecil John Rhodes",
+    "sitelinks": 96
+  },
+  {
+    "id": "Q80732",
+    "name": "Tenzing Norgay",
+    "sitelinks": 94
+  },
+  {
+    "id": "Q170596",
+    "name": "T. E. Lawrence",
+    "sitelinks": 91
+  },
+  {
+    "id": "Q44741",
+    "name": "Francisco Pizarro",
+    "sitelinks": 90
+  },
+  {
+    "id": "Q163900",
+    "name": "Francis Xavier",
+    "sitelinks": 89
+  },
+  {
+    "id": "Q152306",
+    "name": "Carl Gustaf Emil Mannerheim",
+    "sitelinks": 88
+  },
+  {
+    "id": "Q133622",
+    "name": "Thor Heyerdahl",
+    "sitelinks": 87
+  },
+  {
+    "id": "Q76323",
+    "name": "Alfred Wegener",
+    "sitelinks": 87
+  },
+  {
+    "id": "Q126513",
+    "name": "Steve Irwin",
+    "sitelinks": 86
+  },
+  {
+    "id": "Q154269",
+    "name": "Alexey Leonov",
+    "sitelinks": 86
+  },
+  {
+    "id": "Q127641",
+    "name": "Vitus Bering",
+    "sitelinks": 84
+  },
+  {
+    "id": "Q174432",
+    "name": "Pedro Álvares Cabral",
+    "sitelinks": 82
+  },
+  {
+    "id": "Q102527",
+    "name": "Robert Falcon Scott",
+    "sitelinks": 82
+  },
+  {
+    "id": "Q171421",
+    "name": "Henry Morton Stanley",
+    "sitelinks": 80
+  },
+  {
+    "id": "Q130377",
+    "name": "Bartolomeu Dias",
+    "sitelinks": 79
+  },
+  {
+    "id": "Q133060",
+    "name": "Willem Barents",
+    "sitelinks": 79
+  },
+  {
+    "id": "Q42063",
+    "name": "Xuanzang",
+    "sitelinks": 77
+  },
+  {
+    "id": "Q957543",
+    "name": "Ernest Shackleton",
+    "sitelinks": 76
+  },
+  {
+    "id": "Q185718",
+    "name": "Alexander Kolchak",
+    "sitelinks": 74
+  },
+  {
+    "id": "Q191026",
+    "name": "Francis Galton",
+    "sitelinks": 73
+  },
+  {
+    "id": "Q68529",
+    "name": "Samuel de Champlain",
+    "sitelinks": 72
+  },
+  {
+    "id": "Q179167",
+    "name": "Henry Hudson",
+    "sitelinks": 71
+  },
+  {
+    "id": "Q189144",
+    "name": "Walter Raleigh",
+    "sitelinks": 71
+  },
+  {
+    "id": "Q208993",
+    "name": "Nicholas Roerich",
+    "sitelinks": 71
+  },
+  {
+    "id": "Q60040",
+    "name": "Hernando de Soto",
+    "sitelinks": 70
+  },
+  {
+    "id": "Q125057",
+    "name": "Richard Francis Burton",
+    "sitelinks": 70
+  },
+  {
+    "id": "Q154782",
+    "name": "Adelbert von Chamisso",
+    "sitelinks": 69
+  },
+  {
+    "id": "Q204397",
+    "name": "Afonso de Albuquerque",
+    "sitelinks": 69
+  },
+  {
+    "id": "Q152318",
+    "name": "Svetlana Savitskaya",
+    "sitelinks": 68
+  },
+  {
+    "id": "Q172345",
+    "name": "Erik the Red",
+    "sitelinks": 66
+  },
+  {
+    "id": "Q155914",
+    "name": "Peter Simon Pallas",
+    "sitelinks": 65
+  },
+  {
+    "id": "Q186585",
+    "name": "Robert Peary",
+    "sitelinks": 65
+  },
+  {
+    "id": "Q200405",
+    "name": "John Hurt",
+    "sitelinks": 65
+  },
+  {
+    "id": "Q202308",
+    "name": "Evliya Çelebi",
+    "sitelinks": 64
+  },
+  {
+    "id": "Q485365",
+    "name": "Bear Grylls",
+    "sitelinks": 64
+  },
+  {
+    "id": "Q233340",
+    "name": "Matteo Ricci",
+    "sitelinks": 64
+  },
+  {
+    "id": "Q185974",
+    "name": "Juan Ponce de León",
+    "sitelinks": 63
+  },
+  {
+    "id": "Q201510",
+    "name": "Juan Sebastián Elcano",
+    "sitelinks": 63
+  },
+  {
+    "id": "Q271878",
+    "name": "George Curzon, 1st Marquess Curzon of Kedleston",
+    "sitelinks": 63
+  },
+  {
+    "id": "Q214926",
+    "name": "Nikolai Vavilov",
+    "sitelinks": 62
+  },
+  {
+    "id": "Q189307",
+    "name": "Reinhold Messner",
+    "sitelinks": 61
+  },
+  {
+    "id": "Q19080",
+    "name": "Vasco Núñez de Balboa",
+    "sitelinks": 61
+  },
+  {
+    "id": "Q379580",
+    "name": "John Muir",
+    "sitelinks": 61
+  },
+  {
+    "id": "Q189971",
+    "name": "Pytheas",
+    "sitelinks": 60
+  },
+  {
+    "id": "Q192442",
+    "name": "Nikolay Przhevalsky",
+    "sitelinks": 60
+  },
+  {
+    "id": "Q203647",
+    "name": "Harald III of Norway",
+    "sitelinks": 60
+  },
+  {
+    "id": "Q76754",
+    "name": "Fabian Gottlieb von Bellingshausen",
+    "sitelinks": 60
+  },
+  {
+    "id": "Q234491",
+    "name": "Junko Tabei",
+    "sitelinks": 60
+  },
+  {
+    "id": "Q205485",
+    "name": "George Vancouver",
+    "sitelinks": 59
+  },
+  {
+    "id": "Q154759",
+    "name": "Sven Hedin",
+    "sitelinks": 58
+  },
+  {
+    "id": "Q231360",
+    "name": "Gertrude Bell",
+    "sitelinks": 58
+  },
+  {
+    "id": "Q210268",
+    "name": "Richard E. Byrd",
+    "sitelinks": 57
+  }
+]

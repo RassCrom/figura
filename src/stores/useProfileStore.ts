@@ -172,6 +172,7 @@ export const useProfileStore = create<ProfileState>()(
           leveledUp: previousLevelName !== levelInfo.levelName,
           nextLevelName: levelInfo.nextLevelName,
           levelProgress: levelInfo.progress,
+          syncError: null,
         };
 
         set({
@@ -195,7 +196,6 @@ export const useProfileStore = create<ProfileState>()(
         // server is the source of truth for leaderboard rank and XP.
         const result = await submitRun({
           sessionId: summary.sessionId,
-          score: summary.score,
           difficulty: summary.difficulty,
           categories,
           results: summary.results,
@@ -210,12 +210,14 @@ export const useProfileStore = create<ProfileState>()(
           if (result.score !== summary.score) {
             set({ personalBest: Math.max(state.personalBest, result.score) });
           }
-        } else if (
-          result.error !== "OFFLINE" &&
-          result.error !== "RATE_LIMIT" &&
-          result.error !== "AUTH_REQUIRED"
-        ) {
+          return award;
+        }
+
+        if (result.error !== "OFFLINE" && result.error !== "AUTH_REQUIRED") {
           console.warn("[profile] submit_run rejected:", result.error);
+          const failedAward = { ...award, syncError: result.error };
+          set({ lastAward: failedAward });
+          return failedAward;
         }
 
         return award;

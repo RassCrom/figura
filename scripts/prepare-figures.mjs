@@ -63,6 +63,13 @@ function isUrl(value) {
   }
 }
 
+function historicalYear(value) {
+  const match = String(value ?? "").match(/\d{1,4}/);
+  if (!match) return null;
+  const year = Number(match[0]);
+  return /\bBC\b/i.test(value) ? -year : year;
+}
+
 function validateFigure(figure) {
   const issues = [];
   for (const field of [
@@ -94,6 +101,12 @@ function validateFigure(figure) {
     issues.push("popularity_rating");
   }
   if (!isUrl(figure.photo)) issues.push("photo");
+  if (isNonEmptyString(figure.source_url) && !isUrl(figure.source_url)) issues.push("source_url");
+  const birthYear = historicalYear(figure.birth_date);
+  const deathYear = historicalYear(figure.death_date);
+  if (birthYear !== null && deathYear !== null && deathYear < birthYear) {
+    issues.push("chronology");
+  }
   return issues;
 }
 
@@ -101,6 +114,8 @@ const aliasesByName = new Map([
   ["genghis khan", ["Chinggis Khan"]],
   ["chinggis khan", ["Genghis Khan"]],
   ["leonardo da vinci", ["Da Vinci", "Leonardo"]],
+  ["mahatma gandhi", ["Mohandas Gandhi", "Mohandas Karamchand Gandhi"]],
+  ["charlie chaplin", ["Charles Chaplin", "Charles Spencer Chaplin"]],
 ]);
 
 function normalizeName(value) {
@@ -138,6 +153,14 @@ function compactFigure(figure) {
     photo: figure.photo,
     birth_date: figure.birth_date,
     death_date: figure.death_date,
+    source_url:
+      figure.source_url ??
+      (isNonEmptyString(figure._slug)
+        ? `https://en.wikipedia.org/wiki/${encodeURIComponent(figure._slug).replace(/%2F/gi, "/")}`
+        : `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(
+            `${figure.first_name} ${figure.last_name}`.trim(),
+          )}`),
+    ...(isNonEmptyString(figure.wikidata_id) ? { wikidata_id: figure.wikidata_id } : {}),
   };
 }
 
@@ -148,10 +171,19 @@ if (!Array.isArray(source)) {
 
 const valid = [];
 const invalidFields = new Map();
+const generatedIds = new Set();
 for (const figure of source) {
   const issues = validateFigure(figure);
+  const id = figureId(figure);
+  if (!id || /^q\d+$/i.test(`${figure.first_name} ${figure.last_name}`.trim())) {
+    issues.push("identity");
+  }
+  if (generatedIds.has(id)) {
+    issues.push("duplicate_id");
+  }
   if (issues.length === 0) {
     valid.push(compactFigure(figure));
+    generatedIds.add(id);
     continue;
   }
   for (const issue of issues) {

@@ -173,7 +173,13 @@ export function shuffle<T>(items: T[]): T[] {
 }
 
 export function getWikipediaUrl(figure: Figure): string {
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(getFullName(figure).replace(/\s+/g, "_"))}`;
+  if (figure.source_url) {
+    return figure.source_url;
+  }
+  // Search instead of a direct /wiki/ link: an exact title match redirects
+  // straight to the article, while names that need disambiguation (or differ
+  // from "First Last") land on search results instead of a 404.
+  return `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(getFullName(figure))}`;
 }
 
 export function extractYearRange(description: string): string {
@@ -243,13 +249,25 @@ export function inferContinent([lat, lng]: [number, number]): Continent {
     return lat >= 12 ? "North America" : "South America";
   }
 
+  // Maghreb coast (Algiers, Tunis, Annaba) sits above 35°N and would
+  // otherwise fall into the Europe box. Checked first; the longitude range
+  // starts at -2 so southern Spain (Malaga, Cadiz) stays in Europe.
+  if (lat >= 35 && lat <= 37.5 && lng >= -2 && lng <= 12) {
+    return "Africa";
+  }
+
   // Europe: rough northern landmass
   if (lat >= 35 && lng >= -25 && lng <= 45) {
     return "Europe";
   }
 
-  // Africa: extend east to include the Horn of Africa and Red Sea coast
-  if (lat >= -35 && lat <= 38 && lng >= -20 && lng <= 55) {
+  // Africa. North of ~12°N the eastern edge stops at the Suez/Sinai line so
+  // the Levant and Arabian Peninsula (Jerusalem, Mecca, Riyadh) fall through
+  // to Asia; south of it the box extends to 55°E for the Horn of Africa.
+  if (lat >= 12 && lat <= 38 && lng >= -20 && lng <= 34) {
+    return "Africa";
+  }
+  if (lat >= -35 && lat < 12 && lng >= -20 && lng <= 55) {
     return "Africa";
   }
 

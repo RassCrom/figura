@@ -96,13 +96,21 @@ The main route setup lives in `src/App.tsx`. The game surface is `src/pages/Game
 
 ## Figure Data
 
-Figures are loaded from `src/data/figures.json` and validated with Zod before the app uses them. Coordinates are stored as:
+Figures are loaded from `src/data/figures.json`. Generated records include a `source_url` reference,
+and the data pipeline rejects duplicate or placeholder identities before they reach the app.
+Coordinates are stored as:
 
 ```ts
 [latitude, longitude]
 ```
 
 MapLibre expects longitude first, so map code converts them before rendering markers and routes.
+
+Use `pnpm run audit:data` to assess identity, category, chronology, and likely-person duplicates.
+Use `pnpm run fix:data` to remove hard reliability failures and standardize category names, then
+run `pnpm run prepare:data` to regenerate public records.
+Use `pnpm run rebalance:data` to enforce the curated sportsperson roster and remove leaders below
+the maintained popularity cutoff.
 
 ## Development Notes
 

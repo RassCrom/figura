@@ -2816,10 +2816,109 @@ input[type="range"] {
   animation: countPulse 700ms var(--ease-out);
 }
 
+/* While paused the timer stops, so the map must not be readable — otherwise
+   pausing grants unlimited free study time. */
+.paused-overlay {
+  background: rgba(7, 6, 4, 0.92);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+}
+
 .pause-menu {
   width: min(260px, 80vw);
   display: grid;
   gap: 12px;
+}
+
+.sync-warning {
+  margin: 10px auto 0;
+  max-width: 420px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(224, 85, 85, 0.45);
+  background: rgba(224, 85, 85, 0.12);
+  color: #f0b9b9;
+  font-size: 0.85rem;
+}
+
+.howto-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 4, 2, 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.howto-panel {
+  position: relative;
+  width: min(520px, 100%);
+  max-height: min(86vh, 720px);
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(239, 199, 90, 0.22);
+  background: linear-gradient(165deg, #1c1710 0%, #131009 100%);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.howto-panel h2 {
+  margin: 2px 0 16px;
+  font-family: var(--font-display);
+}
+
+.howto-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.howto-sections {
+  display: grid;
+  gap: 14px;
+}
+
+.howto-section {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.howto-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 199, 90, 0.3);
+  background: rgba(239, 199, 90, 0.1);
+  color: #efc75a;
+}
+
+.howto-section h3 {
+  margin: 0 0 2px;
+  font-size: 0.95rem;
+}
+
+.howto-section p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--color-text-muted, #b6a98c);
+  line-height: 1.45;
+}
+
+.howto-footnote {
+  margin: 16px 0 14px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #9a8a6a);
+}
+
+.howto-panel .primary-button {
+  width: 100%;
 }
 
 .pause-menu .primary-button,

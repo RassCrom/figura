@@ -22,7 +22,6 @@ export type ServerProfile = {
 
 export type SubmitRunInput = {
   sessionId: string;
-  score: number;
   difficulty: Difficulty;
   categories: string[];
   results: RoundResult[];
@@ -81,25 +80,25 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
   const userId = await ensureAnonymousUser();
   if (!userId) return { ok: false, error: "AUTH_REQUIRED" };
 
-  const serverAchievementIds: AchievementId[] = [
-    "first_blood",
-    "lightning_round",
-    "ice_cold",
-    "around_the_world",
-    "on_fire",
-    "silk_road",
-    "great_khan",
-  ];
+  // The server recomputes every round score from these fields and ignores the
+  // client-side `score`; reverse rounds additionally need the distance and
+  // year errors. Keep this in sync with the submit_run SQL function.
   const serverResults = input.results.map((result) => ({
     round: result.round,
+    figureId: result.figureId,
     figureName: result.figureName,
     score: result.score,
+    wrongGuesses: result.wrongGuesses,
     hintsUsed: result.hintsUsed,
     timeUsed: result.timeUsed,
+    extraUsed: result.extraUsed,
     category: result.category,
     continent: result.continent,
     correct: result.correct,
     firstGuess: result.firstGuess,
+    distanceKm: result.distanceKm,
+    birthYearError: result.birthYearError,
+    deathYearError: result.deathYearError,
   }));
   const { data, error } = await supabase.rpc("submit_run", {
     p_results: serverResults as unknown as never,
@@ -108,7 +107,9 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
     p_session_id: input.sessionId,
     p_mode: input.mode ?? "classic",
     p_daily_date: input.dailyDate,
-    p_achievements: input.achievements.filter((id) => serverAchievementIds.includes(id)),
+    // Server keeps only the achievements it cannot derive itself and computes
+    // the rest from validated data.
+    p_achievements: input.achievements,
     p_level_name: input.levelName,
   });
 

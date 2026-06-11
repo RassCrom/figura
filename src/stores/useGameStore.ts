@@ -5,6 +5,7 @@ import {
   calcRoundScore,
   GAME_CONFIG,
   getDifficultyRules,
+  REVERSE_SCORING,
 } from "../config/gameConfig";
 import type { Coordinates, Difficulty, Figure, GameMode, RoundResult } from "../types/figure";
 import {
@@ -59,7 +60,6 @@ type GameState = {
   currentRoundScore: number;
   timeUsed: number;
   extraUsed: number;
-  hintsUsed: number;
   usedGameHints: GameHint[];
   roundGameHints: GameHint[];
   roundResults: RoundResult[];
@@ -106,7 +106,6 @@ const initialState = {
   currentRoundScore: 0,
   timeUsed: 0,
   extraUsed: 0,
-  hintsUsed: 0,
   usedGameHints: [] as GameHint[],
   roundGameHints: [] as GameHint[],
   roundResults: [] as RoundResult[],
@@ -129,7 +128,6 @@ function freshRoundState(
   | "currentRoundScore"
   | "timeUsed"
   | "extraUsed"
-  | "hintsUsed"
   | "roundGameHints"
   | "revealedFigure"
 > {
@@ -139,7 +137,6 @@ function freshRoundState(
     currentRoundScore: 0,
     timeUsed: 0,
     extraUsed: 0,
-    hintsUsed: 0,
     roundGameHints: [],
     revealedFigure: null,
   };
@@ -147,6 +144,14 @@ function freshRoundState(
 
 function currentFigure(state: GameState): Figure | null {
   return state.queue[state.roundIndex] ?? null;
+}
+
+// Timings are rounded to 0.1s BEFORE scoring so the score we show locally is
+// reproducible from the values we submit — the server recomputes every round
+// score from (wrongGuesses, timeUsed, extraUsed) and must land on the same
+// number, or players would see their score silently change on the leaderboard.
+function roundTenth(value: number): number {
+  return Math.round(value * 10) / 10;
 }
 
 // Single entry point into the "revealed" state. Always writes the same set
@@ -189,8 +194,10 @@ function reveal(
         figureId: figure.id,
         figureName: getFullName(figure),
         score,
-        hintsUsed: state.hintsUsed,
-        timeUsed: Math.round(state.timeUsed + state.extraUsed),
+        wrongGuesses: state.wrongGuesses,
+        hintsUsed: state.roundGameHints.length,
+        timeUsed: roundTenth(state.timeUsed + state.extraUsed),
+        extraUsed: roundTenth(state.extraUsed),
         category: figure.category,
         continent: inferContinent(figure.coordinates_of_the_place_of_birth),
         correct,
@@ -286,7 +293,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       usedGameHints: [...state.usedGameHints, hint],
       roundGameHints: [...state.roundGameHints, hint],
-      hintsUsed: state.hintsUsed + 1,
     });
     return true;
   },
@@ -304,8 +310,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const streak = state.wrongGuesses === 0 && state.firstGuessStreak >= 1;
       const roundScore = calcRoundScore(
         state.wrongGuesses,
-        state.timeUsed,
-        state.extraUsed,
+        roundTenth(state.timeUsed),
+        roundTenth(state.extraUsed),
         streak,
         getDifficultyRules(state.difficulty).roundSeconds,
       );
@@ -313,20 +319,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       return true;
     }
 
-    set((latest) => {
-      const wrongGuesses = latest.wrongGuesses + 1;
-      return {
-        wrongGuesses,
-        // Any wrong guess breaks the streak immediately; the round can
-        // still be won, but the streak bonus is gone.
-        firstGuessStreak: 0,
-        // hintsUsed mirrors wrongGuesses (capped at 3) — used for the
-        // round-result summary and achievements.
-        hintsUsed: Math.min(3, wrongGuesses) + latest.roundGameHints.length,
-        vignetteKey: latest.vignetteKey + 1,
-        inputShakeKey: latest.inputShakeKey + 1,
-      };
-    });
+    set((latest) => ({
+      wrongGuesses: latest.wrongGuesses + 1,
+      // Any wrong guess breaks the streak immediately; the round can
+      // still be won, but the streak bonus is gone.
+      firstGuessStreak: 0,
+      vignetteKey: latest.vignetteKey + 1,
+      inputShakeKey: latest.inputShakeKey + 1,
+    }));
     return false;
   },
   submitLocation: (coordinates, estimate) => {
@@ -346,11 +346,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       distance,
       birthYearError,
       deathYearError,
-      state.timeUsed + state.extraUsed,
+      roundTenth(state.timeUsed + state.extraUsed),
       getDifficultyRules(state.difficulty).roundSeconds,
     );
+    // A reverse round still scores partial points from far away, but only a
+    // pin within the correct-radius counts as identifying the figure (Codex,
+    // accuracy stats, around-the-world).
+    const correct = distance <= REVERSE_SCORING.correctRadiusKm;
     set(
-      reveal(state, breakdown.total, true, {
+      reveal(state, breakdown.total, correct, {
         distanceKm: distance,
         birthYearError: birthYearError ?? undefined,
         deathYearError: deathYearError ?? undefined,

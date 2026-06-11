@@ -1,23 +1,8 @@
-import {
-  BookOpenText,
-  Brush,
-  Compass,
-  Crown,
-  Dumbbell,
-  FlaskConical,
-  LetterText,
-  LogOut,
-  Music,
-  Pause,
-  PenTool,
-  Play,
-  ScrollText,
-  Tag,
-  Plus,
-  Minus,
-  type LucideIcon,
-} from "lucide-react";
+import { LogOut, Pause, Play, Plus, Minus } from "lucide-react";
+import { FieldNotes } from "../components/game/FieldNotes";
 import { PersonCard } from "../components/game/PersonCard";
+import { ReversePanel } from "../components/game/ReversePanel";
+import { SuggestionList } from "../components/game/SuggestionList";
 import { TimerArc } from "../components/game/TimerArc";
 import {
   type CSSProperties,
@@ -30,25 +15,16 @@ import {
 } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import { GAME_CONFIG, getDifficultyRules } from "../config/gameConfig";
+import { GAME_CONFIG, getDifficultyRules, REVERSE_SCORING } from "../config/gameConfig";
 import { useCountUp } from "../hooks/useCountUp";
 import { useSoundManager } from "../hooks/useSoundManager";
 import { en } from "../i18n/en";
-import {
-  distanceKm,
-  getLifeDateHints,
-  getLifeDateRange,
-  getFullName,
-  getWikipediaUrl,
-  normalizeName,
-  parseHistoricalYear,
-  resolveFigureGuess,
-} from "../lib/figures";
+import { getLifeDateHints, getFullName, normalizeName, resolveFigureGuess } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
-import { type GameHint, useGameStore } from "../stores/useGameStore";
+import { useGameStore } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { Figure, FigureIndex, RoundResult } from "../types/figure";
+import type { FigureIndex } from "../types/figure";
 
 type Props = {
   figureIndex: FigureIndex[];
@@ -56,52 +32,7 @@ type Props = {
 
 type MapEngine = typeof import("../lib/mapEngine");
 
-const CATEGORY_META: Record<string, { icon: LucideIcon; label: string }> = {
-  Artist: { icon: Brush, label: "Artist" },
-  Explorer: { icon: Compass, label: "Explorer" },
-  Leader: { icon: Crown, label: "Leader" },
-  Musician: { icon: Music, label: "Musician" },
-  Philosopher: { icon: ScrollText, label: "Philosopher" },
-  Scientist: { icon: FlaskConical, label: "Scientist" },
-  Sportsman: { icon: Dumbbell, label: "Sportsman" },
-  Writer: { icon: PenTool, label: "Writer" },
-};
-
-const GAME_HINTS: Array<{
-  id: GameHint;
-  icon: LucideIcon;
-  label: string;
-  shortLabel: string;
-}> = [
-  { id: "initial", icon: LetterText, label: "Reveal surname initial", shortLabel: "Initial" },
-  {
-    id: "description",
-    icon: BookOpenText,
-    label: "Show person description",
-    shortLabel: "Description",
-  },
-  { id: "category", icon: Tag, label: "Show person category", shortLabel: "Category" },
-];
-
-const MIN_TIMELINE_YEAR = -3000;
-const MAX_TIMELINE_YEAR = new Date().getUTCFullYear();
 const DEFAULT_REVERSE_ESTIMATE = { birthYear: 1800, deathYear: 1900 };
-
-function formatHistoricalYear(year: number): string {
-  return year < 0 ? `${Math.abs(year)} BC` : `${year}`;
-}
-
-function getCenturyLabel(figure: FigureIndex): string {
-  const year = parseHistoricalYear(figure.birth_date);
-  if (year == null) {
-    return en.centuryUnknown;
-  }
-  const century = Math.floor((Math.abs(year) - 1) / 100) + 1;
-  return en.century(century, year < 0);
-}
-
-
-
 
 export default function GamePage({ figureIndex }: Props) {
   const navigate = useNavigate();
@@ -176,8 +107,6 @@ export default function GamePage({ figureIndex }: Props) {
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
   const difficultyRules = getDifficultyRules(difficulty);
-  const initialSource = currentFigure?.last_name.trim() || currentFigure?.first_name.trim() || "";
-  const revealedInitial = initialSource.charAt(0).toLocaleUpperCase();
   const keyboardLayoutActive = guessPanelFocused && isSmallViewport && status === "playing";
   const revealResult = roundResults[roundResults.length - 1] ?? null;
   const revealWasCorrect = Boolean(
@@ -214,7 +143,11 @@ export default function GamePage({ figureIndex }: Props) {
       return [] as FigureIndex[];
     }
     return figureIndex
-      .filter((figure) => normalizeName(getFullName(figure)).includes(query))
+      .filter((figure) =>
+        [getFullName(figure), ...figure.aliases].some((name) =>
+          normalizeName(name).includes(query),
+        ),
+      )
       .slice(0, GAME_CONFIG.maxSuggestions);
   }, [debouncedGuess, difficultyRules.suggestions, figureIndex, mode, showSuggestions]);
 
@@ -353,7 +286,7 @@ export default function GamePage({ figureIndex }: Props) {
         reverseEstimateRef.current,
       );
       if (result == null) return;
-      play(result.distanceKm <= 500 ? "correct" : "wrong");
+      play(result.distanceKm <= REVERSE_SCORING.correctRadiusKm ? "correct" : "wrong");
       crossfadeTo("reveal-flourish");
     };
     map.getCanvas().style.cursor = status === "playing" ? "crosshair" : "";
@@ -718,144 +651,34 @@ export default function GamePage({ figureIndex }: Props) {
           }}
         >
           {mode !== "reverse" ? (
-            <div className="field-notes">
-              <div className="field-notes-header">
-                <span>Field notes</span>
-                <small>{difficultyRules.maxHints - usedGameHints.length} left this game</small>
-              </div>
-              <div className="game-hint-actions" aria-label="Game hints">
-                {GAME_HINTS.map((hint) => {
-                  const Icon = hint.icon;
-                  const used = usedGameHints.includes(hint.id);
-                  const active = roundGameHints.includes(hint.id);
-                  return (
-                    <button
-                      key={hint.id}
-                      className={`game-hint-button${active ? " active" : ""}`}
-                      type="button"
-                      onClick={() => activateGameHint(hint.id)}
-                      disabled={
-                        status !== "playing" ||
-                        used ||
-                        usedGameHints.length >= difficultyRules.maxHints
-                      }
-                      aria-label={`${hint.label}. ${used ? "Already used" : "Available once this game"}.`}
-                      aria-pressed={active}
-                    >
-                      <Icon aria-hidden="true" size={17} />
-                      <span>{hint.shortLabel}</span>
-                      <small>{used ? (active ? "Revealed" : "Spent") : "1 use"}</small>
-                    </button>
-                  );
-                })}
-              </div>
-              {roundGameHints.length > 0 && currentFigure ? (
-                <div className="field-note-reveals" aria-live="polite">
-                  {roundGameHints.includes("initial") ? (
-                    <p>
-                      <span>{currentFigure.last_name.trim() ? "Surname" : "Name"} starts with</span>
-                      <strong className="initial-reveal">{revealedInitial}</strong>
-                    </p>
-                  ) : null}
-                  {roundGameHints.includes("category") ? (
-                    <p>
-                      <span>Category</span>
-                      <strong>{currentFigure.category}</strong>
-                    </p>
-                  ) : null}
-                  {roundGameHints.includes("description") ? (
-                    <p className="description-reveal">
-                      <span>Description</span>
-                      <strong>{currentFigure.description}</strong>
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <FieldNotes
+              figure={currentFigure}
+              usedGameHints={usedGameHints}
+              roundGameHints={roundGameHints}
+              maxHints={difficultyRules.maxHints}
+              playing={status === "playing"}
+              onActivate={activateGameHint}
+            />
           ) : null}
           <label htmlFor={mode === "reverse" ? undefined : "guess-input"}>
             {mode === "reverse" ? en.where : en.who}
           </label>
           {mode === "reverse" && currentFigure ? (
-            <>
-              <div className="reverse-prompt">
-                <img src={currentFigure.photo} alt="" />
-                <div>
-                  <strong>{getFullName(currentFigure)}</strong>
-                  <span>Estimate their lifetime, then {en.clickBirthplace.toLowerCase()}</span>
-                </div>
-              </div>
-              <div className="reverse-timeline" role="group" aria-label="Lifetime estimate">
-                <label htmlFor="birth-year-estimate">
-                  <span>Birth estimate</span>
-                  <strong>{formatHistoricalYear(birthYearEstimate)}</strong>
-                </label>
-                <input
-                  id="birth-year-estimate"
-                  type="range"
-                  min={MIN_TIMELINE_YEAR}
-                  max={MAX_TIMELINE_YEAR}
-                  step="1"
-                  value={birthYearEstimate}
-                  onChange={(event) => updateBirthYearEstimate(Number(event.target.value))}
-                  disabled={status !== "playing"}
-                />
-                <label htmlFor="death-year-estimate">
-                  <span>Death estimate</span>
-                  <strong>{formatHistoricalYear(deathYearEstimate)}</strong>
-                </label>
-                <input
-                  id="death-year-estimate"
-                  type="range"
-                  min={MIN_TIMELINE_YEAR}
-                  max={MAX_TIMELINE_YEAR}
-                  step="1"
-                  value={deathYearEstimate}
-                  onChange={(event) => updateDeathYearEstimate(Number(event.target.value))}
-                  disabled={status !== "playing"}
-                />
-                <div className="timeline-scale" aria-hidden="true">
-                  <span>3000 BC</span>
-                  <span>Present</span>
-                </div>
-              </div>
-            </>
+            <ReversePanel
+              figure={currentFigure}
+              birthYearEstimate={birthYearEstimate}
+              deathYearEstimate={deathYearEstimate}
+              playing={status === "playing"}
+              onBirthYearChange={updateBirthYearEstimate}
+              onDeathYearChange={updateDeathYearEstimate}
+            />
           ) : null}
-          {suggestions.length > 0 ? (
-            <div className="suggestions" role="listbox">
-              {suggestions.map((figure, index) => {
-                const meta = CATEGORY_META[figure.category] ?? {
-                  icon: ScrollText,
-                  label: figure.category,
-                };
-                const Icon = meta.icon;
-                return (
-                  <button
-                    key={getFullName(figure)}
-                    type="button"
-                    className={index === activeSuggestion ? "suggestion active" : "suggestion"}
-                    onClick={() => submitValue(getFullName(figure))}
-                    role="option"
-                    aria-selected={index === activeSuggestion}
-                  >
-                    {difficultyRules.suggestionMetadata ? (
-                      <span className="suggestion-icon" aria-hidden="true">
-                        <Icon size={16} />
-                      </span>
-                    ) : null}
-                    <span className="suggestion-copy">
-                      <strong>{getFullName(figure)}</strong>
-                      {difficultyRules.suggestionMetadata ? (
-                        <small>
-                          {getCenturyLabel(figure)} · {meta.label}
-                        </small>
-                      ) : null}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
+          <SuggestionList
+            suggestions={suggestions}
+            activeSuggestion={activeSuggestion}
+            showMetadata={difficultyRules.suggestionMetadata}
+            onPick={submitValue}
+          />
           {mode !== "reverse" ? (
             <input
               key={inputShakeKey}

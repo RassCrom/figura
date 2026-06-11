@@ -3,12 +3,15 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import { Link, useNavigate } from "react-router-dom";
 
 import { AnimatedMapBackground } from "../components/AnimatedMapBackground";
+import { HowToPlay } from "../components/HowToPlay";
+import { hasSeenHowToPlay, markHowToPlaySeen } from "../lib/onboarding";
 import { LevelProgress } from "../components/LevelProgress";
 import { Logo } from "../components/Logo";
 import { en } from "../i18n/en";
 import { claimNickname, fetchPlayersToday } from "../lib/api";
 import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
+import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
 import { loadFigureRecords } from "../lib/figures";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useGameStore } from "../stores/useGameStore";
@@ -54,6 +57,7 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [playersToday, setPlayersToday] = useState(() => getLocalPlayersToday());
+  const [showHowToPlay, setShowHowToPlay] = useState(() => !hasSeenHowToPlay());
   const startSession = useGameStore((state) => state.startSession);
   const setToast = useGameStore((state) => state.setToast);
   const difficulty = useSettingsStore((state) => state.difficulty);
@@ -85,6 +89,11 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
     setClaimError(null);
   }
 
+  function closeHowToPlay() {
+    markHowToPlaySeen();
+    setShowHowToPlay(false);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTouched(true);
@@ -111,11 +120,13 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
       figureIndex,
       difficulty,
       effectiveCategories,
+      getRecentFigureIds(),
     );
     if (queueIndex.length === 0) {
       setToast("No figures match the selected filters.");
       return;
     }
+    recordRecentFigures(queueIndex.map((figure) => figure.id));
 
     if (relaxed) {
       setToast("The pool was under five figures, so filters were relaxed for this session.");
@@ -196,9 +207,17 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
             <Link className="secondary-button" to="/profile">
               My profile
             </Link>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setShowHowToPlay(true)}
+            >
+              {en.howToPlay}
+            </button>
           </div>
         </form>
       </section>
+      {showHowToPlay ? <HowToPlay onClose={closeHowToPlay} /> : null}
     </main>
   );
 }

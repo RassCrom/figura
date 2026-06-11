@@ -36,6 +36,7 @@ export const en = {
   categoriesRequired: "Select at least one category.",
   noLeaderboard: "No scores recorded yet.",
   currentRun: "Current run",
+  howToPlay: "How to play",
   centuryUnknown: "Century unknown",
   century: (century: number, bc: boolean) =>
     `${century}${ordinalSuffix(century)} c.${bc ? " BC" : ""}`,

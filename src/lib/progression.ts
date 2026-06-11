@@ -30,6 +30,8 @@ export type ProfileAward = {
   leveledUp: boolean;
   nextLevelName: PlayerLevel | null;
   levelProgress: number;
+  /** Error code when the run could not be saved to the server (null = saved or offline-only). */
+  syncError: string | null;
 };
 
 export const LEVELS: LevelDefinition[] = [
@@ -153,7 +155,7 @@ export function resolveAchievementUnlocks(args: {
   unlock(
     "ice_cold",
     args.summary.difficulty === "Conqueror" &&
-      correctResults.some((result) => result.hintsUsed === 0),
+      correctResults.some((result) => result.wrongGuesses === 0 && result.hintsUsed === 0),
   );
   unlock(
     "around_the_world",

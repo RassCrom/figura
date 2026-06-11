@@ -18,6 +18,8 @@ export type Figure = {
   photo: string;
   birth_date: string;
   death_date: string;
+  source_url?: string;
+  wikidata_id?: string;
 };
 
 export type Difficulty = "Explorer" | "Scholar" | "Conqueror";
@@ -63,8 +65,12 @@ export type RoundResult = {
   figureId: string;
   figureName: string;
   score: number;
+  /** Wrong name submissions this round (drives the score penalty). */
+  wrongGuesses: number;
+  /** Field-note hints revealed this round (initial / description / category). */
   hintsUsed: number;
   timeUsed: number;
+  extraUsed: number;
   category: string;
   continent: Continent;
   correct: boolean;

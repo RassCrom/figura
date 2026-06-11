@@ -24,6 +24,9 @@ export const REVERSE_SCORING = {
   speedPoints: 400,
   distanceDecayKm: 2500,
   yearDecay: 125,
+  // A reverse round counts as a "correct" identification (Codex, accuracy
+  // stats, continents) only when the pin lands within this radius.
+  correctRadiusKm: 500,
 } as const;
 
 export type ReverseScoreBreakdown = {

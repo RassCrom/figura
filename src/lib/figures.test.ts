@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FigureIndex } from "../types/figure";
-import { distanceKm, normalizeName, resolveFigureGuess } from "./figures";
+import { distanceKm, inferContinent, normalizeName, resolveFigureGuess } from "./figures";
 
 function indexed(
   id: string,
@@ -45,5 +45,18 @@ describe("figure helpers", () => {
       indexed("jane-smith", "Jane", "Smith"),
     ];
     expect(resolveFigureGuess("Smith", figures)).toBeNull();
+  });
+
+  it("classifies continents at the tricky boundaries", () => {
+    expect(inferContinent([24.7, 46.7])).toBe("Asia"); // Riyadh
+    expect(inferContinent([31.8, 35.2])).toBe("Asia"); // Jerusalem
+    expect(inferContinent([21.4, 39.8])).toBe("Asia"); // Mecca
+    expect(inferContinent([30.0, 31.2])).toBe("Africa"); // Cairo
+    expect(inferContinent([36.8, 10.2])).toBe("Africa"); // Tunis
+    expect(inferContinent([36.75, 3.06])).toBe("Africa"); // Algiers
+    expect(inferContinent([36.72, -4.42])).toBe("Europe"); // Malaga
+    expect(inferContinent([9.0, 38.7])).toBe("Africa"); // Addis Ababa
+    expect(inferContinent([48.85, 2.35])).toBe("Europe"); // Paris
+    expect(inferContinent([-41.3, 174.8])).toBe("Oceania"); // Wellington
   });
 });

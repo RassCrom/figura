@@ -64,6 +64,39 @@ describe("game-wide hints", () => {
     expect(useGameStore.getState().activateGameHint("category")).toBe(false);
   });
 
+  it("tracks wrong guesses separately from field-note hints in round results", () => {
+    useGameStore.getState().activateGameHint("initial");
+    useGameStore.getState().submitGuess("Wrong Person");
+    useGameStore.getState().submitGuess("Ada Lovelace");
+
+    const result = useGameStore.getState().roundResults[0];
+    expect(result.correct).toBe(true);
+    expect(result.wrongGuesses).toBe(1);
+    expect(result.hintsUsed).toBe(1);
+    expect(result.firstGuess).toBe(false);
+  });
+
+  it("marks a far-away reverse pin as not correct while keeping partial points", () => {
+    useGameStore.getState().reset();
+    useGameStore.getState().startSession({
+      nickname: "tester",
+      difficulty: "Explorer",
+      categories: ["Scientist"],
+      queue: [figure],
+      mode: "reverse",
+    });
+    useGameStore.getState().beginRound();
+    // Tokyo is ~9,500 km from London — partial location points, not a "catch".
+    const result = useGameStore.getState().submitLocation([35.7, 139.7], {
+      birthYear: 1815,
+      deathYear: 1852,
+    });
+
+    expect(result).not.toBeNull();
+    expect(useGameStore.getState().roundResults[0].correct).toBe(false);
+    expect(useGameStore.getState().roundResults[0].score).toBeGreaterThan(0);
+  });
+
   it("scores reverse mode from birthplace, lifetime, and speed without a first-try badge", () => {
     useGameStore.getState().reset();
     useGameStore.getState().startSession({

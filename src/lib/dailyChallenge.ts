@@ -1,6 +1,6 @@
 import type { Figure, FigureIndex } from "../types/figure";
 import { GAME_CONFIG } from "../config/gameConfig";
-import { getFullName, normalizeName } from "./figures";
+import { figureMatchesDifficulty, getFullName, normalizeName } from "./figures";
 
 // All players, everywhere, share the same daily set. We key on UTC date so
 // the rollover is simultaneous worldwide.
@@ -63,10 +63,17 @@ function seededShuffle<T>(items: T[], seed: number): T[] {
   return out;
 }
 
-// Daily pool excludes the longest tail of obscure figures to keep the shared
-// experience approachable.
+// The daily run is recorded as a Scholar-difficulty game, so its pool must
+// match the Scholar band: middle rounds come from the Scholar popularity
+// range and the two bookends from the easy-endpoint tier — the same shape a
+// classic Scholar session has. Drawing from a wider band here would make the
+// "Scholar" label (and Scholar leaderboard filters) dishonest.
 function getDailyPool<T extends FigureIndex>(figures: T[]): T[] {
-  return figures.filter((figure) => figure.popularity_rating >= 70);
+  return figures.filter(
+    (figure) =>
+      figureMatchesDifficulty(figure, "Scholar") ||
+      figure.popularity_rating >= GAME_CONFIG.easyEndpointPopularityRating,
+  );
 }
 
 export function getDailyFigures(
@@ -87,10 +94,16 @@ export function getDailyFigures(
   }
 
   const endpointIds = new Set(endpoints.slice(0, 2).map((figure) => getFullName(figure)));
-  const middle = shuffled
-    .filter((figure) => !endpointIds.has(getFullName(figure)))
-    .slice(0, DAILY_ROUNDS - 2);
-  return [endpoints[0], ...middle, endpoints[1]];
+  // Middle rounds draw only from the Scholar band, mirroring the classic
+  // Scholar queue; bookend-tier figures never appear mid-session.
+  const middlePool = shuffled.filter(
+    (figure) =>
+      figureMatchesDifficulty(figure, "Scholar") && !endpointIds.has(getFullName(figure)),
+  );
+  const middle = (middlePool.length >= DAILY_ROUNDS - 2 ? middlePool : shuffled).filter(
+    (figure) => !endpointIds.has(getFullName(figure)),
+  );
+  return [endpoints[0], ...middle.slice(0, DAILY_ROUNDS - 2), endpoints[1]];
 }
 
 export function getFigureOfTheDay(

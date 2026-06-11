@@ -6,6 +6,10 @@
   "scripts": {
     "prepare:data": "node scripts/prepare-figures.mjs",
     "check:data": "node scripts/prepare-figures.mjs --check",
+    "audit:data": "node scripts/audit-figures.mjs",
+    "fix:data": "node scripts/audit-figures.mjs --fix",
+    "rebalance:data": "node scripts/rebalance-figures.mjs",
+    "add:sports": "node scripts/add-curated-sports.mjs",
     "predev": "pnpm run prepare:data",
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc -b",
