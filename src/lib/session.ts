@@ -39,10 +39,7 @@ function getEasyEndpoints(
     selectedCategories.includes(figure.category),
   );
 
-  return uniqueFigures([
-    ...freshFirst(selectedEasyFigures, recentIds),
-    ...freshFirst(easyFigures, recentIds),
-  ]).slice(0, 2);
+  return uniqueFigures(freshFirst(selectedEasyFigures, recentIds)).slice(0, 2);
 }
 
 export function buildFigureQueue(
@@ -52,15 +49,13 @@ export function buildFigureQueue(
   recentIds?: ReadonlySet<string>,
 ): { queue: FigureIndex[]; relaxed: boolean } {
   const rules = getDifficultyRules(difficulty);
+  const categoryPool = getRelaxedPool(figures, selectedCategories);
   if (!rules.easyEndpoints) {
     const strictPool = getDifficultyPool(figures, difficulty, selectedCategories);
     const relaxed = strictPool.length < GAME_CONFIG.roundCount;
-    const preferred = relaxed ? getRelaxedPool(figures, selectedCategories) : strictPool;
+    const preferred = relaxed ? categoryPool : strictPool;
     return {
-      queue: uniqueFigures([
-        ...freshFirst(preferred, recentIds),
-        ...freshFirst(figures, recentIds),
-      ]).slice(0, GAME_CONFIG.roundCount),
+      queue: uniqueFigures(freshFirst(preferred, recentIds)).slice(0, GAME_CONFIG.roundCount),
       relaxed,
     };
   }
@@ -71,15 +66,12 @@ export function buildFigureQueue(
   const strictMiddlePool = strictPool.filter((figure) => !endpointIds.has(figureId(figure)));
   const relaxed = strictMiddlePool.length < middleRoundCount;
   const preferredMiddlePool = relaxed
-    ? getRelaxedPool(figures, selectedCategories).filter(
-        (figure) => !endpointIds.has(figureId(figure)),
-      )
+    ? categoryPool.filter((figure) => !endpointIds.has(figureId(figure)))
     : strictMiddlePool;
-  const fallbackMiddlePool = figures.filter((figure) => !endpointIds.has(figureId(figure)));
-  const middle = uniqueFigures([
-    ...freshFirst(preferredMiddlePool, recentIds),
-    ...freshFirst(fallbackMiddlePool, recentIds),
-  ]).slice(0, middleRoundCount);
+  const middle = uniqueFigures(freshFirst(preferredMiddlePool, recentIds)).slice(
+    0,
+    middleRoundCount,
+  );
 
   const queue =
     endpoints.length === 2

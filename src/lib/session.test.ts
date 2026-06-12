@@ -27,8 +27,8 @@ function figure(name: string, popularity: number, category = "Scientist"): Figur
 }
 
 const figures = [
-  figure("Easy One", 100, "Leader"),
-  figure("Easy Two", 98, "Artist"),
+  figure("Easy One", 100),
+  figure("Easy Two", 98),
   figure("Middle One", 88),
   figure("Middle Two", 87),
   figure("Middle Three", 86),
@@ -67,5 +67,22 @@ describe("five-round figure queues", () => {
     expect(queue).toHaveLength(5);
     expect(queue[0].popularity_rating).toBeLessThan(98);
     expect(queue[4].popularity_rating).toBeLessThan(98);
+  });
+
+  it("never leaks figures from unselected categories when difficulty is relaxed", () => {
+    const mixedFigures = [
+      figure("Sport One", 100, "Sportsman"),
+      figure("Sport Two", 88, "Sportsman"),
+      figure("Sport Three", 70, "Sportsman"),
+      figure("Scientist One", 99, "Scientist"),
+      figure("Scientist Two", 87, "Scientist"),
+      figure("Scientist Three", 65, "Scientist"),
+    ];
+
+    const { queue, relaxed } = buildFigureQueue(mixedFigures, "Scholar", ["Sportsman"]);
+
+    expect(relaxed).toBe(true);
+    expect(queue).toHaveLength(3);
+    expect(queue.every((item) => item.category === "Sportsman")).toBe(true);
   });
 });

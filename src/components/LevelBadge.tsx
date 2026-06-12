@@ -1,4 +1,15 @@
-import { BookOpen, Compass, Crown, Eye, Map, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  Compass,
+  Crown,
+  Eye,
+  Gem,
+  Map,
+  Orbit,
+  Sparkles,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { PlayerLevel } from "../types/figure";
 
@@ -8,6 +19,10 @@ const levelIcons: Record<PlayerLevel, LucideIcon> = {
   Historian: BookOpen,
   Oracle: Eye,
   Legend: Crown,
+  Pathfinder: Star,
+  Luminary: Sparkles,
+  Worldseer: Orbit,
+  Immortal: Gem,
 };
 
 export function LevelBadge({

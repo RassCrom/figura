@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { RoundResult } from "../types/figure";
-import { resolveAchievementUnlocks } from "./progression";
+import { getLevelInfo, resolveAchievementUnlocks } from "./progression";
 
 const result: RoundResult = {
   round: 1,
@@ -19,6 +19,13 @@ const result: RoundResult = {
 };
 
 describe("progression tiers", () => {
+  it("continues the level path beyond Legend", () => {
+    expect(getLevelInfo(20_000).levelName).toBe("Pathfinder");
+    expect(getLevelInfo(32_000).levelName).toBe("Luminary");
+    expect(getLevelInfo(50_000).levelName).toBe("Worldseer");
+    expect(getLevelInfo(75_000).levelName).toBe("Immortal");
+  });
+
   it("unlocks collection, veteran, daily, and category tiers", () => {
     const unlocked = resolveAchievementUnlocks({
       summary: {

@@ -1628,6 +1628,18 @@ input[type="range"] {
 .level-badge.level-legend {
   --level-color: #f4d46f;
 }
+.level-badge.level-pathfinder {
+  --level-color: #e78c54;
+}
+.level-badge.level-luminary {
+  --level-color: #79d7e8;
+}
+.level-badge.level-worldseer {
+  --level-color: #dd8bea;
+}
+.level-badge.level-immortal {
+  --level-color: #f3f0df;
+}
 
 .level-badge.emblem {
   min-height: 84px;

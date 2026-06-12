@@ -111,8 +111,7 @@ export function getRelaxedPool(
   figures: FigureIndex[],
   selectedCategories: string[],
 ): FigureIndex[] {
-  const categoryPool = figures.filter((figure) => selectedCategories.includes(figure.category));
-  return categoryPool.length >= 5 ? categoryPool : figures;
+  return figures.filter((figure) => selectedCategories.includes(figure.category));
 }
 
 export function levenshteinDistance(left: string, right: string): number {

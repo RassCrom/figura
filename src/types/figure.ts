@@ -100,7 +100,16 @@ export type AchievementId =
   | "daily_30"
   | "category_ace";
 
-export type PlayerLevel = "Traveler" | "Cartographer" | "Historian" | "Oracle" | "Legend";
+export type PlayerLevel =
+  | "Traveler"
+  | "Cartographer"
+  | "Historian"
+  | "Oracle"
+  | "Legend"
+  | "Pathfinder"
+  | "Luminary"
+  | "Worldseer"
+  | "Immortal";
 
 export type LeaderboardEntry = {
   id: string;

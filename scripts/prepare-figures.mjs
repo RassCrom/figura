@@ -56,8 +56,8 @@ function isCoordinate(value) {
 function isUrl(value) {
   if (!isNonEmptyString(value)) return false;
   try {
-    new URL(value);
-    return true;
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
   } catch {
     return false;
   }

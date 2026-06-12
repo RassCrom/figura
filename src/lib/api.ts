@@ -1,4 +1,5 @@
 import { ensureAnonymousUser, supabase } from "./supabase";
+import { cleanLeaderboardEntries } from "./leaderboard";
 import type {
   AchievementId,
   Difficulty,
@@ -148,9 +149,9 @@ export async function fetchTopLeaderboard(
     .not("profiles.nickname", "is", null)
     .order("score", { ascending: false });
   if (difficulty) query = query.eq("difficulty", difficulty);
-  const { data, error } = await query.limit(limit);
+  const { data, error } = await query.limit(limit * 5);
   if (error || !data) return [];
-  return data.flatMap((row) => {
+  const entries = data.flatMap((row) => {
     const profileJoin = row.profiles as unknown as { nickname: string | null } | null;
     const nickname = profileJoin?.nickname;
     if (!nickname) return [];
@@ -167,6 +168,7 @@ export async function fetchTopLeaderboard(
       } satisfies LeaderboardEntry,
     ];
   });
+  return cleanLeaderboardEntries(entries).slice(0, limit);
 }
 
 export type DailyLeaderboardEntry = LeaderboardEntry & { rank: number };
@@ -187,15 +189,15 @@ export async function fetchDailyLeaderboard(
     .not("profiles.nickname", "is", null)
     .order("score", { ascending: false });
   if (difficulty) query = query.eq("difficulty", difficulty);
-  const { data, error } = await query.limit(limit);
+  const { data, error } = await query.limit(limit * 5);
   if (error || !data) return [];
-  return data.flatMap((row, index) => {
+  const entries = data.flatMap((row) => {
     const nickname = (row.profiles as unknown as { nickname: string | null } | null)?.nickname;
     if (!nickname) return [];
     return [
       {
         id: row.id,
-        rank: index + 1,
+        rank: 0,
         nickname,
         score: row.score,
         difficulty: row.difficulty as Difficulty,
@@ -206,6 +208,9 @@ export async function fetchDailyLeaderboard(
       },
     ];
   });
+  return cleanLeaderboardEntries(entries)
+    .slice(0, limit)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
 }
 
 export async function fetchDailyPercentile(

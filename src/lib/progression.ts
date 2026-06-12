@@ -40,6 +40,10 @@ export const LEVELS: LevelDefinition[] = [
   { name: "Historian", minXp: 3000 },
   { name: "Oracle", minXp: 6500 },
   { name: "Legend", minXp: 12000 },
+  { name: "Pathfinder", minXp: 20000 },
+  { name: "Luminary", minXp: 32000 },
+  { name: "Worldseer", minXp: 50000 },
+  { name: "Immortal", minXp: 75000 },
 ];
 
 export const ACHIEVEMENTS: AchievementDefinition[] = [

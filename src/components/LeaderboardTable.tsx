@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { GAME_CONFIG } from "../config/gameConfig";
 import { en } from "../i18n/en";
+import { cleanLeaderboardEntries } from "../lib/leaderboard";
 import type { LeaderboardEntry } from "../types/figure";
 import { AchievementBadge } from "./AchievementBadge";
 import { LevelBadge } from "./LevelBadge";
@@ -13,34 +14,9 @@ type Props = {
   currentNickname?: string;
 };
 
-function runFingerprint(entry: LeaderboardEntry): string {
-  return [
-    entry.current ? "current" : entry.id,
-    entry.nickname,
-    entry.score,
-    entry.difficulty,
-    [...entry.categories].sort().join("|"),
-  ].join(":");
-}
-
-function collapseDuplicateCurrentRuns(entries: LeaderboardEntry[]): LeaderboardEntry[] {
-  const seen = new Set<string>();
-  return entries.filter((entry) => {
-    const fingerprint = runFingerprint(entry);
-    if (seen.has(fingerprint)) {
-      return false;
-    }
-    seen.add(fingerprint);
-    return true;
-  });
-}
-
 export function LeaderboardTable({ entries, full = false, currentNickname }: Props) {
   const [page, setPage] = useState(0);
-  const sorted = useMemo(
-    () => collapseDuplicateCurrentRuns(entries).sort((a, b) => b.score - a.score),
-    [entries],
-  );
+  const sorted = useMemo(() => cleanLeaderboardEntries(entries), [entries]);
   // Precompute rank for every entry once so the render loop is O(1) per row
   // instead of O(n) per row (findIndex was O(n²) total).
   const rankMap = useMemo(
