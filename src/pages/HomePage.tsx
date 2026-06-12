@@ -1,9 +1,10 @@
-import { ArrowRight, Flame, Globe2 } from "lucide-react";
+import { ArrowRight, Flame, Globe2, MapPinned } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AnimatedMapBackground } from "../components/AnimatedMapBackground";
 import { HowToPlay } from "../components/HowToPlay";
+import { usePageMetadata } from "../hooks/usePageMetadata";
 import { hasSeenHowToPlay, markHowToPlaySeen } from "../lib/onboarding";
 import { LevelProgress } from "../components/LevelProgress";
 import { Logo } from "../components/Logo";
@@ -21,6 +22,13 @@ import type { FeaturedFigure, FigureIndex } from "../types/figure";
 
 const nicknamePattern = /^[A-Za-z0-9_.\- ]{2,20}$/;
 const nicknameFormatGuard = /^[._\- ]|[._\- ]$|[._\- ]{2,}/;
+const HOME_METADATA = {
+  title: "Figura | Guess famous people by birthplace",
+  description:
+    "Play a free history and geography game. See a famous person, estimate their lifetime, and find their birthplace on the world map.",
+  keywords:
+    "history game, geography quiz, famous people quiz, birthplace game, historical figures, map game",
+};
 
 type Props = {
   figureIndex: FigureIndex[];
@@ -50,6 +58,7 @@ function nicknameErrorMessage(code: string): string {
 }
 
 export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
+  usePageMetadata(HOME_METADATA);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [nickname, setNickname] = useState(() => localStorage.getItem("gtf_nickname") ?? "");
@@ -204,16 +213,20 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
             <Link className="secondary-button" to="/leaderboard">
               {en.leaderboard}
             </Link>
-            <Link className="secondary-button" to="/profile">
+            <Link className="secondary-button profile-button" to="/profile">
               My profile
             </Link>
             <button
               type="button"
-              className="secondary-button"
+              className="secondary-button howto-button"
               onClick={() => setShowHowToPlay(true)}
             >
               {en.howToPlay}
             </button>
+            <Link className="secondary-button atlas-button" to="/atlas">
+              <MapPinned aria-hidden="true" size={16} />
+              Figure map
+            </Link>
           </div>
         </form>
       </section>

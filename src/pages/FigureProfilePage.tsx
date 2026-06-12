@@ -3,6 +3,8 @@ import { Link, Navigate, useParams } from "react-router-dom";
 
 import { TopNav } from "../components/TopNav";
 import { LoadingScreen } from "../components/LoadingScreen";
+import { LifeJourneyTimeline } from "../components/LifeJourneyTimeline";
+import { getLifeJourney } from "../data/lifeJourneys";
 import {
   findFigureBySlug,
   getDayNumber,
@@ -68,6 +70,7 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
       type: "profile" as const,
     };
   }, [figure]);
+  const lifeJourney = useMemo(() => (figure ? getLifeJourney(figure.id) : null), [figure]);
   usePageMetadata(metadata);
 
   const basemap = useSettingsStore((state) => state.basemap);
@@ -118,6 +121,15 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
     const engine = mapEngineRef.current;
     const handle = mapHandleRef.current;
     if (!engine || !handle || !figure || !mapReady) return;
+    const renderOptions = {
+      animateFit: true,
+      reducedMotion:
+        reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    };
+    if (lifeJourney) {
+      engine.renderLifeJourney(handle, lifeJourney, { ...renderOptions, padding: 42 });
+      return;
+    }
     engine.renderJourney(
       handle,
       figure,
@@ -125,13 +137,9 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
         birth: { primary: figure.place_of_birth, secondary: figure.birth_date || null },
         death: { primary: figure.place_of_death, secondary: figure.death_date || null },
       },
-      {
-        animateFit: true,
-        reducedMotion:
-          reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-      },
+      renderOptions,
     );
-  }, [figure, mapReady, reducedMotionSetting]);
+  }, [figure, lifeJourney, mapReady, reducedMotionSetting]);
 
   if (!selectedIndex || loadFailed) {
     return <Navigate to="/" replace />;
@@ -169,9 +177,11 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
         <p className="figure-description">{figure.description}</p>
 
         <section aria-labelledby="figure-map-title" className="figure-map-section">
-          <h2 id="figure-map-title">Journey</h2>
+          <h2 id="figure-map-title">{lifeJourney ? "Chronological life route" : "Journey"}</h2>
           <p className="figure-map-meta">
-            {figure.place_of_birth} → {figure.place_of_death} · {journey.toLocaleString()} km
+            {lifeJourney
+              ? `${lifeJourney.stops.length} documented stops · ${dates}`
+              : `${figure.place_of_birth} → ${figure.place_of_death} · ${journey.toLocaleString()} km`}
           </p>
           <div
             ref={mapContainerRef}
@@ -179,6 +189,7 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
             aria-label="Birth and death locations"
           />
         </section>
+        {lifeJourney ? <LifeJourneyTimeline journey={lifeJourney} /> : null}
 
         <div className="action-row">
           {mode === "today" ? (

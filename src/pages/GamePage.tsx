@@ -1,5 +1,6 @@
 import { LogOut, Pause, Play, Plus, Minus } from "lucide-react";
 import { FieldNotes } from "../components/game/FieldNotes";
+import { MapScaleBar } from "../components/game/MapScaleBar";
 import { PersonCard } from "../components/game/PersonCard";
 import { ReversePanel } from "../components/game/ReversePanel";
 import { SuggestionList } from "../components/game/SuggestionList";
@@ -16,6 +17,7 @@ import {
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { GAME_CONFIG, getDifficultyRules, REVERSE_SCORING } from "../config/gameConfig";
+import { getLifeJourney } from "../data/lifeJourneys";
 import { useCountUp } from "../hooks/useCountUp";
 import { useSoundManager } from "../hooks/useSoundManager";
 import { en } from "../i18n/en";
@@ -33,6 +35,8 @@ type Props = {
 type MapEngine = typeof import("../lib/mapEngine");
 
 const DEFAULT_REVERSE_ESTIMATE = { birthYear: 1800, deathYear: 1900 };
+const MIN_REVERSE_YEAR = -3000;
+const MAX_REVERSE_YEAR = new Date().getUTCFullYear();
 
 export default function GamePage({ figureIndex }: Props) {
   const navigate = useNavigate();
@@ -40,6 +44,7 @@ export default function GamePage({ figureIndex }: Props) {
   const mapEngineRef = useRef<MapEngine | null>(null);
   const mapRef = useRef<GameMapHandle | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [scaleMap, setScaleMap] = useState<GameMapHandle["map"] | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const guessPanelRef = useRef<HTMLFormElement>(null);
@@ -232,6 +237,7 @@ export default function GamePage({ figureIndex }: Props) {
 
       mapEngineRef.current = engine;
       mapRef.current = engine.createGameMap(mapContainerRef.current, initialBasemapRef.current);
+      setScaleMap(mapRef.current.map);
       setMapReady(true);
     });
 
@@ -242,6 +248,7 @@ export default function GamePage({ figureIndex }: Props) {
       }
       mapRef.current = null;
       mapEngineRef.current = null;
+      setScaleMap(null);
       setMapReady(false);
     };
   }, []);
@@ -432,10 +439,19 @@ export default function GamePage({ figureIndex }: Props) {
       reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cinematic = revealWasCorrect && !reducedMotion;
     if (mapEngineRef.current && mapRef.current) {
-      mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, {
-        reducedMotion,
-        compact: isSmallViewport,
-      });
+      const lifeJourney = getLifeJourney(revealedFigure.id);
+      if (lifeJourney) {
+        mapEngineRef.current.renderLifeJourney(mapRef.current, lifeJourney, {
+          animateFit: !reducedMotion,
+          reducedMotion,
+          compact: isSmallViewport,
+        });
+      } else {
+        mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, {
+          reducedMotion,
+          compact: isSmallViewport,
+        });
+      }
     }
 
     if (!cinematic) {
@@ -466,13 +482,13 @@ export default function GamePage({ figureIndex }: Props) {
   }, [roundIndex]);
 
   function updateBirthYearEstimate(year: number) {
-    const birthYear = Math.min(year, deathYearEstimate);
+    const birthYear = Math.max(MIN_REVERSE_YEAR, Math.min(year, deathYearEstimate));
     setBirthYearEstimate(birthYear);
     reverseEstimateRef.current = { ...reverseEstimateRef.current, birthYear };
   }
 
   function updateDeathYearEstimate(year: number) {
-    const deathYear = Math.max(year, birthYearEstimate);
+    const deathYear = Math.min(MAX_REVERSE_YEAR, Math.max(year, birthYearEstimate));
     setDeathYearEstimate(deathYear);
     reverseEstimateRef.current = { ...reverseEstimateRef.current, deathYear };
   }
@@ -585,6 +601,8 @@ export default function GamePage({ figureIndex }: Props) {
           <Minus size={24} />
         </button>
       </div>
+
+      <MapScaleBar map={scaleMap} />
 
       <section
         className={status === "revealed" ? "game-hud hidden" : "game-hud"}

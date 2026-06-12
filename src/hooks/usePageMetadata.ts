@@ -9,6 +9,7 @@ const DEFAULT_IMAGE_ALT = "Figura game route across a world map";
 type PageMetadata = {
   title: string;
   description: string;
+  keywords?: string;
   image?: string;
   imageAlt?: string;
   type?: "website" | "profile";
@@ -25,18 +26,22 @@ function applyMetadata(metadata?: PageMetadata) {
   const image = metadata?.image ?? DEFAULT_IMAGE;
   const imageAlt = metadata?.imageAlt ?? DEFAULT_IMAGE_ALT;
   const type = metadata?.type ?? "website";
+  const canonicalUrl = window.location.href.split(/[?#]/)[0];
 
   document.title = title;
   setMeta('meta[name="description"]', "content", description);
+  setMeta('meta[name="keywords"]', "content", metadata?.keywords ?? "history game, geography game, famous people, historical figures, map quiz");
   setMeta('meta[property="og:title"]', "content", title);
   setMeta('meta[property="og:description"]', "content", description);
   setMeta('meta[property="og:image"]', "content", image);
   setMeta('meta[property="og:image:alt"]', "content", imageAlt);
   setMeta('meta[property="og:type"]', "content", type);
+  setMeta('meta[property="og:url"]', "content", canonicalUrl);
   setMeta('meta[name="twitter:title"]', "content", title);
   setMeta('meta[name="twitter:description"]', "content", description);
   setMeta('meta[name="twitter:image"]', "content", image);
   setMeta('meta[name="twitter:image:alt"]', "content", imageAlt);
+  document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
 }
 
 export function usePageMetadata(metadata: PageMetadata | null) {

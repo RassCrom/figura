@@ -92,7 +92,7 @@ const initialState = {
   sessionId: "",
   difficulty: "Explorer" as Difficulty,
   categories: [] as string[],
-  mode: "classic" as GameMode,
+  mode: "reverse" as GameMode,
   dailyDate: null as string | null,
   queue: [] as Figure[],
   roundIndex: 0,

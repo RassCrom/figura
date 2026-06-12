@@ -36,12 +36,24 @@ export function ReversePanel({
         </div>
       </div>
       <div className="reverse-timeline" role="group" aria-label="Lifetime estimate">
-        <label htmlFor="birth-year-estimate">
-          <span>Birth estimate</span>
-          <strong>{formatHistoricalYear(birthYearEstimate)}</strong>
-        </label>
+        <div className="reverse-year-field">
+          <label htmlFor="birth-year-estimate">
+            <span>Birth estimate</span>
+            <strong>{formatHistoricalYear(birthYearEstimate)}</strong>
+          </label>
+          <input
+            id="birth-year-estimate"
+            type="number"
+            min={MIN_TIMELINE_YEAR}
+            max={MAX_TIMELINE_YEAR}
+            step="1"
+            value={birthYearEstimate}
+            onChange={(event) => onBirthYearChange(Number(event.target.value))}
+            disabled={!playing}
+          />
+        </div>
         <input
-          id="birth-year-estimate"
+          aria-label="Birth estimate slider"
           type="range"
           min={MIN_TIMELINE_YEAR}
           max={MAX_TIMELINE_YEAR}
@@ -50,12 +62,24 @@ export function ReversePanel({
           onChange={(event) => onBirthYearChange(Number(event.target.value))}
           disabled={!playing}
         />
-        <label htmlFor="death-year-estimate">
-          <span>Death estimate</span>
-          <strong>{formatHistoricalYear(deathYearEstimate)}</strong>
-        </label>
+        <div className="reverse-year-field">
+          <label htmlFor="death-year-estimate">
+            <span>Death estimate</span>
+            <strong>{formatHistoricalYear(deathYearEstimate)}</strong>
+          </label>
+          <input
+            id="death-year-estimate"
+            type="number"
+            min={MIN_TIMELINE_YEAR}
+            max={MAX_TIMELINE_YEAR}
+            step="1"
+            value={deathYearEstimate}
+            onChange={(event) => onDeathYearChange(Number(event.target.value))}
+            disabled={!playing}
+          />
+        </div>
         <input
-          id="death-year-estimate"
+          aria-label="Death estimate slider"
           type="range"
           min={MIN_TIMELINE_YEAR}
           max={MAX_TIMELINE_YEAR}
@@ -65,7 +89,7 @@ export function ReversePanel({
           disabled={!playing}
         />
         <div className="timeline-scale" aria-hidden="true">
-          <span>3000 BC</span>
+          <span>Use negative years for BC</span>
           <span>Present</span>
         </div>
       </div>

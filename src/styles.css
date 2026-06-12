@@ -1272,6 +1272,11 @@ h2 {
   font-size: 0.9rem;
 }
 
+.menu-actions .howto-button,
+.menu-actions .atlas-button {
+  flex-basis: calc(50% - 4px);
+}
+
 label,
 legend,
 .guess-panel label {
@@ -2085,7 +2090,7 @@ input[type="range"] {
 .custom-zoom-controls {
   position: fixed;
   top: max(162px, calc(env(safe-area-inset-top) + 162px));
-  right: 14px;
+  right: 24px;
   z-index: 11;
   display: flex;
   flex-direction: column;
@@ -2128,6 +2133,201 @@ input[type="range"] {
   opacity: 0;
   pointer-events: none;
   transform: translateY(-8px) scale(0.92);
+}
+
+.map-scale-bar {
+  position: fixed;
+  top: max(180px, calc(env(safe-area-inset-top) + 180px));
+  left: 28px;
+  bottom: auto;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 5px 0 4px 9px;
+  border-left: 2px solid rgba(236, 208, 138, 0.58);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.86));
+  pointer-events: none;
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.scale-label {
+  color: rgba(255, 247, 225, 0.74);
+  font-family: var(--font-ui);
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.scale-rule {
+  display: flex;
+  align-items: center;
+  height: 10px;
+  transition: width 240ms var(--ease-out);
+}
+
+.scale-tick {
+  flex: 0 0 auto;
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  background: rgba(255, 247, 225, 0.86);
+}
+
+.scale-fill {
+  flex: 1;
+  height: 2.5px;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 247, 225, 0.86) 0%,
+    rgba(236, 208, 138, 0.52) 50%,
+    rgba(255, 247, 225, 0.86) 100%
+  );
+}
+
+.life-journey-marker {
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.life-marker-disc {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 250, 232, 0.94);
+  border-radius: 999px;
+  color: #171109;
+  background: #f0d58f;
+  box-shadow:
+    0 0 0 4px rgba(239, 199, 90, 0.15),
+    0 5px 16px rgba(0, 0, 0, 0.52),
+    0 0 18px rgba(239, 199, 90, 0.48);
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+  animation: lifeStopReveal 360ms var(--ease-out) var(--life-stop-delay, 0ms) both;
+}
+
+.life-marker-disc > span {
+  transform: translateY(-0.5px);
+}
+
+.life-journey-timeline {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 24px;
+  padding: 18px;
+  border: 1px solid rgba(236, 208, 138, 0.22);
+  border-radius: 14px;
+  background: rgba(9, 8, 6, 0.38);
+}
+
+.life-journey-timeline header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.life-journey-timeline header h2 {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+}
+
+.life-journey-timeline header > span {
+  color: var(--color-primary-strong);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.life-journey-timeline ol {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  list-style: none;
+}
+
+.life-journey-timeline ol::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 14px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(239, 199, 90, 0.7), rgba(239, 199, 90, 0.12));
+}
+
+.life-journey-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+  min-height: 46px;
+}
+
+.life-journey-index {
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 250, 232, 0.72);
+  border-radius: 999px;
+  color: #171109;
+  background: #f0d58f;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.life-journey-timeline li div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.life-journey-timeline li strong {
+  color: var(--color-text);
+  font-size: 0.82rem;
+}
+
+.life-journey-timeline li div > span {
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.life-journey-note,
+.life-journey-sources {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.life-journey-sources a {
+  color: var(--color-primary-strong);
+  font-weight: 900;
 }
 
 .compass-rose {
@@ -2564,6 +2764,21 @@ input[type="range"] {
   gap: 1px;
 }
 
+.reverse-year-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  align-items: center;
+  gap: 8px;
+}
+
+.reverse-year-field input[type="number"] {
+  min-height: 34px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .reverse-timeline label span {
   color: var(--color-text-muted);
   font-size: 0.62rem;
@@ -2593,6 +2808,122 @@ input[type="range"] {
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.atlas-page {
+  display: grid;
+  grid-template-rows: auto auto minmax(520px, 1fr);
+  gap: 16px;
+}
+
+.atlas-page .top-nav {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.atlas-header {
+  width: min(1320px, 100%);
+  margin: 0 auto;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.atlas-header h1 {
+  margin-top: 5px;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+}
+
+.atlas-header p {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+}
+
+.atlas-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-primary-strong);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.atlas-map-frame {
+  position: relative;
+  width: min(1320px, 100%);
+  min-height: 520px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 18px;
+  background: #080704;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+}
+
+.atlas-map {
+  position: absolute;
+  inset: 0;
+}
+
+.atlas-map canvas {
+  filter: sepia(0.28) saturate(0.72) brightness(0.72) contrast(1.14);
+}
+
+.atlas-selection {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2;
+  min-width: min(320px, calc(100% - 32px));
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: rgba(10, 9, 7, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.atlas-selection span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.atlas-selection strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.atlas-selection a {
+  margin-top: 4px;
+  color: var(--color-primary-strong);
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .atlas-page {
+    grid-template-rows: auto auto minmax(460px, 1fr);
+  }
+
+  .atlas-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .atlas-header .secondary-button {
+    width: 100%;
+  }
+
+  .atlas-map-frame {
+    min-height: 460px;
+  }
+
+  .reverse-year-field {
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
 }
 
 .field-notes {
@@ -3529,6 +3860,10 @@ input[type="range"] {
     height: 52px;
   }
 
+  .custom-zoom-controls {
+    right: 14px;
+  }
+
   .compass-rose {
     width: 36px;
     height: 36px;
@@ -3662,6 +3997,10 @@ input[type="range"] {
     padding: 0 10px;
     font-size: 0.78rem;
   }
+
+  .menu-actions .profile-button {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 374px) {
@@ -3708,6 +4047,10 @@ input[type="range"] {
   .custom-compass {
     width: 46px;
     height: 46px;
+  }
+
+  .custom-zoom-controls {
+    right: 11px;
   }
 
   .compass-rose {
@@ -3782,6 +4125,21 @@ input[type="range"] {
     transform: scale(1.18);
   }
   100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lifeStopReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.62);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  to {
     opacity: 1;
     transform: scale(1);
   }
@@ -4115,6 +4473,10 @@ input[type="range"] {
 
   .menu-actions .secondary-button {
     min-width: 0;
+  }
+
+  .menu-actions .profile-button {
+    grid-column: 1 / -1;
   }
 }
 

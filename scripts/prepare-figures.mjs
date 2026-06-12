@@ -196,7 +196,7 @@ if (valid.length < 5) {
 }
 
 const index = valid.map(
-  ({ id, first_name, last_name, aliases, category, popularity_rating, birth_date }) => ({
+  ({
     id,
     first_name,
     last_name,
@@ -204,6 +204,18 @@ const index = valid.map(
     category,
     popularity_rating,
     birth_date,
+    place_of_birth,
+    coordinates_of_the_place_of_birth,
+  }) => ({
+    id,
+    first_name,
+    last_name,
+    aliases,
+    category,
+    popularity_rating,
+    birth_date,
+    place_of_birth,
+    coordinates_of_the_place_of_birth,
   }),
 );
 const featured = [...valid]

@@ -1,6 +1,7 @@
 import greatCircle from "@turf/great-circle";
 import maplibregl, { type LngLatBoundsLike, type Marker } from "maplibre-gl";
 
+import type { LifeJourney } from "../data/lifeJourneys";
 import type { Basemap, Figure } from "../types/figure";
 import { getMapStyle } from "./mapStyles";
 
@@ -71,6 +72,18 @@ type PendingRouteOverlay = {
   options: RouteOverlayOptions;
 };
 
+type LifeJourneyOptions = {
+  animateFit?: boolean;
+  reducedMotion?: boolean;
+  compact?: boolean;
+  padding?: FitPadding;
+};
+
+type PendingLifeJourney = {
+  journey: LifeJourney;
+  options: LifeJourneyOptions;
+};
+
 export type GameMapHandle = {
   map: maplibregl.Map;
   markers: { birth: Marker; death: Marker } | null;
@@ -92,6 +105,10 @@ export type GameMapHandle = {
   pendingRouteOverlay: PendingRouteOverlay | null;
   routeOverlayStyleListener: (() => void) | null;
   routeAnimationFrame: number;
+  lifeJourneyMarkers: Marker[];
+  lifeJourneyLayerIds: Array<{ sourceId: string; layerId: string }>;
+  pendingLifeJourney: PendingLifeJourney | null;
+  lifeJourneyStyleListener: (() => void) | null;
 };
 
 const arcCache = new Map<string, CachedArc>();
@@ -108,6 +125,9 @@ const JOURNEY_PULSE_LAYER_ID = "journey-arc-pulse";
 const ROUTE_OVERLAY_PREFIX = "journey-history-arc";
 const ROUTE_DRAW_MS = 1100;
 const ROUTE_STAGGER_MS = 180;
+const LIFE_JOURNEY_SOURCE_ID = "life-journey-route";
+const LIFE_JOURNEY_LAYER_ID = "life-journey-route";
+const LIFE_JOURNEY_GLOW_LAYER_ID = "life-journey-route-glow";
 
 function isStyleReadyForJourney(map: maplibregl.Map): boolean {
   // MapLibre's public isStyleLoaded() waits for tile sources too. The journey
@@ -189,7 +209,10 @@ function addOriginConnector(element: HTMLElement, offset: [number, number]): voi
   element.prepend(line);
 }
 
-function buildArcFromCoordinates(coordinates: JourneyCoordinates, cacheKey = coordinatesKey(coordinates)): CachedArc {
+function buildArcFromCoordinates(
+  coordinates: JourneyCoordinates,
+  cacheKey = coordinatesKey(coordinates),
+): CachedArc {
   const key = cacheKey;
   const cached = arcCache.get(key);
   if (cached) {
@@ -293,7 +316,10 @@ function emptyArcFeature(arc: CachedArc): GeoJSON.Feature<GeoJSON.MultiLineStrin
   };
 }
 
-function arcPulseFeature(arc: CachedArc, elapsedMs: number): GeoJSON.Feature<GeoJSON.MultiLineString> {
+function arcPulseFeature(
+  arc: CachedArc,
+  elapsedMs: number,
+): GeoJSON.Feature<GeoJSON.MultiLineString> {
   const phase = (elapsedMs % PATH_FLOW_MS) / PATH_FLOW_MS;
   const pulsePoints = Math.max(6, Math.round(arc.totalPoints * PATH_PULSE_POINT_FRACTION));
   const maxStart = Math.max(0, arc.totalPoints - pulsePoints);
@@ -364,6 +390,25 @@ function removeRouteOverlayLayers(handle: GameMapHandle): void {
   handle.routeLayerIds = [];
 }
 
+function removeLifeJourney(handle: GameMapHandle): void {
+  for (const marker of handle.lifeJourneyMarkers) {
+    marker.remove();
+  }
+  handle.lifeJourneyMarkers = [];
+
+  for (const { layerId } of [...handle.lifeJourneyLayerIds].reverse()) {
+    if (handle.map.getLayer(layerId)) {
+      handle.map.removeLayer(layerId);
+    }
+  }
+  for (const sourceId of new Set(handle.lifeJourneyLayerIds.map((item) => item.sourceId))) {
+    if (handle.map.getSource(sourceId)) {
+      handle.map.removeSource(sourceId);
+    }
+  }
+  handle.lifeJourneyLayerIds = [];
+}
+
 function routeToCoordinates(route: RouteOverlay): JourneyCoordinates {
   return {
     birth: route.birth,
@@ -371,7 +416,11 @@ function routeToCoordinates(route: RouteOverlay): JourneyCoordinates {
   };
 }
 
-function fitRoutes(map: maplibregl.Map, routes: RouteOverlay[], options: RouteOverlayOptions): void {
+function fitRoutes(
+  map: maplibregl.Map,
+  routes: RouteOverlay[],
+  options: RouteOverlayOptions,
+): void {
   if (!options.fit || routes.length === 0) {
     return;
   }
@@ -379,7 +428,10 @@ function fitRoutes(map: maplibregl.Map, routes: RouteOverlay[], options: RouteOv
   const bounds = new maplibregl.LngLatBounds();
   for (const route of routes) {
     const coordinates = routeToCoordinates(route);
-    const arc = buildArcFromCoordinates(coordinates, `route:${route.id}:${coordinatesKey(coordinates)}`);
+    const arc = buildArcFromCoordinates(
+      coordinates,
+      `route:${route.id}:${coordinatesKey(coordinates)}`,
+    );
     for (const segment of arc.segments) {
       for (const point of segment) {
         bounds.extend(point as [number, number]);
@@ -395,7 +447,11 @@ function fitRoutes(map: maplibregl.Map, routes: RouteOverlay[], options: RouteOv
   });
 }
 
-function fitBoundsSafely(map: maplibregl.Map, bounds: LngLatBoundsLike, options: SafeFitOptions): void {
+function fitBoundsSafely(
+  map: maplibregl.Map,
+  bounds: LngLatBoundsLike,
+  options: SafeFitOptions,
+): void {
   const { clientWidth, clientHeight } = map.getContainer();
   if (clientWidth < 40 || clientHeight < 40) {
     return;
@@ -444,7 +500,7 @@ export function createGameMap(container: HTMLElement, basemap: Basemap): GameMap
     center: [45, 35],
     zoom: 1.3,
     attributionControl: false,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   });
 
   map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
@@ -463,6 +519,10 @@ export function createGameMap(container: HTMLElement, basemap: Basemap): GameMap
     pendingRouteOverlay: null,
     routeOverlayStyleListener: null,
     routeAnimationFrame: 0,
+    lifeJourneyMarkers: [],
+    lifeJourneyLayerIds: [],
+    pendingLifeJourney: null,
+    lifeJourneyStyleListener: null,
   };
 }
 
@@ -475,6 +535,7 @@ export function setBasemap(handle: GameMapHandle, basemap: Basemap): void {
   handle.currentFigureKey = null;
   removeJourneyLayers(handle.map);
   removeRouteOverlayLayers(handle);
+  removeLifeJourney(handle);
   handle.map.setStyle(getMapStyle(basemap));
   if (routeOverlay) {
     renderRouteOverlay(handle, routeOverlay.routes, routeOverlay.options);
@@ -507,6 +568,7 @@ export function clearJourney(handle: GameMapHandle, fadePoints = true): void {
   handle.currentFigureKey = null;
 
   removeJourneyLayers(handle.map);
+  removeLifeJourney(handle);
 }
 
 export function removeGameMap(handle: GameMapHandle): void {
@@ -520,8 +582,14 @@ export function removeGameMap(handle: GameMapHandle): void {
     handle.map.off("load", handle.routeOverlayStyleListener);
     handle.routeOverlayStyleListener = null;
   }
+  if (handle.lifeJourneyStyleListener) {
+    handle.map.off("styledata", handle.lifeJourneyStyleListener);
+    handle.map.off("load", handle.lifeJourneyStyleListener);
+    handle.lifeJourneyStyleListener = null;
+  }
   handle.pendingRender = null;
   handle.pendingRouteOverlay = null;
+  handle.pendingLifeJourney = null;
   clearJourney(handle, false);
   removeRouteOverlayLayers(handle);
   handle.map.remove();
@@ -593,6 +661,130 @@ export function renderRouteOverlay(
   handle.map.on("load", listener);
 }
 
+export function renderLifeJourney(
+  handle: GameMapHandle,
+  journey: LifeJourney,
+  options: LifeJourneyOptions = {},
+): void {
+  handle.pendingLifeJourney = { journey, options };
+
+  if (isStyleReadyForJourney(handle.map)) {
+    handle.pendingLifeJourney = null;
+    doRenderLifeJourney(handle, journey, options);
+    return;
+  }
+
+  if (handle.lifeJourneyStyleListener) {
+    return;
+  }
+
+  const listener = () => {
+    if (!isStyleReadyForJourney(handle.map)) {
+      return;
+    }
+    handle.map.off("styledata", listener);
+    handle.map.off("load", listener);
+    handle.lifeJourneyStyleListener = null;
+    const pending = handle.pendingLifeJourney;
+    handle.pendingLifeJourney = null;
+    if (pending) {
+      doRenderLifeJourney(handle, pending.journey, pending.options);
+    }
+  };
+  handle.lifeJourneyStyleListener = listener;
+  handle.map.on("styledata", listener);
+  handle.map.on("load", listener);
+}
+
+function doRenderLifeJourney(
+  handle: GameMapHandle,
+  journey: LifeJourney,
+  options: LifeJourneyOptions,
+): void {
+  clearJourney(handle, false);
+  removeRouteOverlayLayers(handle);
+
+  if (journey.stops.length < 2) {
+    return;
+  }
+
+  const map = handle.map;
+  const routeSegments: number[][][] = [];
+  for (let index = 1; index < journey.stops.length; index += 1) {
+    const from = toLngLat(journey.stops[index - 1].coordinates);
+    const to = toLngLat(journey.stops[index].coordinates);
+    const arc = buildArcFromCoordinates(
+      { birth: from, death: to },
+      `life:${journey.figureId}:${index}:${from.join(",")}:${to.join(",")}`,
+    );
+    routeSegments.push(...arc.segments);
+  }
+
+  const route: GeoJSON.Feature<GeoJSON.MultiLineString> = {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "MultiLineString", coordinates: routeSegments },
+  };
+
+  map.addSource(LIFE_JOURNEY_SOURCE_ID, { type: "geojson", data: route });
+  map.addLayer({
+    id: LIFE_JOURNEY_GLOW_LAYER_ID,
+    type: "line",
+    source: LIFE_JOURNEY_SOURCE_ID,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "rgba(239, 199, 90, 0.52)",
+      "line-width": 8,
+      "line-blur": 4,
+      "line-opacity": 0.58,
+    },
+  });
+  map.addLayer({
+    id: LIFE_JOURNEY_LAYER_ID,
+    type: "line",
+    source: LIFE_JOURNEY_SOURCE_ID,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "#f0d58f",
+      "line-width": 2.6,
+      "line-dasharray": [1.2, 1.15],
+      "line-opacity": 0.94,
+    },
+  });
+  handle.lifeJourneyLayerIds = [
+    { sourceId: LIFE_JOURNEY_SOURCE_ID, layerId: LIFE_JOURNEY_GLOW_LAYER_ID },
+    { sourceId: LIFE_JOURNEY_SOURCE_ID, layerId: LIFE_JOURNEY_LAYER_ID },
+  ];
+
+  const bounds = new maplibregl.LngLatBounds();
+  journey.stops.forEach((stop, index) => {
+    const coordinates = toLngLat(stop.coordinates);
+    bounds.extend(coordinates);
+    const element = document.createElement("div");
+    element.className = "life-journey-marker";
+    element.style.setProperty("--life-stop-delay", `${Math.min(index * 85, 600)}ms`);
+    element.innerHTML = `<span class="life-marker-disc"><span>${index + 1}</span></span>`;
+    element.setAttribute("aria-label", `${index + 1}. ${stop.year}, ${stop.place}: ${stop.event}`);
+    element.title = `${stop.year} · ${stop.place} — ${stop.event}`;
+    handle.lifeJourneyMarkers.push(
+      new maplibregl.Marker({ element, anchor: "center", subpixelPositioning: true })
+        .setLngLat(coordinates)
+        .addTo(map),
+    );
+  });
+
+  fitBoundsSafely(map, bounds, {
+    padding:
+      options.padding ??
+      (options.compact
+        ? { top: 44, right: 44, bottom: 150, left: 44 }
+        : { top: 100, right: 100, bottom: 230, left: 100 }),
+    maxZoom: options.compact ? 3.2 : 4.6,
+    duration: options.reducedMotion || !options.animateFit ? 0 : 950,
+    easing: (t) => 1 - Math.pow(1 - t, 3),
+  });
+}
+
 export function focusJourney(
   handle: GameMapHandle,
   figure: Figure,
@@ -659,7 +851,10 @@ function doRenderRouteOverlay(
 
   routes.forEach((route, index) => {
     const coordinates = routeToCoordinates(route);
-    const arc = buildArcFromCoordinates(coordinates, `route:${route.id}:${coordinatesKey(coordinates)}`);
+    const arc = buildArcFromCoordinates(
+      coordinates,
+      `route:${route.id}:${coordinatesKey(coordinates)}`,
+    );
     const sourceId = `${ROUTE_OVERLAY_PREFIX}-source-${index}`;
     const layerId = `${ROUTE_OVERLAY_PREFIX}-layer-${index}`;
     const pulseSourceId = `${ROUTE_OVERLAY_PREFIX}-pulse-source-${index}`;
@@ -778,7 +973,11 @@ function doRender(
   }
 
   handle.markers = {
-    birth: new maplibregl.Marker({ element: birthElement, anchor: "center", subpixelPositioning: true })
+    birth: new maplibregl.Marker({
+      element: birthElement,
+      anchor: "center",
+      subpixelPositioning: true,
+    })
       .setLngLat(birth)
       .addTo(map),
     death: new maplibregl.Marker({

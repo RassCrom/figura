@@ -57,21 +57,21 @@ export function SettingsPage({ categories }: { categories: string[] }) {
           <div className="chip-grid">
             <button
               type="button"
-              className={gameMode === "classic" ? "chip selected" : "chip"}
-              aria-pressed={gameMode === "classic"}
-              onClick={() => setGameMode("classic")}
-            >
-              <span>Who?</span>
-              <small>Follow the journey and name the figure.</small>
-            </button>
-            <button
-              type="button"
               className={gameMode === "reverse" ? "chip selected" : "chip"}
               aria-pressed={gameMode === "reverse"}
               onClick={() => setGameMode("reverse")}
             >
               <span>Where?</span>
               <small>See the figure and click their birthplace.</small>
+            </button>
+            <button
+              type="button"
+              className={gameMode === "classic" ? "chip selected" : "chip"}
+              aria-pressed={gameMode === "classic"}
+              onClick={() => setGameMode("classic")}
+            >
+              <span>Who?</span>
+              <small>Follow the journey and name the figure.</small>
             </button>
           </div>
         </fieldset>

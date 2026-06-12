@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 
 import type { FeaturedFigure } from "../types/figure";
 
-// Lazy import inside the effect so maplibre-gl stays out of the main chunk.
 type MapLibreGL = typeof import("maplibre-gl");
 type MapInstance = import("maplibre-gl").Map;
 
@@ -21,7 +20,7 @@ function createBirthplaceMarker(figure: FeaturedFigure, rank: number): HTMLDivEl
   const marker = document.createElement("div");
   marker.className = `birthplace-marker${rank <= 3 ? " birthplace-marker--headliner" : ""}`;
   marker.style.setProperty("--marker-delay", `${(rank % 7) * -0.46}s`);
-  marker.title = `${rank}. ${figure.first_name} ${figure.last_name} — born in ${figure.place_of_birth}`;
+  marker.title = `${rank}. ${figure.first_name} ${figure.last_name} - born in ${figure.place_of_birth}`;
 
   const body = document.createElement("div");
   body.className = "birthplace-marker-body";
@@ -59,10 +58,7 @@ export function AnimatedMapBackground({ figures }: Props) {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const reducedMotion =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     let cancelled = false;
     let map: MapInstance | null = null;
     let rotationFrame: number | null = null;
@@ -71,10 +67,7 @@ export function AnimatedMapBackground({ figures }: Props) {
 
     void (async () => {
       const [maplibregl, { getMapStyle }]: [MapLibreGL, typeof import("../lib/mapStyles")] =
-        await Promise.all([
-          import("maplibre-gl") as Promise<MapLibreGL>,
-          import("../lib/mapStyles"),
-        ]);
+        await Promise.all([import("maplibre-gl") as Promise<MapLibreGL>, import("../lib/mapStyles")]);
       if (cancelled || !containerRef.current) return;
 
       map = new maplibregl.Map({
@@ -82,24 +75,27 @@ export function AnimatedMapBackground({ figures }: Props) {
         style: getMapStyle("Steppe"),
         center: START_CENTER,
         zoom: 1.35,
+        minZoom: 1,
+        maxZoom: 2,
         interactive: false,
         attributionControl: false,
         fadeDuration: 0,
+        renderWorldCopies: false,
+        refreshExpiredTiles: false,
       });
 
-      const featuredFigures = [...figures]
+      [...figures]
         .sort((first, second) => second.popularity_rating - first.popularity_rating)
-        .slice(0, FEATURED_FIGURE_COUNT);
-
-      featuredFigures.forEach((figure, index) => {
-        const [lat, lng] = figure.coordinates_of_the_place_of_birth;
-        new maplibregl.Marker({
-          element: createBirthplaceMarker(figure, index + 1),
-          anchor: "bottom",
-        })
-          .setLngLat([lng, lat])
-          .addTo(map!);
-      });
+        .slice(0, FEATURED_FIGURE_COUNT)
+        .forEach((figure, index) => {
+          const [lat, lng] = figure.coordinates_of_the_place_of_birth;
+          new maplibregl.Marker({
+            element: createBirthplaceMarker(figure, index + 1),
+            anchor: "bottom",
+          })
+            .setLngLat([lng, lat])
+            .addTo(map!);
+        });
 
       const rotate = () => {
         rotationFrame = null;
@@ -118,21 +114,17 @@ export function AnimatedMapBackground({ figures }: Props) {
         rotationFrame = window.requestAnimationFrame(rotate);
       };
       map.on("moveend", onMoveEnd);
-
       if (!reducedMotion) {
-        map.once("load", () => {
+        map.once("idle", () => {
           rotationFrame = window.requestAnimationFrame(rotate);
         });
       }
 
       onVisibilityChange = () => {
         if (!map) return;
-
         if (document.hidden) {
-          if (rotationFrame !== null) {
-            window.cancelAnimationFrame(rotationFrame);
-            rotationFrame = null;
-          }
+          if (rotationFrame !== null) window.cancelAnimationFrame(rotationFrame);
+          rotationFrame = null;
           map.stop();
         } else if (!reducedMotion && rotationFrame === null) {
           rotationFrame = window.requestAnimationFrame(rotate);
@@ -143,9 +135,7 @@ export function AnimatedMapBackground({ figures }: Props) {
 
     return () => {
       cancelled = true;
-      if (onVisibilityChange) {
-        document.removeEventListener("visibilitychange", onVisibilityChange);
-      }
+      if (onVisibilityChange) document.removeEventListener("visibilitychange", onVisibilityChange);
       if (rotationFrame !== null) window.cancelAnimationFrame(rotationFrame);
       if (onMoveEnd) map?.off("moveend", onMoveEnd);
       map?.remove();

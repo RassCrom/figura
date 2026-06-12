@@ -9,10 +9,15 @@
       content="Figura is a geography and history guessing game. Follow a person's journey from birthplace to place of death and identify the historical figure."
     />
     <meta name="robots" content="index, follow" />
+    <meta
+      name="keywords"
+      content="history game, geography quiz, famous people quiz, birthplace game, historical figures, map game"
+    />
     <meta name="application-name" content="Figura" />
     <meta name="color-scheme" content="dark" />
     <meta property="og:site_name" content="Figura" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
     <meta property="og:title" content="Figura | Guess historical figures by their journeys" />
     <meta
       property="og:description"
@@ -29,7 +34,9 @@
     <meta name="twitter:image" content="/og-cover.png" />
     <meta name="twitter:image:alt" content="Figura game route across a world map" />
     <title>Figura | Guess historical figures by their journeys</title>
+    <link rel="canonical" href="/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preload" href="/data/figure-index.json" as="fetch" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -37,6 +44,18 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "Figura",
+        "description": "A free geography and history game about famous people's birthplaces and life journeys.",
+        "applicationCategory": "Game",
+        "genre": ["Trivia", "Geography", "History"],
+        "operatingSystem": "Web",
+        "isAccessibleForFree": true
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

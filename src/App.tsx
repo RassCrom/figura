@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 
+import { AmbientMusic } from "./components/AmbientMusic";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Toast } from "./components/Toast";
 import { getCategories, loadFeaturedFigures, loadFigureIndex } from "./lib/figures";
@@ -36,6 +37,9 @@ const MyProfilePage = lazy(() =>
 );
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage })),
+);
+const FiguresMapPage = lazy(() =>
+  import("./pages/FiguresMapPage").then((module) => ({ default: module.FiguresMapPage })),
 );
 
 export function App() {
@@ -92,6 +96,7 @@ export function App() {
 
   return (
     <BrowserRouter>
+      <AmbientMusic />
       <Suspense fallback={<LoadingScreen />}>
         <Routes>
           <Route
@@ -105,6 +110,7 @@ export function App() {
             }
           />
           <Route path="/settings" element={<SettingsPage categories={categories} />} />
+          <Route path="/atlas" element={<FiguresMapPage figures={figureIndex} />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/daily" element={<DailyChallengePage figureIndex={figureIndex} />} />
           <Route

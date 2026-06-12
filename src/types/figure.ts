@@ -27,7 +27,15 @@ export type GameMode = "classic" | "daily" | "reverse";
 
 export type FigureIndex = Pick<
   Figure,
-  "id" | "first_name" | "last_name" | "aliases" | "category" | "popularity_rating" | "birth_date"
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "aliases"
+  | "category"
+  | "popularity_rating"
+  | "birth_date"
+  | "place_of_birth"
+  | "coordinates_of_the_place_of_birth"
 >;
 
 export type FeaturedFigure = Pick<

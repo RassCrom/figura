@@ -1,129 +1,132 @@
 # Figura
 
-Figura is a small geography-and-history guessing game. Each round shows a person's life journey on a map, starting at their birthplace and ending at their place of death. The player has to guess the figure before time runs out.
+Figura is a free history and geography guessing game.
 
-The project is built as a Vite + React app with MapLibre for the maps, Zustand for local state, and optional Supabase sync for nicknames, profiles, and leaderboards.
+The main game mode is **Where?**: you see a famous person, estimate when they were born and died, then click their birthplace on the map. There is also a **Who?** mode where you follow a person's life journey and guess their name.
 
-## What You Can Do
+## What is in the game?
 
-- Play a five-round session with timed guesses and score bonuses.
-- Use hints that reveal life dates and places after wrong guesses.
-- Play a daily challenge with the same five figures for everyone.
-- Browse figure journey pages with birth/death map routes.
-- Change difficulty, categories, basemap, music, and sound effects.
-- Keep local progress, XP, achievements, and streaks.
-- Enable Supabase to sync leaderboard and public profile data.
+- Five-round games with scores, timers, hints, and streaks
+- Where? and Who? game modes
+- A daily challenge shared by every player
+- A birthplace atlas with every figure in the game
+- Figure profile pages with life routes
+- Difficulty, category, map, music, SFX, and accessibility settings
+- Local profiles, XP, achievements, and optional online leaderboards
 
-## Tech Stack
+The home globe uses portrait markers. The birthplace atlas uses MapLibre layers and reveals more figures as you zoom in.
 
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- MapLibre GL
-- Turf great-circle routes
-- Zustand
-- Supabase, when configured
+## Run it locally
 
-## Getting Started
-
-Use pnpm, since the repository is locked with `pnpm-lock.yaml`.
+You need Node.js and pnpm.
 
 ```bash
 pnpm install
 pnpm run dev
 ```
 
-The dev server runs on:
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-```text
-http://127.0.0.1:5173/
-```
+The app works without a backend. Supabase is only needed for online nicknames, profiles, and leaderboards.
 
-## Environment Variables
+## Environment variables
 
-The app can run without Supabase. If the variables below are missing or still contain the example values, the game works locally and online sync is skipped.
-
-Create `.env` from `.env.example` when you want backend sync:
-
-```bash
-cp .env.example .env
-```
+Copy `.env.example` to `.env` and add your Supabase project details when you want online features:
 
 ```env
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-With Supabase configured, the app signs players in anonymously and uses that session for nickname claiming, profile hydration, and leaderboard updates.
+Do not commit private service-role keys. The browser app only uses the public anonymous key.
 
-## Available Scripts
-
-```bash
-pnpm run dev
-```
-
-Starts the Vite dev server on `127.0.0.1`.
+## Useful commands
 
 ```bash
-pnpm run build
+pnpm run dev          # start the local app
+pnpm run typecheck    # check TypeScript
+pnpm run lint         # check code style and common mistakes
+pnpm run test         # run unit tests
+pnpm run build        # create the production build
+pnpm run ci           # run every main check
 ```
 
-Runs TypeScript project checks and creates a production build in `dist/`.
+Figure data commands:
 
 ```bash
-pnpm run preview
+pnpm run prepare:data   # rebuild the public figure index and records
+pnpm run check:data     # check that generated data is up to date
+pnpm run audit:data     # report figure-data problems
+pnpm run fix:data       # fix supported data problems
+pnpm run rebalance:data # rebalance the maintained figure pool
 ```
 
-Serves the production build locally for a final smoke test.
-
-## Project Structure
+## Main folders
 
 ```text
-src/
-  components/     Shared UI pieces
-  config/         Game timing and scoring constants
-  data/           Figure data used by the game
-  hooks/          Small React hooks
-  i18n/           UI copy
-  lib/            Data loading, scoring helpers, maps, Supabase API calls
-  pages/          Route-level screens
-  stores/         Zustand stores
-  types/          Shared TypeScript types
+public/audio/     Music used by the game
+public/data/      Generated data loaded by the browser
+scripts/          Figure-data tools
+src/components/   Reusable UI
+src/hooks/        Metadata, sound, and small React helpers
+src/lib/          Maps, data loading, scoring, and API helpers
+src/pages/        Full app screens
+src/stores/       Zustand game and settings state
 ```
 
-The main route setup lives in `src/App.tsx`. The game surface is `src/pages/GamePage.tsx`, and the shared map rendering logic is in `src/lib/mapEngine.ts`.
+## Figure data
 
-## Figure Data
+The source dataset is `src/data/figures.json`.
 
-Figures are loaded from `src/data/figures.json`. Generated records include a `source_url` reference,
-and the data pipeline rejects duplicate or placeholder identities before they reach the app.
-Coordinates are stored as:
+Run `pnpm run prepare:data` after changing it. This creates:
 
-```ts
-[latitude, longitude]
+- `public/data/figure-index.json` for quick browsing, search, and the birthplace atlas
+- `public/data/featured-figures.json` for the home globe
+- one full JSON record per figure in `public/data/figures/`
+
+Coordinates in the data are stored as `[latitude, longitude]`. MapLibre expects `[longitude, latitude]`, so map code swaps them before rendering.
+
+## Maps and performance
+
+- The home globe uses a small set of portrait DOM markers.
+- The birthplace atlas uses one GeoJSON source and filters names and points by popularity at each zoom level.
+- Gameplay routes are added only when needed.
+- The gameplay map does not preserve every rendered frame.
+- Hidden home-map animation stops until the page is visible again.
+
+## Music and sound
+
+The menu track is:
+
+```text
+public/audio/Where_the_Stone_Sleeps-main_music.mp3
 ```
 
-MapLibre expects longitude first, so map code converts them before rendering markers and routes.
+The gameplay track is:
 
-Use `pnpm run audit:data` to assess identity, category, chronology, and likely-person duplicates.
-Use `pnpm run fix:data` to remove hard reliability failures and standardize category names, then
-run `pnpm run prepare:data` to regenerate public records.
-Use `pnpm run rebalance:data` to enforce the curated sportsperson roster and remove leaders below
-the maintained popularity cutoff.
+```text
+public/audio/A_Sweet_Reset-map_msuic.mp3
+```
 
-## Development Notes
+Short tick, wrong-answer, correct-answer, and reveal sounds are generated in the browser with the Web Audio API. Music and SFX volumes can be changed separately in Settings.
 
-- Keep figure data valid. Invalid entries are filtered out during loading.
-- The game should remain playable without Supabase credentials.
-- Map routes are shared by the game and figure profile pages, so changes in `mapEngine.ts` affect both.
-- Build output goes to `dist/` and should not be edited by hand.
+## SEO
 
-## Production Build
+The app includes:
+
+- description, keyword, canonical, Open Graph, and Twitter tags
+- route-specific page titles and descriptions
+- Game structured data
+- `robots.txt`
+- a web app manifest
+
+Set the production domain in your hosting platform so the browser-generated canonical URL and share URLs use the correct address.
+
+## Production
 
 ```bash
 pnpm run build
 pnpm run preview
 ```
 
-Vite may warn about large chunks because MapLibre is a sizeable dependency. That warning does not necessarily mean the build failed.
+The production files are written to `dist/`. Do not edit that folder by hand.

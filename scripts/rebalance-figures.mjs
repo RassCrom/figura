@@ -3,7 +3,11 @@ import path from "node:path";
 import process from "node:process";
 
 const sourcePath = path.join(process.cwd(), "src", "data", "figures.json");
-const leaderMinimumPopularity = 70;
+// This cutoff removes the 100 lowest-popularity leaders from the generated
+// game index. Some lower-ranked source rows are already rejected by the data
+// validator, so the source dataset loses more than 100 rows.
+const leaderPopularityCutoff = 75;
+const leaderCutoffName = "Alfred Rosenberg";
 const categoryNames = new Map(
   Object.entries({
     Sportsperson: [
@@ -141,7 +145,12 @@ for (const figure of source) {
     break;
   }
 
-  if (figure.category === "Leader" && figure.popularity_rating < leaderMinimumPopularity) {
+  if (
+    figure.category === "Leader" &&
+    (figure.popularity_rating < leaderPopularityCutoff ||
+      (figure.popularity_rating === leaderPopularityCutoff &&
+        fullName(figure).localeCompare(leaderCutoffName, "en") <= 0))
+  ) {
     removedLeaders.push(figure);
     continue;
   }
@@ -162,7 +171,5 @@ console.log(
     .join(", ")}.`,
 );
 console.log(`Sportspersons after rebalance: ${sportsCount}.`);
-console.log(
-  `Removed leaders below popularity ${leaderMinimumPopularity}: ${removedLeaders.length}.`,
-);
+console.log(`Removed leaders matching the maintained low-popularity cutoff: ${removedLeaders.length}.`);
 console.log(`Figures after rebalance: ${rebalanced.length}.`);

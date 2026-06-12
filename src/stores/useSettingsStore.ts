@@ -31,7 +31,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       difficulty: "Explorer",
-      gameMode: "classic",
+      gameMode: "reverse",
       selectedCategories: [],
       basemap: "Steppe",
       musicVol: 45,
@@ -61,7 +61,11 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "gtf_settings",
-      version: 3,
+      version: 4,
+      migrate: (persistedState) => ({
+        ...(persistedState as SettingsState),
+        gameMode: "reverse",
+      }),
     },
   ),
 );

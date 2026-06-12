@@ -77,6 +77,7 @@ export function getMapStyle(basemap: Basemap): StyleSpecification {
 
   return {
     version: 8,
+    glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
     sources: {
       base: {
         type: "raster",
