@@ -4,6 +4,7 @@ import type { Basemap } from "../types/figure";
 import customVectorStyle from "./customVectorStyle.json";
 import darkNightBlueStyle from "./darkNightBlueStyle.json";
 import historicStyle from "./historicStyle.json";
+import medivialStyle from "./medivialStyle.json";
 
 type TileConfig = {
   type: "raster";
@@ -56,10 +57,14 @@ const TILE_CONFIG: Record<Basemap, TileConfig> = {
     type: "vector",
     style: historicStyle,
   },
+  Medivial: {
+    type: "vector",
+    style: medivialStyle,
+  },
   "Custom Vector": {
     type: "vector",
-    style: customVectorStyle
-  }
+    style: customVectorStyle,
+  },
 };
 
 export function getMapStyle(basemap: Basemap): StyleSpecification {

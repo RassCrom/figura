@@ -204,6 +204,7 @@ const index = valid.map(
     category,
     popularity_rating,
     birth_date,
+    death_date,
     place_of_birth,
     coordinates_of_the_place_of_birth,
   }) => ({
@@ -214,6 +215,7 @@ const index = valid.map(
     category,
     popularity_rating,
     birth_date,
+    death_date,
     place_of_birth,
     coordinates_of_the_place_of_birth,
   }),

@@ -34,6 +34,7 @@ export type FigureIndex = Pick<
   | "category"
   | "popularity_rating"
   | "birth_date"
+  | "death_date"
   | "place_of_birth"
   | "coordinates_of_the_place_of_birth"
 >;
@@ -57,6 +58,7 @@ export type Basemap =
   | "CartoDB Dark"
   | "Dark Night Blue"
   | "Historic"
+  | "Medivial"
   | "Custom Vector";
 
 export type Continent =

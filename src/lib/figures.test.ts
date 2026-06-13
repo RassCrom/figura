@@ -17,6 +17,7 @@ function indexed(
     category: "Scientist",
     popularity_rating: 99,
     birth_date: "1900-01-01",
+    death_date: "1980-01-01",
     place_of_birth: "Test birthplace",
     coordinates_of_the_place_of_birth: [0, 0],
   };
