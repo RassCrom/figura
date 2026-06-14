@@ -3,6 +3,7 @@ import { FieldNotes } from "../components/game/FieldNotes";
 import { MapScaleBar } from "../components/game/MapScaleBar";
 import { PersonCard } from "../components/game/PersonCard";
 import { ReversePanel } from "../components/game/ReversePanel";
+import { ReverseRevealBanner } from "../components/game/ReverseRevealBanner";
 import { SuggestionList } from "../components/game/SuggestionList";
 import { TimerArc } from "../components/game/TimerArc";
 import {
@@ -21,10 +22,15 @@ import { getLifeJourney } from "../data/lifeJourneys";
 import { useCountUp } from "../hooks/useCountUp";
 import { useSoundManager } from "../hooks/useSoundManager";
 import { en } from "../i18n/en";
-import { getLifeDateHints, getFullName, normalizeName, resolveFigureGuess } from "../lib/figures";
+import {
+  getLifeDateHints,
+  getFullName,
+  resolveFigureGuess,
+  searchFigureSuggestions,
+} from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
-import { useGameStore } from "../stores/useGameStore";
+import { useGameStore, type GameHint } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { FigureIndex } from "../types/figure";
 
@@ -37,6 +43,7 @@ type MapEngine = typeof import("../lib/mapEngine");
 const DEFAULT_REVERSE_ESTIMATE = { birthYear: 1800, deathYear: 1900 };
 const MIN_REVERSE_YEAR = -3000;
 const MAX_REVERSE_YEAR = new Date().getUTCFullYear();
+const GAME_HINT_SHORTCUTS: readonly GameHint[] = ["initial", "description", "category"];
 
 export default function GamePage({ figureIndex }: Props) {
   const navigate = useNavigate();
@@ -139,21 +146,10 @@ export default function GamePage({ figureIndex }: Props) {
   } as CSSProperties;
 
   const suggestions = useMemo(() => {
-    const query = normalizeName(debouncedGuess);
-    if (!query) {
-      return [] as FigureIndex[];
-    }
-
     if (!showSuggestions || !difficultyRules.suggestions || mode === "reverse") {
       return [] as FigureIndex[];
     }
-    return figureIndex
-      .filter((figure) =>
-        [getFullName(figure), ...figure.aliases].some((name) =>
-          normalizeName(name).includes(query),
-        ),
-      )
-      .slice(0, GAME_CONFIG.maxSuggestions);
+    return searchFigureSuggestions(debouncedGuess, figureIndex, GAME_CONFIG.maxSuggestions);
   }, [debouncedGuess, difficultyRules.suggestions, figureIndex, mode, showSuggestions]);
 
   useEffect(() => {
@@ -406,6 +402,44 @@ export default function GamePage({ figureIndex }: Props) {
     const interval = window.setInterval(() => tick(0.25), 250);
     return () => window.clearInterval(interval);
   }, [status, tick]);
+
+  useEffect(() => {
+    const handleGameShortcut = (event: globalThis.KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat) {
+        return;
+      }
+
+      if (event.key === "Escape" && (status === "playing" || status === "paused")) {
+        event.preventDefault();
+        if (status === "paused") {
+          resume();
+        } else {
+          pause();
+        }
+        return;
+      }
+
+      if (
+        status !== "playing" ||
+        mode === "reverse" ||
+        !event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
+        return;
+      }
+
+      const hintIndex = Number(event.key) - 1;
+      const hint = GAME_HINT_SHORTCUTS[hintIndex];
+      if (hint) {
+        event.preventDefault();
+        activateGameHint(hint);
+      }
+    };
+
+    window.addEventListener("keydown", handleGameShortcut);
+    return () => window.removeEventListener("keydown", handleGameShortcut);
+  }, [activateGameHint, mode, pause, resume, status]);
 
   useEffect(() => {
     if (status === "ended") {
@@ -746,6 +780,16 @@ export default function GamePage({ figureIndex }: Props) {
       {status === "paused" ? (
         <div className="countdown-overlay paused-overlay" role="dialog" aria-label={en.pause}>
           <div className="pause-menu">
+            <div className="shortcut-help" aria-label="Keyboard shortcuts">
+              <span>
+                <kbd>Esc</kbd> pause / resume
+              </span>
+              {mode !== "reverse" ? (
+                <span>
+                  <kbd>Alt + 1–3</kbd> reveal hints
+                </span>
+              ) : null}
+            </div>
             <button className="primary-button" type="button" onClick={resume}>
               <Play aria-hidden="true" size={18} />
               {en.resume}
@@ -758,7 +802,16 @@ export default function GamePage({ figureIndex }: Props) {
         </div>
       ) : null}
 
-      {revealedFigure && showRevealCard ? (
+      {revealedFigure && showRevealCard && mode === "reverse" ? (
+        <ReverseRevealBanner
+          figure={revealedFigure}
+          roundScore={currentRoundScore}
+          roundResult={revealResult}
+          onDismiss={dismissReveal}
+        />
+      ) : null}
+
+      {revealedFigure && showRevealCard && mode !== "reverse" ? (
         <PersonCard
           figure={revealedFigure}
           roundScore={currentRoundScore}

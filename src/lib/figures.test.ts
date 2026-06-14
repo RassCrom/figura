@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { FigureIndex } from "../types/figure";
-import { distanceKm, inferContinent, normalizeName, resolveFigureGuess } from "./figures";
+import {
+  distanceKm,
+  inferContinent,
+  normalizeName,
+  resolveFigureGuess,
+  searchFigureSuggestions,
+} from "./figures";
 
 function indexed(
   id: string,
@@ -48,6 +54,21 @@ describe("figure helpers", () => {
       indexed("jane-smith", "Jane", "Smith"),
     ];
     expect(resolveFigureGuess("Smith", figures)).toBeNull();
+  });
+
+  it("searches normalized names and aliases up to the requested limit", () => {
+    const figures = [
+      indexed("leonardo-da-vinci", "Leonardo", "da Vinci", ["Léonard de Vinci"]),
+      indexed("leonardo-fibonacci", "Leonardo", "Fibonacci"),
+      indexed("albert-einstein", "Albert", "Einstein"),
+    ];
+
+    expect(searchFigureSuggestions("leonard", figures, 1).map((figure) => figure.id)).toEqual([
+      "leonardo-da-vinci",
+    ]);
+    expect(searchFigureSuggestions("vinci", figures, 5).map((figure) => figure.id)).toEqual([
+      "leonardo-da-vinci",
+    ]);
   });
 
   it("classifies continents at the tricky boundaries", () => {

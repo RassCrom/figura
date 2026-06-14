@@ -1,12 +1,17 @@
-import { ArrowLeft, MapPinned, ScrollText } from "lucide-react";
+import { ArrowLeft, MapPinned, Minus, Plus, ScrollText, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 import { TopNav } from "../components/TopNav";
 import { usePageMetadata } from "../hooks/usePageMetadata";
-import { getFullName, parseHistoricalYear } from "../lib/figures";
+import {
+  getFullName,
+  getLifeDateRange,
+  loadFigureRecord,
+  parseHistoricalYear,
+} from "../lib/figures";
 import { getMapStyle } from "../lib/mapStyles";
-import type { FigureIndex } from "../types/figure";
+import type { Figure, FigureIndex } from "../types/figure";
 
 const SOURCE_ID = "all-figure-birthplaces";
 const RING_LAYER_ID = "all-figure-birthplace-rings";
@@ -67,6 +72,8 @@ export function FiguresMapPage({ figures }: { figures: FigureIndex[] }) {
   const [selected, setSelected] = useState<{ id: string; name: string; place: string } | null>(
     null,
   );
+  const [selectedFigure, setSelectedFigure] = useState<Figure | null>(null);
+  const [selectedFigureLoading, setSelectedFigureLoading] = useState(false);
   const yearBounds = useMemo(() => {
     const birthYears = figures
       .map((figure) => parseHistoricalYear(figure.birth_date))
@@ -141,7 +148,6 @@ export function FiguresMapPage({ figures }: { figures: FigureIndex[] }) {
         attributionControl: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
       map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
       map.once("load", () => {
         if (!map) return;
@@ -262,6 +268,38 @@ export function FiguresMapPage({ figures }: { figures: FigureIndex[] }) {
     setSelected(null);
   }, [applyAtlasFilter, selectedYear]);
 
+  useEffect(() => {
+    if (!selected) {
+      setSelectedFigure(null);
+      setSelectedFigureLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSelectedFigure(null);
+    setSelectedFigureLoading(true);
+    void loadFigureRecord(selected.id)
+      .then((record) => {
+        if (cancelled) return;
+        setSelectedFigure(record);
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedFigure(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSelectedFigureLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
+
+  const handleZoomIn = useCallback(() => {
+    mapRef.current?.zoomIn({ duration: 300 });
+  }, []);
+  const handleZoomOut = useCallback(() => {
+    mapRef.current?.zoomOut({ duration: 300 });
+  }, []);
+
   return (
     <main className="page-shell atlas-page">
       <TopNav />
@@ -282,11 +320,52 @@ export function FiguresMapPage({ figures }: { figures: FigureIndex[] }) {
       </header>
       <section className="atlas-map-frame" aria-label="Map of figure birthplaces">
         <div ref={containerRef} className="atlas-map" />
+        <div className="atlas-zoom-controls" aria-hidden={false}>
+          <button type="button" onClick={handleZoomIn} aria-label="Zoom in">
+            <Plus size={20} />
+          </button>
+          <button type="button" onClick={handleZoomOut} aria-label="Zoom out">
+            <Minus size={20} />
+          </button>
+        </div>
         {selected ? (
-          <aside className="atlas-selection" aria-live="polite">
-            <span>Born in {selected.place}</span>
-            <strong>{selected.name}</strong>
-            <Link to={`/figure/${selected.id}`}>Open figure</Link>
+          <aside className="atlas-side-panel" aria-live="polite" aria-label="Figure details">
+            <button
+              type="button"
+              className="atlas-side-close"
+              aria-label="Close figure details"
+              onClick={() => setSelected(null)}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+            <div className="atlas-side-portrait">
+              {selectedFigure?.photo ? (
+                <img src={selectedFigure.photo} alt={selectedFigure ? getFullName(selectedFigure) : selected.name} />
+              ) : (
+                <div className="atlas-side-portrait-placeholder" aria-hidden="true" />
+              )}
+            </div>
+            <div className="atlas-side-body">
+              <span className="atlas-side-kicker">Born in {selected.place}</span>
+              <strong>{selectedFigure ? getFullName(selectedFigure) : selected.name}</strong>
+              {selectedFigure ? (
+                <span className="atlas-side-dates">{getLifeDateRange(selectedFigure)}</span>
+              ) : null}
+              {selectedFigure ? (
+                <div className="atlas-side-tags">
+                  <span>{selectedFigure.category}</span>
+                  {selectedFigure.nationality ? <span>{selectedFigure.nationality}</span> : null}
+                </div>
+              ) : null}
+              {selectedFigure?.description ? (
+                <p className="atlas-side-description">{selectedFigure.description}</p>
+              ) : selectedFigureLoading ? (
+                <p className="atlas-side-description atlas-side-placeholder">Loading…</p>
+              ) : null}
+              <Link className="atlas-side-link" to={`/figure/${selected.id}`}>
+                Open full profile
+              </Link>
+            </div>
           </aside>
         ) : null}
         <div

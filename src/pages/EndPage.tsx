@@ -141,7 +141,15 @@ export function EndPage() {
     if (!shareCardRef.current || isGeneratingImage) return null;
     setIsGeneratingImage(true);
     try {
-      const dataUrl = await toPng(shareCardRef.current, { cacheBust: true, pixelRatio: 2 });
+      // skipFonts avoids a SecurityError when html-to-image tries to read
+      // cssRules from the cross-origin Google Fonts stylesheet. The share
+      // card uses system serif/display fallbacks that render fine without
+      // embedded web fonts.
+      const dataUrl = await toPng(shareCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        skipFonts: true,
+      });
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], "guess-the-figure-result.png", { type: blob.type });
       return { dataUrl, file };

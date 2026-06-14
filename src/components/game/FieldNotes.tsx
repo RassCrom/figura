@@ -8,15 +8,29 @@ const GAME_HINTS: Array<{
   icon: LucideIcon;
   label: string;
   shortLabel: string;
+  shortcut: string;
 }> = [
-  { id: "initial", icon: LetterText, label: "Reveal surname initial", shortLabel: "Initial" },
+  {
+    id: "initial",
+    icon: LetterText,
+    label: "Reveal surname initial",
+    shortLabel: "Initial",
+    shortcut: "Alt+1",
+  },
   {
     id: "description",
     icon: BookOpenText,
     label: "Show person description",
     shortLabel: "Description",
+    shortcut: "Alt+2",
   },
-  { id: "category", icon: Tag, label: "Show person category", shortLabel: "Category" },
+  {
+    id: "category",
+    icon: Tag,
+    label: "Show person category",
+    shortLabel: "Category",
+    shortcut: "Alt+3",
+  },
 ];
 
 type Props = {
@@ -58,11 +72,13 @@ export function FieldNotes({
               onClick={() => onActivate(hint.id)}
               disabled={!playing || used || usedGameHints.length >= maxHints}
               aria-label={`${hint.label}. ${used ? "Already used" : "Available once this game"}.`}
+              aria-keyshortcuts={hint.shortcut}
               aria-pressed={active}
+              title={`${hint.label} (${hint.shortcut})`}
             >
               <Icon aria-hidden="true" size={17} />
               <span>{hint.shortLabel}</span>
-              <small>{used ? (active ? "Revealed" : "Spent") : "1 use"}</small>
+              <small>{used ? (active ? "Revealed" : "Spent") : `1 use · ${hint.shortcut}`}</small>
             </button>
           );
         })}

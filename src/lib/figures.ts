@@ -4,6 +4,34 @@ let loadedIndex: FigureIndex[] | null = null;
 let indexPromise: Promise<FigureIndex[]> | null = null;
 const recordCache = new Map<string, Figure>();
 let featuredPromise: Promise<FeaturedFigure[]> | null = null;
+const searchIndexCache = new WeakMap<FigureIndex[], FigureSearchEntry[]>();
+
+type FigureSearchEntry = {
+  figure: FigureIndex;
+  names: string[];
+  lastName: string;
+  fuzzyNames: string[];
+};
+
+function getFigureSearchIndex(figures: FigureIndex[]): FigureSearchEntry[] {
+  const cached = searchIndexCache.get(figures);
+  if (cached) {
+    return cached;
+  }
+
+  const index = figures.map((figure) => {
+    const names = [...new Set([getFullName(figure), ...figure.aliases].map(normalizeName))];
+    const lastName = normalizeName(figure.last_name);
+    return {
+      figure,
+      names,
+      lastName,
+      fuzzyNames: [...new Set([...names, lastName].filter(Boolean))],
+    };
+  });
+  searchIndexCache.set(figures, index);
+  return index;
+}
 
 export function loadFigureIndex(): Promise<FigureIndex[]> {
   if (loadedIndex) {
@@ -143,23 +171,39 @@ export function resolveFigureGuess(guess: string, figures: FigureIndex[]): Figur
   const query = normalizeName(guess);
   if (!query) return null;
 
-  const exact = figures.filter((figure) =>
-    [getFullName(figure), ...figure.aliases].some((name) => normalizeName(name) === query),
-  );
-  if (exact.length === 1) return exact[0];
+  const searchIndex = getFigureSearchIndex(figures);
+  const exact = searchIndex.filter((entry) => entry.names.includes(query));
+  if (exact.length === 1) return exact[0].figure;
 
-  const lastName = figures.filter(
-    (figure) => figure.last_name && normalizeName(figure.last_name) === query,
-  );
-  if (lastName.length === 1) return lastName[0];
+  const lastName = searchIndex.filter((entry) => entry.lastName && entry.lastName === query);
+  if (lastName.length === 1) return lastName[0].figure;
 
-  const fuzzy = figures.filter((figure) =>
-    [getFullName(figure), figure.last_name, ...figure.aliases].filter(Boolean).some((name) => {
-      const normalized = normalizeName(name);
-      return levenshteinDistance(query, normalized) <= typoTolerance(normalized);
-    }),
+  const fuzzy = searchIndex.filter((entry) =>
+    entry.fuzzyNames.some((name) => levenshteinDistance(query, name) <= typoTolerance(name)),
   );
-  return fuzzy.length === 1 ? fuzzy[0] : null;
+  return fuzzy.length === 1 ? fuzzy[0].figure : null;
+}
+
+export function searchFigureSuggestions(
+  query: string,
+  figures: FigureIndex[],
+  limit: number,
+): FigureIndex[] {
+  const normalizedQuery = normalizeName(query);
+  if (!normalizedQuery || limit <= 0) {
+    return [];
+  }
+
+  const matches: FigureIndex[] = [];
+  for (const entry of getFigureSearchIndex(figures)) {
+    if (entry.names.some((name) => name.includes(normalizedQuery))) {
+      matches.push(entry.figure);
+      if (matches.length >= limit) {
+        break;
+      }
+    }
+  }
+  return matches;
 }
 
 export function shuffle<T>(items: T[]): T[] {
