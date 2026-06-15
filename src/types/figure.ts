@@ -132,5 +132,6 @@ export type LeaderboardEntry = {
   levelName?: PlayerLevel;
   achievements?: AchievementId[];
   date: string;
+  mode?: GameMode;
   current?: boolean;
 };

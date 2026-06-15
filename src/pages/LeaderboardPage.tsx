@@ -1,5 +1,5 @@
 import { Trophy } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { AchievementBadge } from "../components/AchievementBadge";
@@ -18,9 +18,16 @@ import {
 } from "../lib/api";
 import { getUtcDateString } from "../lib/dailyChallenge";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
-import type { Difficulty, LeaderboardEntry } from "../types/figure";
+import type { Difficulty, GameMode, LeaderboardEntry } from "../types/figure";
 
 type Tab = "daily" | "alltime" | "week" | "hof";
+type ModeFilter = "All" | GameMode;
+
+const MODE_LABEL: Record<GameMode, string> = {
+  classic: "Classic",
+  daily: "Daily",
+  reverse: "Where",
+};
 
 function SkeletonTable({ cols = 5, rows = 5 }: { cols?: number; rows?: number }) {
   return (
@@ -78,6 +85,7 @@ function WeeklyTable({ entries }: { entries: WeeklyEntry[] }) {
             <th>Rank</th>
             <th>Nickname</th>
             <th>Best</th>
+            <th>Mode</th>
             <th>Level</th>
             <th>Badges</th>
             <th>Difficulty</th>
@@ -86,7 +94,7 @@ function WeeklyTable({ entries }: { entries: WeeklyEntry[] }) {
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={`${entry.rank}-${entry.nickname}`}>
+            <tr key={`${entry.rank}-${entry.nickname}-${entry.mode}`}>
               <td>{entry.rank}</td>
               <td>
                 <Link to={`/profile/${entry.nickname}`} className="leaderboard-nick">
@@ -94,6 +102,7 @@ function WeeklyTable({ entries }: { entries: WeeklyEntry[] }) {
                 </Link>
               </td>
               <td>{entry.bestScore.toLocaleString()}</td>
+              <td>{MODE_LABEL[entry.mode] ?? entry.mode}</td>
               <td>{entry.levelName ? <LevelBadge level={entry.levelName} /> : "Traveler"}</td>
               <td>
                 {entry.achievements?.length ? (
@@ -165,46 +174,66 @@ function HallOfFameList({ archives }: { archives: WeeklyArchive[] }) {
 }
 
 export function LeaderboardPage() {
-  const [tab, setTab] = useState<Tab>("daily");
+  const [tab, setTab] = useState<Tab>("alltime");
   const [difficulty, setDifficulty] = useState<Difficulty | "All">("All");
-  const nickname = localStorage.getItem("gtf_nickname") ?? "";
-  const entries = useLeaderboardStore((state) => state.entries);
+  const [mode, setMode] = useState<ModeFilter>("All");
+  const nickname = useMemo(() => localStorage.getItem("gtf_nickname") ?? "", []);
   const refresh = useLeaderboardStore((state) => state.refresh);
   const [weekly, setWeekly] = useState<WeeklyEntry[] | null>(null);
   const [hof, setHof] = useState<WeeklyArchive[] | null>(null);
   const [daily, setDaily] = useState<DailyLeaderboardEntry[] | null>(null);
   const [alltime, setAlltime] = useState<LeaderboardEntry[] | null>(null);
   const [countdown, setCountdown] = useState(() => formatCountdown(nextMondayUtc()));
+  const requestSeq = useRef(0);
 
+  // Warm the persisted all-time fallback only when the user lands on /alltime,
+  // not on every visit to the page (the old behavior fired an extra RPC even
+  // when the user only wanted Today).
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (tab === "alltime") void refresh();
+  }, [refresh, tab]);
 
   useEffect(() => {
     if (tab !== "daily") return;
+    const seq = ++requestSeq.current;
     setDaily(null);
     void fetchDailyLeaderboard(
       getUtcDateString(),
       difficulty === "All" ? undefined : difficulty,
-    ).then(setDaily);
+    ).then((result) => {
+      if (requestSeq.current === seq) setDaily(result);
+    });
   }, [difficulty, tab]);
 
   useEffect(() => {
     if (tab !== "alltime") return;
+    const seq = ++requestSeq.current;
     setAlltime(null);
-    void fetchTopLeaderboard(100, difficulty === "All" ? undefined : difficulty).then(setAlltime);
-  }, [difficulty, tab]);
+    void fetchTopLeaderboard(
+      100,
+      difficulty === "All" ? undefined : difficulty,
+      mode === "All" ? undefined : mode,
+    ).then((result) => {
+      if (requestSeq.current === seq) setAlltime(result);
+    });
+  }, [difficulty, mode, tab]);
 
   useEffect(() => {
     if (tab !== "week") return;
+    const seq = ++requestSeq.current;
     setWeekly(null);
-    void fetchWeeklyLeaderboard().then(setWeekly);
-  }, [tab]);
+    void fetchWeeklyLeaderboard(100, mode === "All" ? undefined : mode).then((result) => {
+      if (requestSeq.current === seq) setWeekly(result);
+    });
+  }, [mode, tab]);
 
   useEffect(() => {
     if (tab !== "hof") return;
+    const seq = ++requestSeq.current;
     setHof(null);
-    void fetchHallOfFame().then(setHof);
+    void fetchHallOfFame().then((result) => {
+      if (requestSeq.current === seq) setHof(result);
+    });
   }, [tab]);
 
   useEffect(() => {
@@ -218,8 +247,8 @@ export function LeaderboardPage() {
 
   const tabs: Array<{ id: Tab; label: string }> = useMemo(
     () => [
-      { id: "daily", label: "Today" },
       { id: "alltime", label: "All-time" },
+      { id: "daily", label: "Today's challenge" },
       { id: "week", label: "This Week" },
       { id: "hof", label: "Hall of Fame" },
     ],
@@ -262,6 +291,21 @@ export function LeaderboardPage() {
           </div>
         ) : null}
 
+        {tab === "alltime" || tab === "week" ? (
+          <div className="difficulty-filter" aria-label="Filter leaderboard by game mode">
+            {(["All", "classic", "daily", "reverse"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={mode === item ? "chip selected" : "chip"}
+                onClick={() => setMode(item)}
+              >
+                {item === "All" ? "All modes" : MODE_LABEL[item]}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {tab === "daily" ? (
           daily === null ? (
             <SkeletonTable cols={8} />
@@ -271,7 +315,11 @@ export function LeaderboardPage() {
         ) : null}
 
         {tab === "alltime" ? (
-          <LeaderboardTable entries={alltime ?? entries} currentNickname={nickname} />
+          alltime === null ? (
+            <SkeletonTable cols={9} />
+          ) : (
+            <LeaderboardTable entries={alltime} currentNickname={nickname} />
+          )
         ) : null}
 
         {tab === "week" ? (

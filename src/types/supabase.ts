@@ -197,17 +197,19 @@ export type Database = {
         Args: {
           p_difficulty?: string
           p_limit?: number
+          p_mode?: string
         }
         Returns: Json
       }
       weekly_leaderboard: {
-        Args: { p_limit?: number }
+        Args: { p_limit?: number; p_mode?: string }
         Returns: {
           achievements: string[]
           best_score: number
           difficulty: string
           games_played: number
           level_name: string
+          mode: string
           nickname: string
           played_at: string
           rank: number

@@ -10,6 +10,7 @@ import {
 import type {
   AchievementId,
   Difficulty,
+  GameMode,
   LeaderboardEntry,
   PlayerLevel,
   RoundResult,
@@ -53,6 +54,7 @@ type LeaderboardRpcRow = {
   categories: string[];
   level_name: string | null;
   achievements: string[] | null;
+  mode: string | null;
   created_at: string;
 };
 
@@ -161,12 +163,14 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
 export async function fetchTopLeaderboard(
   limit = 100,
   difficulty?: Difficulty,
+  mode?: GameMode,
 ): Promise<LeaderboardEntry[]> {
   if (!supabase) return [];
   const safeLimit = clampPublicLimit(limit);
   const { data, error } = await supabase.rpc("top_leaderboard", {
     p_limit: safeLimit,
     p_difficulty: difficulty,
+    p_mode: mode,
   });
   if (error || !data) return [];
   const entries = asRows<LeaderboardRpcRow>(data).map(
@@ -179,6 +183,7 @@ export async function fetchTopLeaderboard(
         categories: row.categories,
         levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
         achievements: (row.achievements ?? []) as AchievementId[],
+        mode: (row.mode ?? undefined) as GameMode | undefined,
         date: row.created_at,
       }) satisfies LeaderboardEntry,
   );
@@ -209,6 +214,7 @@ export async function fetchDailyLeaderboard(
     categories: row.categories,
     levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
     achievements: (row.achievements ?? []) as AchievementId[],
+    mode: "daily" as GameMode,
     date: row.created_at,
   }));
   return cleanLeaderboardEntries(entries)
@@ -235,16 +241,21 @@ export type WeeklyEntry = {
   nickname: string;
   bestScore: number;
   difficulty: Difficulty;
+  mode: GameMode;
   levelName: PlayerLevel | null;
   achievements: AchievementId[];
   playedAt: string;
   gamesPlayed: number;
 };
 
-export async function fetchWeeklyLeaderboard(limit = 100): Promise<WeeklyEntry[]> {
+export async function fetchWeeklyLeaderboard(
+  limit = 100,
+  mode?: GameMode,
+): Promise<WeeklyEntry[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.rpc("weekly_leaderboard", {
     p_limit: clampPublicLimit(limit),
+    p_mode: mode,
   });
   if (error || !data) return [];
   const rows = data as unknown as Array<{
@@ -252,6 +263,7 @@ export async function fetchWeeklyLeaderboard(limit = 100): Promise<WeeklyEntry[]
     nickname: string;
     best_score: number;
     difficulty: string;
+    mode: string;
     level_name: string | null;
     achievements: string[] | null;
     played_at: string;
@@ -262,6 +274,7 @@ export async function fetchWeeklyLeaderboard(limit = 100): Promise<WeeklyEntry[]
     nickname: row.nickname,
     bestScore: row.best_score,
     difficulty: row.difficulty as Difficulty,
+    mode: (row.mode ?? "classic") as GameMode,
     levelName: (row.level_name ?? null) as PlayerLevel | null,
     achievements: (row.achievements ?? []) as AchievementId[],
     playedAt: row.played_at,

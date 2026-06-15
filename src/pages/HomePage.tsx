@@ -155,8 +155,10 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
     <main className="page-shell home-page">
       <AnimatedMapBackground figures={featuredFigures} />
       <section className="home-panel" aria-labelledby="home-title">
-        <Logo />
-        <h1 id="home-title">Figura</h1>
+        <div className="home-header">
+          <Logo />
+          <h1 id="home-title">Figura</h1>
+        </div>
         <p className="home-subtitle">Who was here</p>
         {(playersToday != null && playersToday > 0) || dailyStreak > 0 ? (
           <div className="home-pills">

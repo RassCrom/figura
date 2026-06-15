@@ -7,7 +7,6 @@ export function Logo() {
         <path d="M8 32 30 25 56 32 34 39Z" fill="currentColor" opacity="0.35" />
         <circle cx="32" cy="32" r="5" fill="var(--color-bg)" stroke="currentColor" strokeWidth="2" />
       </svg>
-      <span>Figura</span>
     </div>
   );
 }

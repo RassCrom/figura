@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { GAME_CONFIG } from "../config/gameConfig";
 import { en } from "../i18n/en";
 import { cleanLeaderboardEntries } from "../lib/leaderboard";
-import type { LeaderboardEntry } from "../types/figure";
+import type { GameMode, LeaderboardEntry } from "../types/figure";
 import { AchievementBadge } from "./AchievementBadge";
 import { LevelBadge } from "./LevelBadge";
 
@@ -12,6 +12,12 @@ type Props = {
   entries: LeaderboardEntry[];
   full?: boolean;
   currentNickname?: string;
+};
+
+const MODE_LABEL: Record<GameMode, string> = {
+  classic: "Classic",
+  daily: "Daily",
+  reverse: "Where",
 };
 
 export function LeaderboardTable({ entries, full = false, currentNickname }: Props) {
@@ -47,6 +53,7 @@ export function LeaderboardTable({ entries, full = false, currentNickname }: Pro
             <th>Rank</th>
             <th>Nickname</th>
             <th>Score</th>
+            <th>Mode</th>
             <th>Level</th>
             <th>Badges</th>
             <th>Difficulty</th>
@@ -75,6 +82,7 @@ export function LeaderboardTable({ entries, full = false, currentNickname }: Pro
                   </Link>
                 </td>
                 <td>{entry.score.toLocaleString()}</td>
+                <td>{entry.mode ? (MODE_LABEL[entry.mode] ?? entry.mode) : "Classic"}</td>
                 <td>{entry.levelName ? <LevelBadge level={entry.levelName} /> : "Traveler"}</td>
                 <td>
                   {entry.achievements?.length ? (
