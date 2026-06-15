@@ -162,7 +162,23 @@ export type Database = {
       archive_week: { Args: { p_week_start?: string }; Returns: Json }
       claim_nickname: { Args: { p_nickname: string }; Returns: Json }
       current_week_start: { Args: never; Returns: string }
+      daily_leaderboard: {
+        Args: {
+          p_daily_date: string
+          p_difficulty?: string
+          p_limit?: number
+        }
+        Returns: Json
+      }
+      daily_percentile: {
+        Args: {
+          p_daily_date: string
+          p_score: number
+        }
+        Returns: number
+      }
       get_public_profile: { Args: { p_nickname: string }; Returns: Json }
+      hall_of_fame: { Args: { p_limit?: number }; Returns: Json }
       players_today: { Args: never; Returns: number }
       submit_run: {
         Args: {
@@ -174,6 +190,13 @@ export type Database = {
           p_mode?: string
           p_results: Json
           p_session_id: string
+        }
+        Returns: Json
+      }
+      top_leaderboard: {
+        Args: {
+          p_difficulty?: string
+          p_limit?: number
         }
         Returns: Json
       }

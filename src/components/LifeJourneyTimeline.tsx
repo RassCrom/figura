@@ -1,8 +1,14 @@
 import { MapPin } from "lucide-react";
 
 import type { LifeJourney } from "../data/lifeJourneys";
+import { getTrustedReferenceUrl } from "../lib/figures";
 
 export function LifeJourneyTimeline({ journey }: { journey: LifeJourney }) {
+  const safeSources = journey.sources.flatMap((source) => {
+    const trustedSource = getTrustedReferenceUrl(source);
+    return trustedSource ? [trustedSource] : [];
+  });
+
   return (
     <section className="life-journey-timeline" aria-labelledby="life-journey-title">
       <header>
@@ -29,14 +35,16 @@ export function LifeJourneyTimeline({ journey }: { journey: LifeJourney }) {
         <MapPin aria-hidden="true" size={14} />
         Lines connect documented stops chronologically; they do not represent exact travel paths.
       </p>
-      <div className="life-journey-sources">
-        Sources:
-        {journey.sources.map((source, index) => (
-          <a key={source} href={source} target="_blank" rel="noreferrer">
-            {index + 1}
-          </a>
-        ))}
-      </div>
+      {safeSources.length > 0 ? (
+        <div className="life-journey-sources">
+          Sources:
+          {safeSources.map((source, index) => (
+            <a key={source} href={source} target="_blank" rel="noreferrer">
+              {index + 1}
+            </a>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

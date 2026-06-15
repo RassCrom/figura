@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FigureIndex } from "../types/figure";
 import {
   distanceKm,
+  getTrustedReferenceUrl,
   inferContinent,
   normalizeName,
   resolveFigureGuess,
@@ -69,6 +70,15 @@ describe("figure helpers", () => {
     expect(searchFigureSuggestions("vinci", figures, 5).map((figure) => figure.id)).toEqual([
       "leonardo-da-vinci",
     ]);
+  });
+
+  it("allows only trusted HTTPS reference links", () => {
+    expect(getTrustedReferenceUrl("https://en.wikipedia.org/wiki/Ada_Lovelace")).toBe(
+      "https://en.wikipedia.org/wiki/Ada_Lovelace",
+    );
+    expect(getTrustedReferenceUrl("http://en.wikipedia.org/wiki/Ada_Lovelace")).toBeNull();
+    expect(getTrustedReferenceUrl("https://example.com/track")).toBeNull();
+    expect(getTrustedReferenceUrl("javascript:alert(1)")).toBeNull();
   });
 
   it("classifies continents at the tricky boundaries", () => {

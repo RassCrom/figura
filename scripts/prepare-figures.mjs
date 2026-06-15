@@ -10,6 +10,8 @@ const indexPath = path.join(dataDirectory, "figure-index.json");
 const featuredPath = path.join(dataDirectory, "featured-figures.json");
 const recordsDirectory = path.join(dataDirectory, "figures");
 const checkOnly = process.argv.includes("--check");
+const trustedPhotoHosts = new Set(["upload.wikimedia.org", "commons.wikimedia.org"]);
+const trustedSourceHosts = new Set(["en.wikipedia.org", "www.wikidata.org"]);
 
 async function writeIfChanged(filePath, output) {
   const current = await readFile(filePath, "utf8").catch(() => "");
@@ -53,11 +55,11 @@ function isCoordinate(value) {
   );
 }
 
-function isUrl(value) {
+function isTrustedHttpsUrl(value, trustedHosts) {
   if (!isNonEmptyString(value)) return false;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
+    return url.protocol === "https:" && trustedHosts.has(url.hostname);
   } catch {
     return false;
   }
@@ -100,8 +102,13 @@ function validateFigure(figure) {
   ) {
     issues.push("popularity_rating");
   }
-  if (!isUrl(figure.photo)) issues.push("photo");
-  if (isNonEmptyString(figure.source_url) && !isUrl(figure.source_url)) issues.push("source_url");
+  if (!isTrustedHttpsUrl(figure.photo, trustedPhotoHosts)) issues.push("photo");
+  if (
+    isNonEmptyString(figure.source_url) &&
+    !isTrustedHttpsUrl(figure.source_url, trustedSourceHosts)
+  ) {
+    issues.push("source_url");
+  }
   const birthYear = historicalYear(figure.birth_date);
   const deathYear = historicalYear(figure.death_date);
   if (birthYear !== null && deathYear !== null && deathYear < birthYear) {

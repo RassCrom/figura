@@ -5,6 +5,7 @@ let indexPromise: Promise<FigureIndex[]> | null = null;
 const recordCache = new Map<string, Figure>();
 let featuredPromise: Promise<FeaturedFigure[]> | null = null;
 const searchIndexCache = new WeakMap<FigureIndex[], FigureSearchEntry[]>();
+const TRUSTED_REFERENCE_HOSTS = new Set(["en.wikipedia.org", "www.wikidata.org"]);
 
 type FigureSearchEntry = {
   figure: FigureIndex;
@@ -216,13 +217,26 @@ export function shuffle<T>(items: T[]): T[] {
 }
 
 export function getWikipediaUrl(figure: Figure): string {
-  if (figure.source_url) {
-    return figure.source_url;
+  const trustedSource = getTrustedReferenceUrl(figure.source_url);
+  if (trustedSource) {
+    return trustedSource;
   }
   // Search instead of a direct /wiki/ link: an exact title match redirects
   // straight to the article, while names that need disambiguation (or differ
   // from "First Last") land on search results instead of a 404.
   return `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(getFullName(figure))}`;
+}
+
+export function getTrustedReferenceUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && TRUSTED_REFERENCE_HOSTS.has(url.hostname)
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export function extractYearRange(description: string): string {

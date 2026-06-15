@@ -41,7 +41,13 @@ function applyMetadata(metadata?: PageMetadata) {
   setMeta('meta[name="twitter:description"]', "content", description);
   setMeta('meta[name="twitter:image"]', "content", image);
   setMeta('meta[name="twitter:image:alt"]', "content", imageAlt);
-  document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", canonicalUrl);
+  let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    document.head.append(canonical);
+  }
+  canonical.href = canonicalUrl;
 }
 
 export function usePageMetadata(metadata: PageMetadata | null) {

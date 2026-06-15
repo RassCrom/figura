@@ -1,5 +1,12 @@
 import { ensureAnonymousUser, supabase } from "./supabase";
 import { cleanLeaderboardEntries } from "./leaderboard";
+import {
+  clampPublicLimit,
+  isIsoDate,
+  isValidPublicNickname,
+  nicknameValidationError,
+  parseRpcError,
+} from "./apiSecurity";
 import type {
   AchievementId,
   Difficulty,
@@ -38,6 +45,21 @@ export type SubmitRunResult =
 
 export type ClaimNicknameResult = { ok: true; nickname: string } | { ok: false; error: string };
 
+type LeaderboardRpcRow = {
+  id: string;
+  nickname: string;
+  score: number;
+  difficulty: string;
+  categories: string[];
+  level_name: string | null;
+  achievements: string[] | null;
+  created_at: string;
+};
+
+function asRows<T>(data: unknown): T[] {
+  return Array.isArray(data) ? (data as T[]) : [];
+}
+
 export async function fetchProfile(): Promise<ServerProfile | null> {
   if (!supabase) return null;
   const userId = await ensureAnonymousUser();
@@ -66,6 +88,8 @@ export async function fetchProfile(): Promise<ServerProfile | null> {
 
 export async function claimNickname(nickname: string): Promise<ClaimNicknameResult> {
   if (!supabase) return { ok: false, error: "OFFLINE" };
+  const validationError = nicknameValidationError(nickname);
+  if (validationError) return { ok: false, error: validationError };
   const userId = await ensureAnonymousUser();
   if (!userId) return { ok: false, error: "AUTH_REQUIRED" };
   const { data, error } = await supabase.rpc("claim_nickname", { p_nickname: nickname });
@@ -140,35 +164,26 @@ export async function fetchTopLeaderboard(
   difficulty?: Difficulty,
 ): Promise<LeaderboardEntry[]> {
   if (!supabase) return [];
-  let query = supabase
-    .from("runs")
-    .select(
-      "id, score, difficulty, categories, level_name, achievements, created_at, mode, user_id, profiles!inner(nickname)",
-    )
-    .eq("mode", "classic")
-    .not("profiles.nickname", "is", null)
-    .order("score", { ascending: false });
-  if (difficulty) query = query.eq("difficulty", difficulty);
-  const { data, error } = await query.limit(limit * 5);
+  const safeLimit = clampPublicLimit(limit);
+  const { data, error } = await supabase.rpc("top_leaderboard", {
+    p_limit: safeLimit,
+    p_difficulty: difficulty,
+  });
   if (error || !data) return [];
-  const entries = data.flatMap((row) => {
-    const profileJoin = row.profiles as unknown as { nickname: string | null } | null;
-    const nickname = profileJoin?.nickname;
-    if (!nickname) return [];
-    return [
-      {
+  const entries = asRows<LeaderboardRpcRow>(data).map(
+    (row) =>
+      ({
         id: row.id,
-        nickname,
+        nickname: row.nickname,
         score: row.score,
         difficulty: row.difficulty as Difficulty,
         categories: row.categories,
         levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
         achievements: (row.achievements ?? []) as AchievementId[],
         date: row.created_at,
-      } satisfies LeaderboardEntry,
-    ];
-  });
-  return cleanLeaderboardEntries(entries).slice(0, limit);
+      }) satisfies LeaderboardEntry,
+  );
+  return cleanLeaderboardEntries(entries).slice(0, safeLimit);
 }
 
 export type DailyLeaderboardEntry = LeaderboardEntry & { rank: number };
@@ -178,38 +193,27 @@ export async function fetchDailyLeaderboard(
   difficulty?: Difficulty,
   limit = 100,
 ): Promise<DailyLeaderboardEntry[]> {
-  if (!supabase) return [];
-  let query = supabase
-    .from("runs")
-    .select(
-      "id, score, difficulty, categories, level_name, achievements, created_at, user_id, profiles!inner(nickname)",
-    )
-    .eq("mode", "daily")
-    .eq("daily_date", dailyDate)
-    .not("profiles.nickname", "is", null)
-    .order("score", { ascending: false });
-  if (difficulty) query = query.eq("difficulty", difficulty);
-  const { data, error } = await query.limit(limit * 5);
-  if (error || !data) return [];
-  const entries = data.flatMap((row) => {
-    const nickname = (row.profiles as unknown as { nickname: string | null } | null)?.nickname;
-    if (!nickname) return [];
-    return [
-      {
-        id: row.id,
-        rank: 0,
-        nickname,
-        score: row.score,
-        difficulty: row.difficulty as Difficulty,
-        categories: row.categories,
-        levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
-        achievements: (row.achievements ?? []) as AchievementId[],
-        date: row.created_at,
-      },
-    ];
+  if (!supabase || !isIsoDate(dailyDate)) return [];
+  const safeLimit = clampPublicLimit(limit);
+  const { data, error } = await supabase.rpc("daily_leaderboard", {
+    p_daily_date: dailyDate,
+    p_difficulty: difficulty,
+    p_limit: safeLimit,
   });
+  if (error || !data) return [];
+  const entries = asRows<LeaderboardRpcRow>(data).map((row) => ({
+    id: row.id,
+    rank: 0,
+    nickname: row.nickname,
+    score: row.score,
+    difficulty: row.difficulty as Difficulty,
+    categories: row.categories,
+    levelName: (row.level_name ?? undefined) as PlayerLevel | undefined,
+    achievements: (row.achievements ?? []) as AchievementId[],
+    date: row.created_at,
+  }));
   return cleanLeaderboardEntries(entries)
-    .slice(0, limit)
+    .slice(0, safeLimit)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
 }
 
@@ -217,22 +221,14 @@ export async function fetchDailyPercentile(
   dailyDate: string,
   score: number,
 ): Promise<number | null> {
-  if (!supabase) return null;
-  const [totalResult, belowResult] = await Promise.all([
-    supabase
-      .from("runs")
-      .select("id", { count: "exact", head: true })
-      .eq("mode", "daily")
-      .eq("daily_date", dailyDate),
-    supabase
-      .from("runs")
-      .select("id", { count: "exact", head: true })
-      .eq("mode", "daily")
-      .eq("daily_date", dailyDate)
-      .lt("score", score),
-  ]);
-  if (totalResult.error || belowResult.error || !totalResult.count) return null;
-  return Math.round(((belowResult.count ?? 0) / totalResult.count) * 100);
+  if (!supabase || !isIsoDate(dailyDate) || !Number.isFinite(score)) return null;
+  const { data, error } = await supabase.rpc("daily_percentile", {
+    p_daily_date: dailyDate,
+    p_score: Math.trunc(score),
+  });
+  if (error || data == null) return null;
+  const percentile = Number(data);
+  return Number.isFinite(percentile) ? percentile : null;
 }
 
 export type WeeklyEntry = {
@@ -248,7 +244,9 @@ export type WeeklyEntry = {
 
 export async function fetchWeeklyLeaderboard(limit = 100): Promise<WeeklyEntry[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.rpc("weekly_leaderboard", { p_limit: limit });
+  const { data, error } = await supabase.rpc("weekly_leaderboard", {
+    p_limit: clampPublicLimit(limit),
+  });
   if (error || !data) return [];
   const rows = data as unknown as Array<{
     rank: number;
@@ -286,13 +284,11 @@ export type WeeklyArchive = {
 
 export async function fetchHallOfFame(limit = 20): Promise<WeeklyArchive[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("weekly_winners")
-    .select("week_start, winners")
-    .order("week_start", { ascending: false })
-    .limit(limit);
+  const { data, error } = await supabase.rpc("hall_of_fame", {
+    p_limit: clampPublicLimit(limit, 52),
+  });
   if (error || !data) return [];
-  return data.map((row) => {
+  return asRows<{ week_start: string; winners: unknown }>(data).map((row) => {
     const winners =
       (row.winners as unknown as Array<{
         nickname: string;
@@ -337,7 +333,7 @@ export type PublicProfile = {
 };
 
 export async function fetchPublicProfile(nickname: string): Promise<PublicProfile | null> {
-  if (!supabase) return null;
+  if (!supabase || !isValidPublicNickname(nickname)) return null;
   const { data, error } = await supabase.rpc("get_public_profile", { p_nickname: nickname });
   if (error || data == null) return null;
   const obj = data as unknown as {
@@ -385,33 +381,4 @@ export async function fetchPlayersToday(): Promise<number> {
   const { data, error } = await supabase.rpc("players_today");
   if (error || data == null) return 0;
   return Number(data);
-}
-
-function parseRpcError(message: string): string {
-  // Supabase wraps Postgres errors. Strip prefix so callers see the bare code.
-  const known = [
-    "AUTH_REQUIRED",
-    "BAD_DIFFICULTY",
-    "BAD_MODE",
-    "BAD_RESULTS_SHAPE",
-    "BAD_RESULTS_LENGTH",
-    "BAD_ROUND_SCORE",
-    "BAD_TOTAL_SCORE",
-    "BAD_CATEGORIES",
-    "BAD_ACHIEVEMENTS",
-    "DAILY_DATE_REQUIRED",
-    "DAILY_DATE_INVALID",
-    "DAILY_ALREADY_PLAYED",
-    "RATE_LIMIT",
-    "NICKNAME_LENGTH",
-    "NICKNAME_CHARSET",
-    "NICKNAME_FORMAT",
-    "NICKNAME_FORBIDDEN",
-    "NICKNAME_RESERVED",
-    "NICKNAME_TAKEN",
-  ];
-  for (const code of known) {
-    if (message.includes(code)) return code;
-  }
-  return message;
 }

@@ -18,7 +18,7 @@ The home globe uses portrait markers. The birthplace atlas uses MapLibre layers 
 
 ## Run it locally
 
-You need Node.js and pnpm.
+You need Node.js 22.12 or newer and pnpm.
 
 ```bash
 pnpm install
@@ -28,6 +28,8 @@ pnpm run dev
 Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
 The app works without a backend. Supabase is only needed for online nicknames, profiles, and leaderboards.
+Apply the tracked Supabase migrations before deploying backend-enabled frontend changes. See
+[`SECURITY.md`](SECURITY.md) for the required grants, RLS, and RPC checks.
 
 ## Environment variables
 

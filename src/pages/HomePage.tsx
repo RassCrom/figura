@@ -12,6 +12,7 @@ import { en } from "../i18n/en";
 import { claimNickname, fetchPlayersToday } from "../lib/api";
 import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
+import { isValidPublicNickname } from "../lib/apiSecurity";
 import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
 import { loadFigureRecords } from "../lib/figures";
 import { isSupabaseConfigured } from "../lib/supabase";
@@ -20,8 +21,6 @@ import { useProfileStore } from "../stores/useProfileStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { FeaturedFigure, FigureIndex } from "../types/figure";
 
-const nicknamePattern = /^[A-Za-z0-9_.\- ]{2,20}$/;
-const nicknameFormatGuard = /^[._\- ]|[._\- ]$|[._\- ]{2,}/;
 const HOME_METADATA = {
   title: "Figura | Guess famous people by birthplace",
   description:
@@ -77,10 +76,7 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
   const dailyStreak = useProfileStore((state) => state.dailyStreak);
   const effectiveCategories = selectedCategories.length > 0 ? selectedCategories : categories;
 
-  const isValid = useMemo(
-    () => nicknamePattern.test(nickname) && !nicknameFormatGuard.test(nickname),
-    [nickname],
-  );
+  const isValid = useMemo(() => isValidPublicNickname(nickname), [nickname]);
 
   useEffect(() => {
     inputRef.current?.focus();

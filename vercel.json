@@ -6,15 +6,18 @@
       "headers": [
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=63072000; includeSubDomains; preload"
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.arcgisonline.com https://server.arcgisonline.com https://tiles.openfreemap.org; worker-src blob:; frame-ancestors 'none';"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; script-src 'self' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://upload.wikimedia.org https://commons.wikimedia.org https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.arcgisonline.com https://server.arcgisonline.com https://tiles.openfreemap.org; media-src 'self'; connect-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.arcgisonline.com https://server.arcgisonline.com https://tiles.openfreemap.org; worker-src blob:; manifest-src 'self'; upgrade-insecure-requests;"
         }
       ]
     },
