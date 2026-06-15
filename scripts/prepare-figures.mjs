@@ -4,6 +4,7 @@ import process from "node:process";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "src", "data", "figures.json");
+const presentSourcePath = path.join(root, "src", "data", "figures_present.json");
 const dataDirectory = path.join(root, "public", "data");
 const legacyOutputPath = path.join(dataDirectory, "figures.json");
 const indexPath = path.join(dataDirectory, "figure-index.json");
@@ -72,27 +73,36 @@ function historicalYear(value) {
   return /\bBC\b/i.test(value) ? -year : year;
 }
 
-function validateFigure(figure) {
+function normalizeHttpsUrl(value) {
+  return typeof value === "string" ? value.replace(/^http:/, "https:") : value;
+}
+
+function validateFigure(figure, { deathRequired }) {
   const issues = [];
   for (const field of [
     "first_name",
     "nationality",
     "country_of_origin",
     "place_of_birth",
-    "place_of_death",
     "category",
-    "description",
     "birth_date",
-    "death_date",
   ]) {
     if (!isNonEmptyString(figure[field])) issues.push(field);
+  }
+  if (deathRequired && !isNonEmptyString(figure.description)) {
+    issues.push("description");
+  }
+  if (deathRequired) {
+    for (const field of ["place_of_death", "death_date"]) {
+      if (!isNonEmptyString(figure[field])) issues.push(field);
+    }
   }
   if (typeof figure.last_name !== "string") issues.push("last_name");
   if (typeof figure.flag !== "string") issues.push("flag");
   if (!isCoordinate(figure.coordinates_of_the_place_of_birth)) {
     issues.push("coordinates_of_the_place_of_birth");
   }
-  if (!isCoordinate(figure.coordinates_of_the_place_of_death)) {
+  if (deathRequired && !isCoordinate(figure.coordinates_of_the_place_of_death)) {
     issues.push("coordinates_of_the_place_of_death");
   }
   if (
@@ -102,7 +112,7 @@ function validateFigure(figure) {
   ) {
     issues.push("popularity_rating");
   }
-  if (!isTrustedHttpsUrl(figure.photo, trustedPhotoHosts)) issues.push("photo");
+  if (!isTrustedHttpsUrl(normalizeHttpsUrl(figure.photo), trustedPhotoHosts)) issues.push("photo");
   if (
     isNonEmptyString(figure.source_url) &&
     !isTrustedHttpsUrl(figure.source_url, trustedSourceHosts)
@@ -111,17 +121,34 @@ function validateFigure(figure) {
   }
   const birthYear = historicalYear(figure.birth_date);
   const deathYear = historicalYear(figure.death_date);
-  if (birthYear !== null && deathYear !== null && deathYear < birthYear) {
+  if (deathRequired && birthYear !== null && deathYear !== null && deathYear < birthYear) {
     issues.push("chronology");
   }
   return issues;
 }
 
 const aliasesByName = new Map([
+  ["abay kunanbaiuly", ["Abai Qunanbaiuly", "Abai Kunanbayev", "Abay Kunanbayev"]],
+  ["abu bakr al razi", ["Al-Razi", "Rhazes"]],
+  ["ahmad yasawi", ["Khoja Ahmed Yasawi", "Khoja Akhmet Yassawi", "Ahmet Yesevi"]],
+  ["al farabi", ["Farabi", "Abu Nasr Al-Farabi"]],
+  ["ali shir nava i", ["Alisher Navoiy", "Alisher Navoi", "Navai"]],
+  ["chandrasekhara venkata raman", ["C. V. Raman", "CV Raman"]],
+  ["dhyan chand", ["Major Dhyan Chand", "Major Dhyan Chand Singh"]],
+  ["emperor gaozu of han", ["Liu Bang"]],
   ["genghis khan", ["Chinggis Khan"]],
   ["chinggis khan", ["Genghis Khan"]],
+  ["kangxi emperor", ["Emperor Kangxi"]],
   ["leonardo da vinci", ["Da Vinci", "Leonardo"]],
   ["mahatma gandhi", ["Mohandas Gandhi", "Mohandas Karamchand Gandhi"]],
+  ["mehmed ii", ["Mehmed the Conqueror"]],
+  ["qianlong emperor", ["Emperor Qianlong"]],
+  ["qin shi huang", ["Ying Zheng"]],
+  ["rani lakshmibai", ["Rani of Jhansi", "Lakshmibai"]],
+  ["rikidozan", ["Rikidōzan", "Mitsuhiro Momota"]],
+  ["shivaji", ["Chhatrapati Shivaji", "Chhatrapati Shivaji Maharaj"]],
+  ["suleiman the magnificent", ["Suleiman I", "Suleyman the Magnificent"]],
+  ["timur", ["Tamerlane", "Timur the Lame"]],
   ["charlie chaplin", ["Charles Chaplin", "Charles Spencer Chaplin"]],
 ]);
 
@@ -138,10 +165,22 @@ function figureId(figure) {
   return normalizeName(`${figure.first_name} ${figure.last_name}`).replace(/\s+/g, "-");
 }
 
+function fullName(figure) {
+  return `${figure.first_name} ${figure.last_name}`.trim();
+}
+
+function livingDescription(figure) {
+  const description = typeof figure.description === "string" ? figure.description.trim() : "";
+  if (description) return description;
+  const category = String(figure.category ?? "public figure").toLowerCase();
+  const origin = figure.country_of_origin || figure.nationality || "the world";
+  return `${fullName(figure)} is a living ${category} from ${origin}.`;
+}
+
 function compactFigure(figure) {
   const id = figureId(figure);
-  const aliases =
-    aliasesByName.get(normalizeName(`${figure.first_name} ${figure.last_name}`)) ?? [];
+  const aliases = aliasesByName.get(normalizeName(fullName(figure))) ?? [];
+  const isLiving = Boolean(figure.is_living);
   return {
     id,
     first_name: figure.first_name,
@@ -152,14 +191,15 @@ function compactFigure(figure) {
     flag: figure.flag,
     place_of_birth: figure.place_of_birth,
     coordinates_of_the_place_of_birth: figure.coordinates_of_the_place_of_birth,
-    place_of_death: figure.place_of_death,
-    coordinates_of_the_place_of_death: figure.coordinates_of_the_place_of_death,
+    place_of_death: isLiving ? null : figure.place_of_death,
+    coordinates_of_the_place_of_death: isLiving ? null : figure.coordinates_of_the_place_of_death,
     category: figure.category,
-    description: figure.description,
+    description: isLiving ? livingDescription(figure) : figure.description,
     popularity_rating: figure.popularity_rating,
-    photo: figure.photo,
+    photo: normalizeHttpsUrl(figure.photo),
     birth_date: figure.birth_date,
-    death_date: figure.death_date,
+    death_date: isLiving ? null : figure.death_date,
+    ...(isLiving ? { is_living: true } : {}),
     source_url:
       figure.source_url ??
       (isNonEmptyString(figure._slug)
@@ -171,18 +211,27 @@ function compactFigure(figure) {
   };
 }
 
-const source = JSON.parse(await readFile(sourcePath, "utf8"));
-if (!Array.isArray(source)) {
+const historicalSource = JSON.parse(await readFile(sourcePath, "utf8"));
+if (!Array.isArray(historicalSource)) {
   throw new Error("Figure dataset must be a JSON array.");
 }
+const presentSource = JSON.parse(await readFile(presentSourcePath, "utf8").catch(() => "[]"));
+if (!Array.isArray(presentSource)) {
+  throw new Error("Present figure dataset must be a JSON array.");
+}
+
+const source = [
+  ...historicalSource.map((figure) => ({ figure, living: false })),
+  ...presentSource.map((figure) => ({ figure: { ...figure, is_living: true }, living: true })),
+];
 
 const valid = [];
 const invalidFields = new Map();
 const generatedIds = new Set();
-for (const figure of source) {
-  const issues = validateFigure(figure);
+for (const { figure, living } of source) {
+  const issues = validateFigure(figure, { deathRequired: !living });
   const id = figureId(figure);
-  if (!id || /^q\d+$/i.test(`${figure.first_name} ${figure.last_name}`.trim())) {
+  if (!id || /^q\d+$/i.test(fullName(figure))) {
     issues.push("identity");
   }
   if (generatedIds.has(id)) {
@@ -212,6 +261,7 @@ const index = valid.map(
     popularity_rating,
     birth_date,
     death_date,
+    is_living,
     place_of_birth,
     coordinates_of_the_place_of_birth,
   }) => ({
@@ -223,6 +273,7 @@ const index = valid.map(
     popularity_rating,
     birth_date,
     death_date,
+    ...(is_living ? { is_living: true } : {}),
     place_of_birth,
     coordinates_of_the_place_of_birth,
   }),

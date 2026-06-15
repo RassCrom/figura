@@ -36,7 +36,10 @@ export function ReverseRevealBanner({ figure, roundScore, roundResult, onDismiss
     >
       <div className="reverse-reveal-banner-top">
         <div className="reverse-reveal-identity">
-          <p className="eyebrow">+{roundScore.toLocaleString()} pts</p>
+          <p className="reverse-reveal-score">
+            <span>Result</span>
+            <strong>+{roundScore.toLocaleString()} pts</strong>
+          </p>
           <h2>{getFullName(figure)}</h2>
           <p className="date-line">
             {dates} &middot; {figure.place_of_birth}

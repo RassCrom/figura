@@ -1,5 +1,6 @@
 import type { RouteOverlay } from "./mapEngine";
 import type { Coordinates, Figure, RoundResult } from "../types/figure";
+import { hasDeathLocation } from "./figures";
 
 type BuildRouteOptions = {
   correctOnly?: boolean;
@@ -40,7 +41,7 @@ export function buildRoundRouteOverlays(
       return [];
     }
     const figure = queue[result.round - 1];
-    if (!figure) {
+    if (!figure || !hasDeathLocation(figure)) {
       return [];
     }
 

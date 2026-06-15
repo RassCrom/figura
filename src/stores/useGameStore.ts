@@ -166,6 +166,7 @@ function reveal(
     | "distanceKm"
     | "birthYearError"
     | "deathYearError"
+    | "guessCoordinates"
     | "locationScore"
     | "speedScore"
   >,
@@ -363,6 +364,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(
       reveal(state, breakdown.total, correct, {
         distanceKm: distance,
+        guessCoordinates: coordinates,
         birthYearError: birthYearError ?? undefined,
         deathYearError: deathYearError ?? undefined,
         locationScore: breakdown.location,

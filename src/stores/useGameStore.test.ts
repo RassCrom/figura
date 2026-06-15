@@ -95,6 +95,7 @@ describe("game-wide hints", () => {
     expect(result).not.toBeNull();
     expect(useGameStore.getState().roundResults[0].correct).toBe(false);
     expect(useGameStore.getState().roundResults[0].score).toBeGreaterThan(0);
+    expect(useGameStore.getState().roundResults[0].guessCoordinates).toEqual([35.7, 139.7]);
   });
 
   it("scores reverse mode from birthplace and speed without a first-try badge", () => {

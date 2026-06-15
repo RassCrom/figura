@@ -3,7 +3,13 @@ import { X } from "lucide-react";
 
 import { GAME_CONFIG } from "../../config/gameConfig";
 import { en } from "../../i18n/en";
-import { distanceKm, getLifeDateRange, getFullName, getWikipediaUrl } from "../../lib/figures";
+import {
+  distanceKm,
+  getLifeDateRange,
+  getFullName,
+  getWikipediaUrl,
+  hasDeathLocation,
+} from "../../lib/figures";
 import type { Figure, RoundResult } from "../../types/figure";
 
 export function PersonCard({
@@ -22,10 +28,9 @@ export function PersonCard({
   roundResult?: RoundResult | null;
 }) {
   const [remainingMs, setRemainingMs] = useState<number>(GAME_CONFIG.revealAutoDismissMs);
-  const journey = distanceKm(
-    figure.coordinates_of_the_place_of_birth,
-    figure.coordinates_of_the_place_of_death,
-  );
+  const journey = hasDeathLocation(figure)
+    ? distanceKm(figure.coordinates_of_the_place_of_birth, figure.coordinates_of_the_place_of_death)
+    : null;
   const dates = getLifeDateRange(figure);
 
   useEffect(() => {
@@ -99,10 +104,17 @@ export function PersonCard({
           </div>
           <p className="description-label">{en.description}</p>
           <p>{figure.description}</p>
-          <div className="distance-block">
-            <span>{en.journeyDistance}</span>
-            <strong>{journey.toLocaleString()} km</strong>
-          </div>
+          {journey != null ? (
+            <div className="distance-block">
+              <span>{en.journeyDistance}</span>
+              <strong>{journey.toLocaleString()} km</strong>
+            </div>
+          ) : (
+            <div className="distance-block">
+              <span>Birthplace</span>
+              <strong>{figure.place_of_birth}</strong>
+            </div>
+          )}
           <div className="reveal-controls">
             <span>
               {autoAdvance ? `Next in ${Math.ceil(remainingMs / 1000)}s` : "Ready when you are"}

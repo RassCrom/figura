@@ -10,14 +10,15 @@ export type Figure = {
   flag: string;
   place_of_birth: string;
   coordinates_of_the_place_of_birth: Coordinates;
-  place_of_death: string;
-  coordinates_of_the_place_of_death: Coordinates;
+  place_of_death: string | null;
+  coordinates_of_the_place_of_death: Coordinates | null;
   category: string;
   description: string;
   popularity_rating: number;
   photo: string;
   birth_date: string;
-  death_date: string;
+  death_date: string | null;
+  is_living?: boolean;
   source_url?: string;
   wikidata_id?: string;
 };
@@ -35,6 +36,7 @@ export type FigureIndex = Pick<
   | "popularity_rating"
   | "birth_date"
   | "death_date"
+  | "is_living"
   | "place_of_birth"
   | "coordinates_of_the_place_of_birth"
 >;
@@ -86,6 +88,7 @@ export type RoundResult = {
   correct: boolean;
   firstGuess: boolean;
   distanceKm?: number;
+  guessCoordinates?: Coordinates;
   birthYearError?: number;
   deathYearError?: number;
   locationScore?: number;

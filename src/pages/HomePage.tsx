@@ -14,7 +14,7 @@ import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
 import { isValidPublicNickname } from "../lib/apiSecurity";
 import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
-import { loadFigureRecords } from "../lib/figures";
+import { hasDeathDate, loadFigureRecords } from "../lib/figures";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useGameStore } from "../stores/useGameStore";
 import { useProfileStore } from "../stores/useProfileStore";
@@ -121,8 +121,11 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
       }
     }
 
+    const playableFigures =
+      gameMode === "reverse" ? figureIndex.filter((figure) => hasDeathDate(figure)) : figureIndex;
+
     const { queue: queueIndex, relaxed } = buildFigureQueue(
-      figureIndex,
+      playableFigures,
       difficulty,
       effectiveCategories,
       getRecentFigureIds(),
@@ -223,6 +226,14 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
               <MapPinned aria-hidden="true" size={16} />
               Figure map
             </Link>
+            <a
+              className="secondary-button kofi-button"
+              href="https://ko-fi.com/alinbeisenbayev"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ☕ Support on Ko-fi
+            </a>
           </div>
         </form>
       </section>

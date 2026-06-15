@@ -21,6 +21,7 @@ export const REVERSE_SCORING = {
   locationPoints: 4600,
   speedPoints: 400,
   distanceDecayKm: 2500,
+  maxScoringDistanceKm: 5000,
   // A reverse round counts as a "correct" identification (Codex, accuracy
   // stats, continents) only when the pin lands within this radius.
   correctRadiusKm: 500,
@@ -100,6 +101,9 @@ export function calcReverseScore(
   timeUsed: number,
   roundSeconds: number = GAME_CONFIG.roundSeconds,
 ): ReverseScoreBreakdown {
+  if (distance >= REVERSE_SCORING.maxScoringDistanceKm) {
+    return { total: 0, location: 0, speed: 0 };
+  }
   const location = Math.round(
     REVERSE_SCORING.locationPoints *
       Math.exp(-Math.max(0, distance) / REVERSE_SCORING.distanceDecayKm),

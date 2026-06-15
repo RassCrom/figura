@@ -32,7 +32,7 @@ import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
 import { useGameStore, type GameHint, type ReverseEstimate } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { FigureIndex } from "../types/figure";
+import type { Coordinates, FigureIndex } from "../types/figure";
 
 type Props = {
   figureIndex: FigureIndex[];
@@ -69,6 +69,7 @@ export default function GamePage({ figureIndex }: Props) {
   const [deathYearEstimate, setDeathYearEstimate] = useState(DEFAULT_REVERSE_ESTIMATE.deathYear);
   const reverseEstimateRef = useRef(DEFAULT_REVERSE_ESTIMATE);
   const [reverseDateValidation, setReverseDateValidation] = useState<string | null>(null);
+  const [pendingReverseGuess, setPendingReverseGuess] = useState<Coordinates | null>(null);
   const [wrongPlace, setWrongPlace] = useState<{
     key: number;
     name: string;
@@ -296,13 +297,9 @@ export default function GamePage({ figureIndex }: Props) {
         return;
       }
       setReverseDateValidation(null);
-      const result = submitLocation(
-        [event.lngLat.lat, event.lngLat.lng],
-        reverseEstimateRef.current,
-      );
-      if (result == null) return;
-      play(result.distanceKm <= REVERSE_SCORING.correctRadiusKm ? "correct" : "wrong");
-      crossfadeTo("reveal-flourish");
+      const coordinates: Coordinates = [event.lngLat.lat, event.lngLat.lng];
+      setPendingReverseGuess(coordinates);
+      mapEngineRef.current?.setReverseGuessMarker(handle, coordinates, "pending");
     };
     map.getCanvas().style.cursor = status === "playing" ? "crosshair" : "";
     map.on("click", onClick);
@@ -310,15 +307,7 @@ export default function GamePage({ figureIndex }: Props) {
       map.getCanvas().style.cursor = "";
       map.off("click", onClick);
     };
-  }, [
-    crossfadeTo,
-    difficultyRules.reverseDatesRequired,
-    mapReady,
-    mode,
-    play,
-    status,
-    submitLocation,
-  ]);
+  }, [difficultyRules.reverseDatesRequired, mapReady, mode, status]);
 
   useEffect(() => {
     const engine = mapEngineRef.current;
@@ -344,30 +333,37 @@ export default function GamePage({ figureIndex }: Props) {
 
     const lifeDates = getLifeDateHints(currentFigure);
     const revealReverse = mode === "reverse" && status === "revealed";
+    const revealWhere = mode !== "reverse" && status === "revealed";
     const hints: JourneyHints = {
       birth: {
-        primary: revealReverse
-          ? currentFigure.place_of_birth
-          : wrongGuesses >= 1
-            ? lifeDates.birthDate
-            : null,
+        primary:
+          revealReverse || revealWhere
+            ? currentFigure.place_of_birth
+            : wrongGuesses >= 1
+              ? lifeDates.birthDate
+              : null,
         secondary: revealReverse
           ? lifeDates.birthDate
-          : wrongGuesses >= 2
-            ? currentFigure.place_of_birth
-            : null,
+          : revealWhere
+            ? null
+            : wrongGuesses >= 2
+              ? currentFigure.place_of_birth
+              : null,
       },
       death: {
-        primary: revealReverse
-          ? currentFigure.place_of_death
-          : wrongGuesses >= 1
-            ? lifeDates.deathDate
-            : null,
+        primary:
+          revealReverse || revealWhere
+            ? currentFigure.place_of_death
+            : wrongGuesses >= 1
+              ? lifeDates.deathDate
+              : null,
         secondary: revealReverse
           ? lifeDates.deathDate
-          : wrongGuesses >= 2
-            ? currentFigure.place_of_death
-            : null,
+          : revealWhere
+            ? null
+            : wrongGuesses >= 2
+              ? currentFigure.place_of_death
+              : null,
       },
     };
 
@@ -377,6 +373,7 @@ export default function GamePage({ figureIndex }: Props) {
       animateFit: !reducedMotion && (status === "countdown" || status === "playing"),
       reducedMotion,
       compact: isSmallViewport,
+      result: revealReverse,
     });
   }, [currentFigure, isSmallViewport, mapReady, mode, reducedMotionSetting, wrongGuesses, status]);
 
@@ -483,6 +480,16 @@ export default function GamePage({ figureIndex }: Props) {
   }, [status]);
 
   useEffect(() => {
+    if (mode !== "reverse" || status === "playing" || status === "paused" || !pendingReverseGuess) {
+      return;
+    }
+    setPendingReverseGuess(null);
+    if (mapEngineRef.current && mapRef.current) {
+      mapEngineRef.current.clearReverseGuessMarker(mapRef.current);
+    }
+  }, [mode, pendingReverseGuess, status]);
+
+  useEffect(() => {
     if (!revealedFigure) {
       setShowRevealCard(false);
       setRevealFlightActive(false);
@@ -499,11 +506,13 @@ export default function GamePage({ figureIndex }: Props) {
           animateFit: !reducedMotion,
           reducedMotion,
           compact: isSmallViewport,
+          result: mode === "reverse",
         });
       } else {
         mapEngineRef.current.focusJourney(mapRef.current, revealedFigure, {
           reducedMotion,
           compact: isSmallViewport,
+          result: mode === "reverse",
         });
       }
     }
@@ -521,7 +530,7 @@ export default function GamePage({ figureIndex }: Props) {
       setShowRevealCard(true);
     }, 620);
     return () => window.clearTimeout(timer);
-  }, [isSmallViewport, reducedMotionSetting, revealWasCorrect, revealedFigure]);
+  }, [isSmallViewport, mode, reducedMotionSetting, revealWasCorrect, revealedFigure]);
 
   // Round transition: clear local UI state that's only meaningful within the
   // round just ended (the typed guess, the wrong-figure toast).
@@ -534,6 +543,10 @@ export default function GamePage({ figureIndex }: Props) {
     setDeathYearEstimate(DEFAULT_REVERSE_ESTIMATE.deathYear);
     reverseEstimateRef.current = DEFAULT_REVERSE_ESTIMATE;
     setReverseDateValidation(null);
+    setPendingReverseGuess(null);
+    if (mapEngineRef.current && mapRef.current) {
+      mapEngineRef.current.clearReverseGuessMarker(mapRef.current, false);
+    }
   }, [roundIndex]);
 
   function updateBirthYearEstimate(year: number | null) {
@@ -554,6 +567,36 @@ export default function GamePage({ figureIndex }: Props) {
     setDeathYearEstimate(deathYear);
     reverseEstimateRef.current = { ...reverseEstimateRef.current, deathYear };
     setReverseDateValidation(null);
+  }
+
+  function confirmReverseGuess() {
+    if (!pendingReverseGuess) {
+      return;
+    }
+
+    const result = submitLocation(pendingReverseGuess, reverseEstimateRef.current);
+    if (result == null) {
+      return;
+    }
+
+    if (mapEngineRef.current && mapRef.current) {
+      mapEngineRef.current.setReverseGuessMarker(
+        mapRef.current,
+        pendingReverseGuess,
+        result.distanceKm <= REVERSE_SCORING.correctRadiusKm ? "correct" : "miss",
+      );
+    }
+    setPendingReverseGuess(null);
+    setReverseDateValidation(null);
+    play(result.distanceKm <= REVERSE_SCORING.correctRadiusKm ? "correct" : "wrong");
+    crossfadeTo("reveal-flourish");
+  }
+
+  function clearPendingReverseGuess() {
+    setPendingReverseGuess(null);
+    if (mapEngineRef.current && mapRef.current) {
+      mapEngineRef.current.clearReverseGuessMarker(mapRef.current);
+    }
   }
 
   function submitValue(value: string) {
@@ -756,6 +799,29 @@ export default function GamePage({ figureIndex }: Props) {
               onBirthYearChange={updateBirthYearEstimate}
               onDeathYearChange={updateDeathYearEstimate}
             />
+          ) : null}
+          {mode === "reverse" && pendingReverseGuess ? (
+            <div className="reverse-confirmation" role="status" aria-live="polite">
+              <div>
+                <span>Pin placed</span>
+                <strong>Confirm birthplace?</strong>
+                <small>
+                  {pendingReverseGuess[0].toFixed(2)}, {pendingReverseGuess[1].toFixed(2)}
+                </small>
+              </div>
+              <div className="reverse-confirmation-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={clearPendingReverseGuess}
+                >
+                  Move
+                </button>
+                <button className="primary-button" type="button" onClick={confirmReverseGuess}>
+                  Confirm
+                </button>
+              </div>
+            </div>
           ) : null}
           <SuggestionList
             suggestions={suggestions}

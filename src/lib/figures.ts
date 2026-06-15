@@ -1,4 +1,4 @@
-import type { Continent, Difficulty, FeaturedFigure, Figure, FigureIndex } from "../types/figure";
+import type { Continent, Coordinates, Difficulty, FeaturedFigure, Figure, FigureIndex } from "../types/figure";
 
 let loadedIndex: FigureIndex[] | null = null;
 let indexPromise: Promise<FigureIndex[]> | null = null;
@@ -99,7 +99,10 @@ export function normalizeName(value: string): string {
     .toLowerCase();
 }
 
-export function parseHistoricalYear(value: string): number | null {
+export function parseHistoricalYear(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
   const century = value.match(/\b(\d+)(?:st|nd|rd|th)\s+century\s+BC\b/i);
   if (century) {
     return -(Number(century[1]) - 1) * 100 - 1;
@@ -265,6 +268,9 @@ export function getLifeDateRange(
   if (figure.birth_date && figure.death_date) {
     return `${figure.birth_date} - ${figure.death_date}`;
   }
+  if (figure.birth_date) {
+    return `${figure.birth_date} - present`;
+  }
 
   return extractYearRange(figure.description);
 }
@@ -284,6 +290,27 @@ export function getLifeDateHints(
     birthDate: years.birthYear,
     deathDate: years.deathYear,
   };
+}
+
+export function hasDeathLocation<
+  T extends Pick<Figure, "place_of_death" | "coordinates_of_the_place_of_death">,
+>(figure: T): figure is T & {
+  place_of_death: string;
+  coordinates_of_the_place_of_death: Coordinates;
+} {
+  return (
+    typeof figure.place_of_death === "string" &&
+    figure.place_of_death.trim().length > 0 &&
+    Array.isArray(figure.coordinates_of_the_place_of_death) &&
+    figure.coordinates_of_the_place_of_death.length === 2 &&
+    figure.coordinates_of_the_place_of_death.every(Number.isFinite)
+  );
+}
+
+export function hasDeathDate<T extends Pick<Figure, "death_date">>(
+  figure: T,
+): figure is T & { death_date: string } {
+  return typeof figure.death_date === "string" && figure.death_date.trim().length > 0;
 }
 
 export function distanceKm(from: [number, number], to: [number, number]): number {

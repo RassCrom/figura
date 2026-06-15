@@ -17,6 +17,7 @@ import {
   getFullName,
   getLifeDateRange,
   getWikipediaUrl,
+  hasDeathLocation,
   loadFigureRecord,
 } from "../lib/figures";
 import { usePageMetadata } from "../hooks/usePageMetadata";
@@ -61,7 +62,9 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
   const metadata = useMemo(() => {
     if (!figure) return null;
     const fullName = getFullName(figure);
-    const journey = `${figure.place_of_birth} to ${figure.place_of_death}`;
+    const journey = hasDeathLocation(figure)
+      ? `${figure.place_of_birth} to ${figure.place_of_death}`
+      : `born in ${figure.place_of_birth}`;
     return {
       title: `${fullName} | Figura`,
       description: `Explore ${fullName}'s life journey from ${journey} and learn who they were.`,
@@ -135,7 +138,10 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
       figure,
       {
         birth: { primary: figure.place_of_birth, secondary: figure.birth_date || null },
-        death: { primary: figure.place_of_death, secondary: figure.death_date || null },
+        death: {
+          primary: hasDeathLocation(figure) ? figure.place_of_death : null,
+          secondary: figure.death_date || null,
+        },
       },
       renderOptions,
     );
@@ -147,10 +153,9 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
   if (!figure) return <LoadingScreen />;
 
   const fullName = getFullName(figure);
-  const journey = distanceKm(
-    figure.coordinates_of_the_place_of_birth,
-    figure.coordinates_of_the_place_of_death,
-  );
+  const journey = hasDeathLocation(figure)
+    ? distanceKm(figure.coordinates_of_the_place_of_birth, figure.coordinates_of_the_place_of_death)
+    : null;
   const dates = getLifeDateRange(figure);
   const slug = getFigureSlug(figure);
   const dayNumber = mode === "today" ? getDayNumber(today) : null;
@@ -181,7 +186,9 @@ export function FigureProfilePage({ figureIndex, mode }: Props) {
           <p className="figure-map-meta">
             {lifeJourney
               ? `${lifeJourney.stops.length} documented stops · ${dates}`
-              : `${figure.place_of_birth} → ${figure.place_of_death} · ${journey.toLocaleString()} km`}
+              : journey != null && hasDeathLocation(figure)
+                ? `${figure.place_of_birth} → ${figure.place_of_death} · ${journey.toLocaleString()} km`
+                : `Born in ${figure.place_of_birth}`}
           </p>
           <div
             ref={mapContainerRef}

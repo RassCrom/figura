@@ -2,10 +2,12 @@ import greatCircle from "@turf/great-circle";
 import maplibregl, { type LngLatBoundsLike, type Marker } from "maplibre-gl";
 
 import type { LifeJourney } from "../data/lifeJourneys";
-import type { Basemap, Figure } from "../types/figure";
+import type { Basemap, Coordinates, Figure } from "../types/figure";
+import { hasDeathLocation } from "./figures";
 import { getMapStyle } from "./mapStyles";
 
 type MarkerKind = "birth" | "death";
+type ReverseGuessMarkerState = "pending" | "correct" | "miss";
 
 type MarkerHint = {
   primary: string | null;
@@ -24,6 +26,11 @@ type JourneyCoordinates = {
   death: [number, number];
 };
 
+type FigureJourneyCoordinates = {
+  birth: [number, number];
+  death: [number, number] | null;
+};
+
 type FitPadding = number | { top: number; right: number; bottom: number; left: number };
 
 type SafeFitOptions = {
@@ -40,7 +47,12 @@ type CachedArc = {
   totalPoints: number;
 };
 
-type RenderOptions = { animateFit: boolean; reducedMotion: boolean; compact?: boolean };
+type RenderOptions = {
+  animateFit: boolean;
+  reducedMotion: boolean;
+  compact?: boolean;
+  result?: boolean;
+};
 
 type PendingRender = {
   figure: Figure;
@@ -77,6 +89,7 @@ type LifeJourneyOptions = {
   reducedMotion?: boolean;
   compact?: boolean;
   padding?: FitPadding;
+  result?: boolean;
 };
 
 type PendingLifeJourney = {
@@ -86,8 +99,9 @@ type PendingLifeJourney = {
 
 export type GameMapHandle = {
   map: maplibregl.Map;
-  markers: { birth: Marker; death: Marker } | null;
+  markers: { birth: Marker; death: Marker | null } | null;
   dotMarker: Marker | null;
+  reverseGuessMarker: Marker | null;
   animationFrame: number;
   currentFigureKey: string | null;
   arcStart: number;
@@ -143,10 +157,10 @@ function coordinatesCoincide(a: [number, number], b: [number, number]): boolean 
   return Math.abs(a[0] - b[0]) < COORDINATE_EPSILON && Math.abs(a[1] - b[1]) < COORDINATE_EPSILON;
 }
 
-function getJourneyCoordinates(figure: Figure): JourneyCoordinates {
+function getJourneyCoordinates(figure: Figure): FigureJourneyCoordinates {
   return {
     birth: toLngLat(figure.coordinates_of_the_place_of_birth),
-    death: toLngLat(figure.coordinates_of_the_place_of_death),
+    death: hasDeathLocation(figure) ? toLngLat(figure.coordinates_of_the_place_of_death) : null,
   };
 }
 
@@ -155,7 +169,7 @@ function figureKey(figure: Figure): string {
     figure.first_name,
     figure.last_name,
     ...figure.coordinates_of_the_place_of_birth,
-    ...figure.coordinates_of_the_place_of_death,
+    ...(figure.coordinates_of_the_place_of_death ?? ["living"]),
   ].join(":");
 }
 
@@ -182,6 +196,21 @@ function makeMarkerElement(kind: MarkerKind): HTMLElement {
     '<span class="marker-hint marker-hint-primary"></span>' +
     '<span class="marker-hint marker-hint-secondary"></span>';
   return element;
+}
+
+function makeReverseGuessMarkerElement(state: ReverseGuessMarkerState): HTMLElement {
+  const element = document.createElement("div");
+  element.innerHTML = '<span class="reverse-guess-label">Your pin</span>';
+  applyReverseGuessMarkerState(element, state);
+  return element;
+}
+
+function applyReverseGuessMarkerState(element: HTMLElement, state: ReverseGuessMarkerState): void {
+  element.className = `reverse-guess-marker ${state}`;
+  element.setAttribute(
+    "aria-label",
+    state === "pending" ? "Unconfirmed guessed location" : "Your guessed location",
+  );
 }
 
 function setMarkerHint(element: HTMLElement, hint: MarkerHint): void {
@@ -509,6 +538,7 @@ export function createGameMap(container: HTMLElement, basemap: Basemap): GameMap
     map,
     markers: null,
     dotMarker: null,
+    reverseGuessMarker: null,
     animationFrame: 0,
     currentFigureKey: null,
     arcStart: 0,
@@ -558,7 +588,9 @@ export function clearJourney(handle: GameMapHandle, fadePoints = true): void {
   handle.animationFrame = 0;
   if (handle.markers) {
     removeMarker(handle.markers.birth, fadePoints);
-    removeMarker(handle.markers.death, fadePoints);
+    if (handle.markers.death) {
+      removeMarker(handle.markers.death, fadePoints);
+    }
     handle.markers = null;
   }
   if (handle.dotMarker) {
@@ -569,6 +601,35 @@ export function clearJourney(handle: GameMapHandle, fadePoints = true): void {
 
   removeJourneyLayers(handle.map);
   removeLifeJourney(handle);
+}
+
+export function setReverseGuessMarker(
+  handle: GameMapHandle,
+  coordinates: Coordinates,
+  state: ReverseGuessMarkerState = "pending",
+): void {
+  const lngLat = toLngLat(coordinates);
+  if (!handle.reverseGuessMarker) {
+    handle.reverseGuessMarker = new maplibregl.Marker({
+      element: makeReverseGuessMarkerElement(state),
+      anchor: "center",
+      subpixelPositioning: true,
+    })
+      .setLngLat(lngLat)
+      .addTo(handle.map);
+    return;
+  }
+
+  applyReverseGuessMarkerState(handle.reverseGuessMarker.getElement(), state);
+  handle.reverseGuessMarker.setLngLat(lngLat);
+}
+
+export function clearReverseGuessMarker(handle: GameMapHandle, fadePoint = true): void {
+  if (!handle.reverseGuessMarker) {
+    return;
+  }
+  removeMarker(handle.reverseGuessMarker, fadePoint);
+  handle.reverseGuessMarker = null;
 }
 
 export function removeGameMap(handle: GameMapHandle): void {
@@ -591,6 +652,7 @@ export function removeGameMap(handle: GameMapHandle): void {
   handle.pendingRouteOverlay = null;
   handle.pendingLifeJourney = null;
   clearJourney(handle, false);
+  clearReverseGuessMarker(handle, false);
   removeRouteOverlayLayers(handle);
   handle.map.remove();
 }
@@ -734,9 +796,9 @@ function doRenderLifeJourney(
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
       "line-color": "rgba(239, 199, 90, 0.52)",
-      "line-width": 8,
-      "line-blur": 4,
-      "line-opacity": 0.58,
+      "line-width": options.result ? 11 : 8,
+      "line-blur": options.result ? 5 : 4,
+      "line-opacity": options.result ? 0.7 : 0.58,
     },
   });
   map.addLayer({
@@ -746,9 +808,9 @@ function doRenderLifeJourney(
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
       "line-color": "#f0d58f",
-      "line-width": 2.6,
+      "line-width": options.result ? 3.8 : 2.6,
       "line-dasharray": [1.2, 1.15],
-      "line-opacity": 0.94,
+      "line-opacity": options.result ? 0.98 : 0.94,
     },
   });
   handle.lifeJourneyLayerIds = [
@@ -761,7 +823,14 @@ function doRenderLifeJourney(
     const coordinates = toLngLat(stop.coordinates);
     bounds.extend(coordinates);
     const element = document.createElement("div");
-    element.className = "life-journey-marker";
+    element.className = [
+      "life-journey-marker",
+      options.result ? "result" : "",
+      index === 0 ? "origin" : "",
+      index === journey.stops.length - 1 ? "destination" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     element.style.setProperty("--life-stop-delay", `${Math.min(index * 85, 600)}ms`);
     element.innerHTML = `<span class="life-marker-disc"><span>${index + 1}</span></span>`;
     element.setAttribute("aria-label", `${index + 1}. ${stop.year}, ${stop.place}: ${stop.event}`);
@@ -776,10 +845,14 @@ function doRenderLifeJourney(
   fitBoundsSafely(map, bounds, {
     padding:
       options.padding ??
-      (options.compact
-        ? { top: 44, right: 44, bottom: 150, left: 44 }
-        : { top: 100, right: 100, bottom: 230, left: 100 }),
-    maxZoom: options.compact ? 3.2 : 4.6,
+      (options.result
+        ? options.compact
+          ? { top: 34, right: 34, bottom: 150, left: 34 }
+          : { top: 72, right: 72, bottom: 190, left: 72 }
+        : options.compact
+          ? { top: 44, right: 44, bottom: 150, left: 44 }
+          : { top: 100, right: 100, bottom: 230, left: 100 }),
+    maxZoom: options.result ? (options.compact ? 4.3 : 5.6) : options.compact ? 3.2 : 4.6,
     duration: options.reducedMotion || !options.animateFit ? 0 : 950,
     easing: (t) => 1 - Math.pow(1 - t, 3),
   });
@@ -788,19 +861,46 @@ function doRenderLifeJourney(
 export function focusJourney(
   handle: GameMapHandle,
   figure: Figure,
-  options: { reducedMotion: boolean; compact?: boolean } = { reducedMotion: false },
+  options: { reducedMotion: boolean; compact?: boolean; result?: boolean } = {
+    reducedMotion: false,
+  },
 ): void {
   const { birth, death } = getJourneyCoordinates(figure);
+  const boundsBuffer = options.result ? 3 : 8;
+  if (!death) {
+    const bounds: LngLatBoundsLike = [
+      [birth[0] - boundsBuffer, birth[1] - boundsBuffer],
+      [birth[0] + boundsBuffer, birth[1] + boundsBuffer],
+    ];
+    fitBoundsSafely(handle.map, bounds, {
+      padding: options.result
+        ? options.compact
+          ? { top: 24, right: 24, bottom: 140, left: 24 }
+          : { top: 72, right: 56, bottom: 190, left: 56 }
+        : options.compact
+          ? { top: 28, right: 28, bottom: 28, left: 28 }
+          : { top: 96, right: 64, bottom: 220, left: 64 },
+      maxZoom: options.result ? (options.compact ? 4.2 : 5.6) : options.compact ? 2.7 : 4.5,
+      duration: options.reducedMotion ? 0 : 850,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+    return;
+  }
+
   const bounds: LngLatBoundsLike = [
-    [Math.min(birth[0], death[0]) - 8, Math.min(birth[1], death[1]) - 8],
-    [Math.max(birth[0], death[0]) + 8, Math.max(birth[1], death[1]) + 8],
+    [Math.min(birth[0], death[0]) - boundsBuffer, Math.min(birth[1], death[1]) - boundsBuffer],
+    [Math.max(birth[0], death[0]) + boundsBuffer, Math.max(birth[1], death[1]) + boundsBuffer],
   ];
 
   fitBoundsSafely(handle.map, bounds, {
-    padding: options.compact
-      ? { top: 28, right: 28, bottom: 28, left: 28 }
-      : { top: 96, right: 64, bottom: 220, left: 64 },
-    maxZoom: options.compact ? 2.7 : 4.5,
+    padding: options.result
+      ? options.compact
+        ? { top: 24, right: 24, bottom: 140, left: 24 }
+        : { top: 72, right: 56, bottom: 190, left: 56 }
+      : options.compact
+        ? { top: 28, right: 28, bottom: 28, left: 28 }
+        : { top: 96, right: 64, bottom: 220, left: 64 },
+    maxZoom: options.result ? (options.compact ? 4.2 : 5.6) : options.compact ? 2.7 : 4.5,
     duration: options.reducedMotion ? 0 : 850,
     easing: (t) => 1 - Math.pow(1 - t, 3),
   });
@@ -951,7 +1051,11 @@ function doRender(
   // (prevents marker bounce + visual drift on re-render).
   if (handle.currentFigureKey === key && handle.markers) {
     setMarkerHint(handle.markers.birth.getElement(), hints.birth);
-    setMarkerHint(handle.markers.death.getElement(), hints.death);
+    if (handle.markers.death) {
+      setMarkerHint(handle.markers.death.getElement(), hints.death);
+    }
+    handle.markers.birth.getElement().classList.toggle("result", Boolean(options.result));
+    handle.markers.death?.getElement().classList.toggle("result", Boolean(options.result));
     return;
   }
 
@@ -963,8 +1067,36 @@ function doRender(
   const { birth, death } = coordinates;
 
   const birthElement = makeMarkerElement("birth");
-  const deathElement = makeMarkerElement("death");
+  birthElement.classList.toggle("result", Boolean(options.result));
   setMarkerHint(birthElement, hints.birth);
+  if (!death) {
+    handle.markers = {
+      birth: new maplibregl.Marker({
+        element: birthElement,
+        anchor: "center",
+        subpixelPositioning: true,
+      })
+        .setLngLat(birth)
+        .addTo(map),
+      death: null,
+    };
+
+    const boundsBuffer = options.result ? 3 : 8;
+    const bounds: LngLatBoundsLike = [
+      [birth[0] - boundsBuffer, birth[1] - boundsBuffer],
+      [birth[0] + boundsBuffer, birth[1] + boundsBuffer],
+    ];
+    fitBoundsSafely(map, bounds, {
+      padding: options.result ? (options.compact ? 18 : 58) : options.compact ? 24 : 80,
+      maxZoom: options.result ? (options.compact ? 4.1 : 5.6) : options.compact ? 2.8 : 4.2,
+      duration: options.animateFit ? 900 : 0,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+    return;
+  }
+
+  const deathElement = makeMarkerElement("death");
+  deathElement.classList.toggle("result", Boolean(options.result));
   setMarkerHint(deathElement, hints.death);
   const sameLocation = coordinatesCoincide(birth, death);
   const deathOffset: [number, number] = sameLocation ? SAME_LOCATION_DEATH_OFFSET : [0, 0];
@@ -990,9 +1122,10 @@ function doRender(
       .addTo(map),
   };
 
-  const arc = buildArc(figure, coordinates);
+  const arcCoordinates = { birth, death };
+  const arc = buildArc(figure, arcCoordinates);
   const initialFeature =
-    options.reducedMotion || sameLocation ? arcFeature(arc, 1, coordinates) : arcFeature(arc, 0);
+    options.reducedMotion || sameLocation ? arcFeature(arc, 1, arcCoordinates) : arcFeature(arc, 0);
 
   map.addSource(JOURNEY_SOURCE_ID, { type: "geojson", data: initialFeature });
   map.addLayer({
@@ -1002,7 +1135,7 @@ function doRender(
     layout: { "line-cap": "round", "line-join": "round" },
     paint: {
       "line-color": "rgba(255, 200, 80, 0.85)",
-      "line-width": 3,
+      "line-width": options.result ? 4.4 : 3,
       "line-dasharray": [2, 2],
       "line-blur": 0.5,
     },
@@ -1016,8 +1149,8 @@ function doRender(
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
         "line-color": "rgba(255, 246, 202, 0.92)",
-        "line-width": 6,
-        "line-blur": 1.2,
+        "line-width": options.result ? 7.5 : 6,
+        "line-blur": options.result ? 1.5 : 1.2,
         "line-opacity": 0.95,
       },
     });
@@ -1034,13 +1167,14 @@ function doRender(
     .setLngLat(birth)
     .addTo(map);
 
+  const boundsBuffer = options.result ? 3 : 10;
   const bounds: LngLatBoundsLike = [
-    [Math.min(birth[0], death[0]) - 10, Math.min(birth[1], death[1]) - 10],
-    [Math.max(birth[0], death[0]) + 10, Math.max(birth[1], death[1]) + 10],
+    [Math.min(birth[0], death[0]) - boundsBuffer, Math.min(birth[1], death[1]) - boundsBuffer],
+    [Math.max(birth[0], death[0]) + boundsBuffer, Math.max(birth[1], death[1]) + boundsBuffer],
   ];
   fitBoundsSafely(map, bounds, {
-    padding: options.compact ? 24 : 80,
-    maxZoom: options.compact ? 2.8 : 4.2,
+    padding: options.result ? (options.compact ? 18 : 58) : options.compact ? 24 : 80,
+    maxZoom: options.result ? (options.compact ? 4.1 : 5.6) : options.compact ? 2.8 : 4.2,
     duration: options.animateFit ? 1300 : 0,
     easing: (t) => 1 - Math.pow(1 - t, 3),
   });
@@ -1070,7 +1204,7 @@ function doRender(
     const elapsed = now - handle.arcStart;
     const drawProgress = Math.min(1, elapsed / ARC_DRAW_MS);
     const easedDraw = 1 - Math.pow(1 - drawProgress, 3); // ease-out cubic
-    source.setData(arcFeature(arc, easedDraw, coordinates));
+    source.setData(arcFeature(arc, easedDraw, arcCoordinates));
 
     // The dot follows the head of the line as it draws (birth → death),
     // then settles at the death endpoint. The previous behavior — looping
@@ -1080,7 +1214,7 @@ function doRender(
     handle.dotMarker.setLngLat(dotPositionAt(arc, easedDraw));
 
     if (drawProgress >= 1) {
-      source.setData(arcFeature(arc, 1, coordinates));
+      source.setData(arcFeature(arc, 1, arcCoordinates));
       // Pin the dot exactly at the death endpoint and mark it arrived so
       // CSS can switch from "traveling" (bright glow) to "arrived"
       // (smaller, dimmer rest state).
