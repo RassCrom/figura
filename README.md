@@ -2,7 +2,7 @@
 
 Figura is a free history and geography guessing game.
 
-The main game mode is **Where?**: you see a famous person, estimate when they were born and died, then click their birthplace on the map. There is also a **Who?** mode where you follow a person's life journey and guess their name.
+The main game mode is **Where?**: you see a famous person and click their birthplace on the map. Scores use birthplace distance and speed; lifetime estimates are optional on Explorer and required on harder levels. There is also a **Who?** mode where you follow a person's life journey and guess their name.
 
 ## What is in the game?
 

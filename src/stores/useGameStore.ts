@@ -30,8 +30,8 @@ type StartSessionArgs = {
 };
 
 export type ReverseEstimate = {
-  birthYear: number;
-  deathYear: number;
+  birthYear: number | null;
+  deathYear: number | null;
 };
 
 export type ReverseGuessResult = {
@@ -167,7 +167,6 @@ function reveal(
     | "birthYearError"
     | "deathYearError"
     | "locationScore"
-    | "timelineScore"
     | "speedScore"
   >,
 ): Partial<GameState> {
@@ -335,17 +334,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!figure || state.status !== "playing" || state.mode !== "reverse") {
       return null;
     }
+    if (
+      getDifficultyRules(state.difficulty).reverseDatesRequired &&
+      (estimate.birthYear == null || estimate.deathYear == null)
+    ) {
+      return null;
+    }
     const distance = distanceKm(coordinates, figure.coordinates_of_the_place_of_birth);
     const actualBirthYear = parseHistoricalYear(figure.birth_date);
     const actualDeathYear = parseHistoricalYear(figure.death_date);
     const birthYearError =
-      actualBirthYear == null ? null : Math.abs(estimate.birthYear - actualBirthYear);
+      actualBirthYear == null || estimate.birthYear == null
+        ? null
+        : Math.abs(estimate.birthYear - actualBirthYear);
     const deathYearError =
-      actualDeathYear == null ? null : Math.abs(estimate.deathYear - actualDeathYear);
+      actualDeathYear == null || estimate.deathYear == null
+        ? null
+        : Math.abs(estimate.deathYear - actualDeathYear);
     const breakdown = calcReverseScore(
       distance,
-      birthYearError,
-      deathYearError,
       roundTenth(state.timeUsed + state.extraUsed),
       getDifficultyRules(state.difficulty).roundSeconds,
     );
@@ -359,7 +366,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         birthYearError: birthYearError ?? undefined,
         deathYearError: deathYearError ?? undefined,
         locationScore: breakdown.location,
-        timelineScore: breakdown.timeline,
         speedScore: breakdown.speed,
       }),
     );

@@ -89,7 +89,6 @@ export type RoundResult = {
   birthYearError?: number;
   deathYearError?: number;
   locationScore?: number;
-  timelineScore?: number;
   speedScore?: number;
 };
 

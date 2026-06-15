@@ -11,6 +11,7 @@ type SettingsState = {
   musicVol: number;
   sfxVol: number;
   showSuggestions: boolean;
+  showReverseDates: boolean;
   autoAdvanceReveal: boolean;
   reducedMotion: boolean;
   mapTextures: boolean;
@@ -22,6 +23,7 @@ type SettingsState = {
   setMusicVol: (volume: number) => void;
   setSfxVol: (volume: number) => void;
   setShowSuggestions: (enabled: boolean) => void;
+  setShowReverseDates: (enabled: boolean) => void;
   setAutoAdvanceReveal: (enabled: boolean) => void;
   setReducedMotion: (enabled: boolean) => void;
   setMapTextures: (enabled: boolean) => void;
@@ -33,10 +35,11 @@ export const useSettingsStore = create<SettingsState>()(
       difficulty: "Explorer",
       gameMode: "reverse",
       selectedCategories: [],
-      basemap: "Steppe",
+      basemap: "Medivial",
       musicVol: 45,
       sfxVol: 60,
       showSuggestions: true,
+      showReverseDates: false,
       autoAdvanceReveal: true,
       reducedMotion: false,
       mapTextures: true,
@@ -55,16 +58,19 @@ export const useSettingsStore = create<SettingsState>()(
       setMusicVol: (musicVol) => set({ musicVol }),
       setSfxVol: (sfxVol) => set({ sfxVol }),
       setShowSuggestions: (showSuggestions) => set({ showSuggestions }),
+      setShowReverseDates: (showReverseDates) => set({ showReverseDates }),
       setAutoAdvanceReveal: (autoAdvanceReveal) => set({ autoAdvanceReveal }),
       setReducedMotion: (reducedMotion) => set({ reducedMotion }),
       setMapTextures: (mapTextures) => set({ mapTextures }),
     }),
     {
       name: "gtf_settings",
-      version: 4,
+      version: 6,
       migrate: (persistedState) => ({
         ...(persistedState as SettingsState),
         gameMode: "reverse",
+        showReverseDates: false,
+        basemap: "Medivial",
       }),
     },
   ),

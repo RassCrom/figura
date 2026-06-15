@@ -30,7 +30,7 @@ import {
 } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
 import { buildRoundRouteOverlays } from "../lib/routeOverlays";
-import { useGameStore, type GameHint } from "../stores/useGameStore";
+import { useGameStore, type GameHint, type ReverseEstimate } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { FigureIndex } from "../types/figure";
 
@@ -40,7 +40,7 @@ type Props = {
 
 type MapEngine = typeof import("../lib/mapEngine");
 
-const DEFAULT_REVERSE_ESTIMATE = { birthYear: 1800, deathYear: 1900 };
+const DEFAULT_REVERSE_ESTIMATE: ReverseEstimate = { birthYear: null, deathYear: null };
 const MIN_REVERSE_YEAR = -3000;
 const MAX_REVERSE_YEAR = new Date().getUTCFullYear();
 const GAME_HINT_SHORTCUTS: readonly GameHint[] = ["initial", "description", "category"];
@@ -68,6 +68,7 @@ export default function GamePage({ figureIndex }: Props) {
   const [birthYearEstimate, setBirthYearEstimate] = useState(DEFAULT_REVERSE_ESTIMATE.birthYear);
   const [deathYearEstimate, setDeathYearEstimate] = useState(DEFAULT_REVERSE_ESTIMATE.deathYear);
   const reverseEstimateRef = useRef(DEFAULT_REVERSE_ESTIMATE);
+  const [reverseDateValidation, setReverseDateValidation] = useState<string | null>(null);
   const [wrongPlace, setWrongPlace] = useState<{
     key: number;
     name: string;
@@ -76,6 +77,7 @@ export default function GamePage({ figureIndex }: Props) {
   const basemap = useSettingsStore((state) => state.basemap);
   const initialBasemapRef = useRef(basemap);
   const showSuggestions = useSettingsStore((state) => state.showSuggestions);
+  const showReverseDates = useSettingsStore((state) => state.showReverseDates);
   const autoAdvanceReveal = useSettingsStore((state) => state.autoAdvanceReveal);
   const reducedMotionSetting = useSettingsStore((state) => state.reducedMotion);
   const mapTextures = useSettingsStore((state) => state.mapTextures);
@@ -119,6 +121,7 @@ export default function GamePage({ figureIndex }: Props) {
   const animatedScore = useCountUp(score);
   const currentFigure = queue[roundIndex] ?? null;
   const difficultyRules = getDifficultyRules(difficulty);
+  const showReverseDateInputs = showReverseDates || difficultyRules.reverseDatesRequired;
   const keyboardLayoutActive = guessPanelFocused && isSmallViewport && status === "playing";
   const revealResult = roundResults[roundResults.length - 1] ?? null;
   const revealWasCorrect = Boolean(
@@ -284,6 +287,15 @@ export default function GamePage({ figureIndex }: Props) {
     const map = handle.map;
     const onClick = (event: { lngLat: { lat: number; lng: number } }) => {
       if (status !== "playing") return;
+      if (
+        difficultyRules.reverseDatesRequired &&
+        (reverseEstimateRef.current.birthYear == null ||
+          reverseEstimateRef.current.deathYear == null)
+      ) {
+        setReverseDateValidation("Enter both required years before placing your pin.");
+        return;
+      }
+      setReverseDateValidation(null);
       const result = submitLocation(
         [event.lngLat.lat, event.lngLat.lng],
         reverseEstimateRef.current,
@@ -298,7 +310,15 @@ export default function GamePage({ figureIndex }: Props) {
       map.getCanvas().style.cursor = "";
       map.off("click", onClick);
     };
-  }, [crossfadeTo, mapReady, mode, play, status, submitLocation]);
+  }, [
+    crossfadeTo,
+    difficultyRules.reverseDatesRequired,
+    mapReady,
+    mode,
+    play,
+    status,
+    submitLocation,
+  ]);
 
   useEffect(() => {
     const engine = mapEngineRef.current;
@@ -513,18 +533,27 @@ export default function GamePage({ figureIndex }: Props) {
     setBirthYearEstimate(DEFAULT_REVERSE_ESTIMATE.birthYear);
     setDeathYearEstimate(DEFAULT_REVERSE_ESTIMATE.deathYear);
     reverseEstimateRef.current = DEFAULT_REVERSE_ESTIMATE;
+    setReverseDateValidation(null);
   }, [roundIndex]);
 
-  function updateBirthYearEstimate(year: number) {
-    const birthYear = Math.max(MIN_REVERSE_YEAR, Math.min(year, deathYearEstimate));
+  function updateBirthYearEstimate(year: number | null) {
+    const birthYear =
+      year == null
+        ? null
+        : Math.max(MIN_REVERSE_YEAR, Math.min(year, deathYearEstimate ?? MAX_REVERSE_YEAR));
     setBirthYearEstimate(birthYear);
     reverseEstimateRef.current = { ...reverseEstimateRef.current, birthYear };
+    setReverseDateValidation(null);
   }
 
-  function updateDeathYearEstimate(year: number) {
-    const deathYear = Math.min(MAX_REVERSE_YEAR, Math.max(year, birthYearEstimate));
+  function updateDeathYearEstimate(year: number | null) {
+    const deathYear =
+      year == null
+        ? null
+        : Math.min(MAX_REVERSE_YEAR, Math.max(year, birthYearEstimate ?? MIN_REVERSE_YEAR));
     setDeathYearEstimate(deathYear);
     reverseEstimateRef.current = { ...reverseEstimateRef.current, deathYear };
+    setReverseDateValidation(null);
   }
 
   function submitValue(value: string) {
@@ -720,6 +749,9 @@ export default function GamePage({ figureIndex }: Props) {
               figure={currentFigure}
               birthYearEstimate={birthYearEstimate}
               deathYearEstimate={deathYearEstimate}
+              showDateInputs={showReverseDateInputs}
+              datesRequired={difficultyRules.reverseDatesRequired}
+              validationMessage={reverseDateValidation}
               playing={status === "playing"}
               onBirthYearChange={updateBirthYearEstimate}
               onDeathYearChange={updateDeathYearEstimate}

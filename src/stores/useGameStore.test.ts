@@ -97,7 +97,7 @@ describe("game-wide hints", () => {
     expect(useGameStore.getState().roundResults[0].score).toBeGreaterThan(0);
   });
 
-  it("scores reverse mode from birthplace, lifetime, and speed without a first-try badge", () => {
+  it("scores reverse mode from birthplace and speed without a first-try badge", () => {
     useGameStore.getState().reset();
     useGameStore.getState().startSession({
       nickname: "tester",
@@ -119,7 +119,47 @@ describe("game-wide hints", () => {
     expect(useGameStore.getState().firstGuessStreak).toBe(0);
   });
 
-  it("reduces reverse score for inaccurate years and time spent", () => {
+  it("allows Explorer to skip dates", () => {
+    useGameStore.getState().reset();
+    useGameStore.getState().startSession({
+      nickname: "tester",
+      difficulty: "Explorer",
+      categories: ["Scientist"],
+      queue: [figure],
+      mode: "reverse",
+    });
+    useGameStore.getState().beginRound();
+
+    const result = useGameStore
+      .getState()
+      .submitLocation([51.5, -0.1], { birthYear: null, deathYear: null });
+
+    expect(result?.score).toBe(5000);
+    expect(result?.birthYearError).toBeNull();
+    expect(result?.deathYearError).toBeNull();
+  });
+
+  it.each(["Scholar", "Conqueror"] as const)("requires dates on %s", (difficulty) => {
+    useGameStore.getState().reset();
+    useGameStore.getState().startSession({
+      nickname: "tester",
+      difficulty,
+      categories: ["Scientist"],
+      queue: [figure],
+      mode: "reverse",
+    });
+    useGameStore.getState().beginRound();
+
+    const result = useGameStore
+      .getState()
+      .submitLocation([51.5, -0.1], { birthYear: null, deathYear: null });
+
+    expect(result).toBeNull();
+    expect(useGameStore.getState().status).toBe("playing");
+    expect(useGameStore.getState().roundResults).toEqual([]);
+  });
+
+  it("ignores date accuracy when scoring and only reduces speed points over time", () => {
     useGameStore.getState().reset();
     useGameStore.getState().startSession({
       nickname: "tester",
@@ -134,8 +174,7 @@ describe("game-wide hints", () => {
       .getState()
       .submitLocation([51.5, -0.1], { birthYear: 1715, deathYear: 1952 });
 
-    expect(result?.score).toBeLessThan(5000);
-    expect(useGameStore.getState().roundResults[0].timelineScore).toBeLessThan(1600);
+    expect(result?.score).toBe(4800);
     expect(useGameStore.getState().roundResults[0].speedScore).toBe(200);
   });
 });

@@ -2879,24 +2879,20 @@ input[type="range"] {
 
 .reverse-timeline {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 4px 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
   padding-top: 10px;
   border-top: 1px solid rgba(226, 194, 125, 0.16);
 }
 
 .reverse-timeline label {
-  min-width: 112px;
-  display: grid;
-  gap: 1px;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
 }
 
 .reverse-year-field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
-  align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .reverse-year-field input[type="number"] {
@@ -2907,35 +2903,15 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
 }
 
-.reverse-timeline label span {
+.reverse-date-help,
+.reverse-date-error {
+  grid-column: 1 / -1;
   color: var(--color-text-muted);
-  font-size: 0.62rem;
+  font-size: 0.66rem;
 }
 
-.reverse-timeline label strong {
-  color: var(--color-accent);
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.reverse-timeline input[type="range"] {
-  min-height: 28px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  accent-color: var(--color-primary-strong);
-  cursor: ew-resize;
-}
-
-.timeline-scale {
-  grid-column: 2;
-  display: flex;
-  justify-content: space-between;
-  color: var(--color-text-muted);
-  font-size: 0.58rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.reverse-date-error {
+  color: var(--color-danger);
 }
 
 .atlas-page {
@@ -3473,7 +3449,7 @@ input[type="range"] {
   }
 
   .reverse-year-field {
-    grid-template-columns: minmax(0, 1fr) 82px;
+    min-width: 0;
   }
 }
 

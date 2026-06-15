@@ -106,8 +106,9 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
   if (!userId) return { ok: false, error: "AUTH_REQUIRED" };
 
   // The server recomputes every round score from these fields and ignores the
-  // client-side `score`; reverse rounds additionally need the distance and
-  // year errors. Keep this in sync with the submit_run SQL function.
+  // client-side `score`; reverse rounds additionally need the distance.
+  // Date estimates are feedback-only, so omitting their errors also keeps the
+  // existing submit_run RPC on the distance-plus-speed scoring path.
   const serverResults = input.results.map((result) => ({
     round: result.round,
     figureId: result.figureId,
@@ -122,8 +123,6 @@ export async function submitRun(input: SubmitRunInput): Promise<SubmitRunResult>
     correct: result.correct,
     firstGuess: result.firstGuess,
     distanceKm: result.distanceKm,
-    birthYearError: result.birthYearError,
-    deathYearError: result.deathYearError,
   }));
   const { data, error } = await supabase.rpc("submit_run", {
     p_results: serverResults as unknown as never,

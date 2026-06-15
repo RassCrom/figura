@@ -24,7 +24,7 @@ import type { FeaturedFigure, FigureIndex } from "../types/figure";
 const HOME_METADATA = {
   title: "Figura | Guess famous people by birthplace",
   description:
-    "Play a free history and geography game. See a famous person, estimate their lifetime, and find their birthplace on the world map.",
+    "Play a free history and geography game. See a famous person and find their birthplace on the world map.",
   keywords:
     "history game, geography quiz, famous people quiz, birthplace game, historical figures, map game",
 };

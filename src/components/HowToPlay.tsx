@@ -25,7 +25,7 @@ const SECTIONS = [
   {
     icon: MapPin,
     title: "Reverse mode",
-    body: "The roles flip: you see the person, then estimate their lifetime and click their birthplace on the map. The closer your pin, the more points.",
+    body: "The roles flip: you see the person and click their birthplace on the map. Points come only from distance and speed. Lifetime estimates are optional on Explorer and required on harder levels.",
   },
 ] as const;
 

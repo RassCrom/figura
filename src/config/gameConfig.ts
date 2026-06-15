@@ -18,12 +18,9 @@ export const GAME_CONFIG = {
 } as const;
 
 export const REVERSE_SCORING = {
-  accuracyPoints: 4600,
-  locationPoints: 3000,
-  yearPoints: 800,
+  locationPoints: 4600,
   speedPoints: 400,
   distanceDecayKm: 2500,
-  yearDecay: 125,
   // A reverse round counts as a "correct" identification (Codex, accuracy
   // stats, continents) only when the pin lands within this radius.
   correctRadiusKm: 500,
@@ -32,7 +29,6 @@ export const REVERSE_SCORING = {
 export type ReverseScoreBreakdown = {
   total: number;
   location: number;
-  timeline: number;
   speed: number;
 };
 
@@ -43,6 +39,7 @@ export type DifficultyRules = {
   suggestions: boolean;
   easyEndpoints: boolean;
   suggestionMetadata: boolean;
+  reverseDatesRequired: boolean;
 };
 
 export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRules> = {
@@ -53,6 +50,7 @@ export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRules> = {
     suggestions: true,
     easyEndpoints: true,
     suggestionMetadata: true,
+    reverseDatesRequired: false,
   },
   Scholar: {
     roundSeconds: 24,
@@ -61,6 +59,7 @@ export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRules> = {
     suggestions: true,
     easyEndpoints: true,
     suggestionMetadata: false,
+    reverseDatesRequired: true,
   },
   Conqueror: {
     roundSeconds: 18,
@@ -69,6 +68,7 @@ export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRules> = {
     suggestions: false,
     easyEndpoints: false,
     suggestionMetadata: false,
+    reverseDatesRequired: true,
   },
 };
 
@@ -97,26 +97,12 @@ export function calcRoundScore(
 
 export function calcReverseScore(
   distance: number,
-  birthYearError: number | null,
-  deathYearError: number | null,
   timeUsed: number,
   roundSeconds: number = GAME_CONFIG.roundSeconds,
 ): ReverseScoreBreakdown {
-  const availableYearErrors = [birthYearError, deathYearError].filter(
-    (error): error is number => error != null,
-  );
-  const locationMax =
-    REVERSE_SCORING.accuracyPoints - availableYearErrors.length * REVERSE_SCORING.yearPoints;
   const location = Math.round(
-    locationMax * Math.exp(-Math.max(0, distance) / REVERSE_SCORING.distanceDecayKm),
-  );
-  const timeline = availableYearErrors.reduce(
-    (score, error) =>
-      score +
-      Math.round(
-        REVERSE_SCORING.yearPoints * Math.exp(-Math.max(0, error) / REVERSE_SCORING.yearDecay),
-      ),
-    0,
+    REVERSE_SCORING.locationPoints *
+      Math.exp(-Math.max(0, distance) / REVERSE_SCORING.distanceDecayKm),
   );
   const speed = Math.round(
     REVERSE_SCORING.speedPoints *
@@ -124,9 +110,8 @@ export function calcReverseScore(
   );
 
   return {
-    total: location + timeline + speed,
+    total: location + speed,
     location,
-    timeline,
     speed,
   };
 }

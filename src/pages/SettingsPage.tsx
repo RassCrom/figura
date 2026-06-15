@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { TopNav } from "../components/TopNav";
+import { getDifficultyRules } from "../config/gameConfig";
 import { en } from "../i18n/en";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Basemap, Difficulty } from "../types/figure";
@@ -15,6 +16,7 @@ const basemaps: Array<{ name: Basemap; description: string }> = [
   { name: "CartoDB Dark", description: "High-contrast dark city map" },
   { name: "Dark Night Blue", description: "Smooth midnight-blue terrain" },
   { name: "Historic", description: "Painterly watercolor atlas" },
+  { name: "Medivial", description: "Illustrated medieval-world map" },
   { name: "Custom Vector", description: "Cyber-styled borders and cities" },
 ];
 
@@ -26,6 +28,7 @@ export function SettingsPage({ categories }: { categories: string[] }) {
   const musicVol = useSettingsStore((state) => state.musicVol);
   const sfxVol = useSettingsStore((state) => state.sfxVol);
   const showSuggestions = useSettingsStore((state) => state.showSuggestions);
+  const showReverseDates = useSettingsStore((state) => state.showReverseDates);
   const autoAdvanceReveal = useSettingsStore((state) => state.autoAdvanceReveal);
   const reducedMotion = useSettingsStore((state) => state.reducedMotion);
   const mapTextures = useSettingsStore((state) => state.mapTextures);
@@ -37,9 +40,11 @@ export function SettingsPage({ categories }: { categories: string[] }) {
   const setMusicVol = useSettingsStore((state) => state.setMusicVol);
   const setSfxVol = useSettingsStore((state) => state.setSfxVol);
   const setShowSuggestions = useSettingsStore((state) => state.setShowSuggestions);
+  const setShowReverseDates = useSettingsStore((state) => state.setShowReverseDates);
   const setAutoAdvanceReveal = useSettingsStore((state) => state.setAutoAdvanceReveal);
   const setReducedMotion = useSettingsStore((state) => state.setReducedMotion);
   const setMapTextures = useSettingsStore((state) => state.setMapTextures);
+  const reverseDatesRequired = getDifficultyRules(difficulty).reverseDatesRequired;
 
   useEffect(() => {
     if (selectedCategories.length === 0) {
@@ -89,10 +94,10 @@ export function SettingsPage({ categories }: { categories: string[] }) {
                 <span>{item}</span>
                 <small>
                   {item === "Explorer"
-                    ? "30s + 30s bank, 3 hints, full suggestions"
+                    ? "30s + 30s bank, optional lifetime estimates, 3 hints"
                     : item === "Scholar"
-                      ? "24s + 15s bank, 2 hints, name-only suggestions"
-                      : "18s, no bank, 1 hint, no suggestions or easy rounds"}
+                      ? "24s + 15s bank, lifetime estimates required, 2 hints"
+                      : "18s, lifetime estimates required, no bank, 1 hint"}
                 </small>
               </button>
             ))}
@@ -169,6 +174,22 @@ export function SettingsPage({ categories }: { categories: string[] }) {
                 type="checkbox"
                 checked={showSuggestions}
                 onChange={(event) => setShowSuggestions(event.target.checked)}
+              />
+            </label>
+            <label className="settings-toggle">
+              <span>
+                <strong>Lifetime estimates in Where mode</strong>
+                <small>
+                  {reverseDatesRequired
+                    ? "Required on Scholar and Conqueror."
+                    : "Optionally enter birth and death years before placing your pin."}
+                </small>
+              </span>
+              <input
+                type="checkbox"
+                checked={showReverseDates || reverseDatesRequired}
+                disabled={reverseDatesRequired}
+                onChange={(event) => setShowReverseDates(event.target.checked)}
               />
             </label>
             <label className="settings-toggle">

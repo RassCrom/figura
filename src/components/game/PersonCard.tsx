@@ -87,12 +87,6 @@ export function PersonCard({
               </p>
               <div className="reverse-score-breakdown">
                 <span>Map +{roundResult.locationScore?.toLocaleString() ?? 0}</span>
-                <span>
-                  Timeline +{roundResult.timelineScore?.toLocaleString() ?? 0}
-                  {roundResult.birthYearError != null && roundResult.deathYearError != null
-                    ? ` (${roundResult.birthYearError}y / ${roundResult.deathYearError}y off)`
-                    : ""}
-                </span>
                 <span>Speed +{roundResult.speedScore?.toLocaleString() ?? 0}</span>
               </div>
             </div>

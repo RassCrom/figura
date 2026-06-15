@@ -469,7 +469,11 @@ export function EndPage() {
               <strong>{result.figureName}</strong>
               <small>
                 {result.distanceKm != null
-                  ? `${result.score.toLocaleString()} pts, ${result.distanceKm.toLocaleString()} km away, ${result.birthYearError ?? "-"}y / ${result.deathYearError ?? "-"}y off`
+                  ? `${result.score.toLocaleString()} pts, ${result.distanceKm.toLocaleString()} km away${
+                      result.birthYearError != null || result.deathYearError != null
+                        ? `, ${result.birthYearError ?? "-"}y / ${result.deathYearError ?? "-"}y off`
+                        : ""
+                    }`
                   : `${result.score.toLocaleString()} pts, ${result.wrongGuesses ?? 0} wrong, ${result.hintsUsed} hints, ${Math.round(result.timeUsed)}s`}
               </small>
             </article>
