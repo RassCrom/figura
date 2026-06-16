@@ -10,7 +10,7 @@ const SECTIONS = [
   {
     icon: BookOpenText,
     title: "Use your hints",
-    body: "Wrong guesses reveal life dates, then place names, on the map for free. Field notes — surname initial, description, category — are stronger but limited for the whole game.",
+    body: "Life dates are visible from the start. After your first wrong guess, place names appear on the map for free. Field notes — surname initial, description, category — are stronger but limited for the whole game.",
   },
   {
     icon: Timer,

@@ -339,14 +339,12 @@ export default function GamePage({ figureIndex }: Props) {
         primary:
           revealReverse || revealWhere
             ? currentFigure.place_of_birth
-            : wrongGuesses >= 1
-              ? lifeDates.birthDate
-              : null,
+            : lifeDates.birthDate,
         secondary: revealReverse
           ? lifeDates.birthDate
           : revealWhere
             ? null
-            : wrongGuesses >= 2
+            : wrongGuesses >= 1
               ? currentFigure.place_of_birth
               : null,
       },
@@ -354,14 +352,12 @@ export default function GamePage({ figureIndex }: Props) {
         primary:
           revealReverse || revealWhere
             ? currentFigure.place_of_death
-            : wrongGuesses >= 1
-              ? lifeDates.deathDate
-              : null,
+            : lifeDates.deathDate,
         secondary: revealReverse
           ? lifeDates.deathDate
           : revealWhere
             ? null
-            : wrongGuesses >= 2
+            : wrongGuesses >= 1
               ? currentFigure.place_of_death
               : null,
       },
@@ -847,9 +843,8 @@ export default function GamePage({ figureIndex }: Props) {
           {mode !== "reverse" ? (
             <div className="hint-live" aria-live="polite">
               {wrongGuesses === 1
-                ? "Hint added: life dates are visible near the birth marker."
+                ? "Hint added: place names are visible near the markers."
                 : null}
-              {wrongGuesses === 2 ? "Hint added: place names are visible near the markers." : null}
             </div>
           ) : null}
         </form>
