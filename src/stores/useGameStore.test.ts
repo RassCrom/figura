@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { calcReverseScore, REVERSE_SCORING } from "../config/gameConfig";
 import type { Figure } from "../types/figure";
 import { useGameStore } from "./useGameStore";
 
@@ -76,7 +77,7 @@ describe("game-wide hints", () => {
     expect(result.firstGuess).toBe(false);
   });
 
-  it("marks a far-away reverse pin as not correct while keeping partial points", () => {
+  it("marks a far-away reverse pin as not correct with no points", () => {
     useGameStore.getState().reset();
     useGameStore.getState().startSession({
       nickname: "tester",
@@ -86,7 +87,7 @@ describe("game-wide hints", () => {
       mode: "reverse",
     });
     useGameStore.getState().beginRound();
-    // Tokyo is ~9,500 km from London — partial location points, not a "catch".
+    // Tokyo is ~9,500 km from London: outside the scoring range and not a catch.
     const result = useGameStore.getState().submitLocation([35.7, 139.7], {
       birthYear: 1815,
       deathYear: 1852,
@@ -94,7 +95,7 @@ describe("game-wide hints", () => {
 
     expect(result).not.toBeNull();
     expect(useGameStore.getState().roundResults[0].correct).toBe(false);
-    expect(useGameStore.getState().roundResults[0].score).toBeGreaterThan(0);
+    expect(useGameStore.getState().roundResults[0].score).toBe(0);
     expect(useGameStore.getState().roundResults[0].guessCoordinates).toEqual([35.7, 139.7]);
   });
 
@@ -177,5 +178,28 @@ describe("game-wide hints", () => {
 
     expect(result?.score).toBe(4800);
     expect(useGameStore.getState().roundResults[0].speedScore).toBe(200);
+  });
+});
+
+describe("reverse scoring", () => {
+  it("awards max points through the 2 km perfect radius", () => {
+    const score = calcReverseScore(REVERSE_SCORING.perfectRadiusKm, 0);
+
+    expect(score.location).toBe(REVERSE_SCORING.locationPoints);
+    expect(score.speed).toBe(REVERSE_SCORING.speedPoints);
+    expect(score.total).toBe(REVERSE_SCORING.locationPoints + REVERSE_SCORING.speedPoints);
+  });
+
+  it("starts reducing location points immediately after 2 km", () => {
+    expect(calcReverseScore(REVERSE_SCORING.perfectRadiusKm + 1, 0).location).toBeLessThan(
+      REVERSE_SCORING.locationPoints,
+    );
+  });
+
+  it("keeps medium-distance misses playable without awarding near-perfect points", () => {
+    const score = calcReverseScore(500, 0);
+
+    expect(score.total).toBeGreaterThan(2_500);
+    expect(score.location).toBeLessThan(3_000);
   });
 });

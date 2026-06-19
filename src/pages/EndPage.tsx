@@ -23,7 +23,7 @@ import { useCountUp } from "../hooks/useCountUp";
 import { en } from "../i18n/en";
 import { getDayNumber } from "../lib/dailyChallenge";
 import { fetchDailyPercentile } from "../lib/api";
-import { getValidatedFigureIndex, loadFigureRecords } from "../lib/figures";
+import { getValidatedFigureIndex, hasDeathDate, loadFigureRecords } from "../lib/figures";
 import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
 import { buildFigureQueue } from "../lib/session";
 import { useGameStore } from "../stores/useGameStore";
@@ -114,6 +114,7 @@ export function EndPage() {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [runAward, setRunAward] = useState<ProfileAward | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
   const [dailyPercentile, setDailyPercentile] = useState<number | null>(null);
   const reducedMotion = useSettingsStore((state) => state.reducedMotion);
   const dismissLevelUp = useCallback(() => setShowLevelUp(false), []);
@@ -246,25 +247,40 @@ export function EndPage() {
     reducedMotion,
   ]);
 
-  if (status !== "ended" && results.length === 0) {
+  if (!isRestarting && status !== "ended" && results.length === 0) {
     return <Navigate to="/" replace />;
   }
 
   async function handlePlayAgain() {
-    const { queue: queueIndex } = buildFigureQueue(
-      getValidatedFigureIndex(),
+    setIsRestarting(true);
+    const figureIndex = getValidatedFigureIndex();
+    const playableFigures =
+      mode === "reverse" ? figureIndex.filter((figure) => hasDeathDate(figure)) : figureIndex;
+    const { queue: queueIndex, relaxed } = buildFigureQueue(
+      playableFigures,
       difficulty,
       categories,
       getRecentFigureIds(),
     );
     if (queueIndex.length === 0) {
+      setIsRestarting(false);
       setToast("No figures match the selected filters. Try adjusting your settings.");
       return;
     }
     recordRecentFigures(queueIndex.map((figure) => figure.id));
-    const nextQueue = await loadFigureRecords(queueIndex);
-    startSession({ nickname, difficulty, categories, queue: nextQueue, mode });
-    navigate("/game");
+    if (relaxed) {
+      setToast("The pool was under five figures, so filters were relaxed for this session.");
+      window.setTimeout(() => setToast(null), 4200);
+    }
+    try {
+      const nextQueue = await loadFigureRecords(queueIndex);
+      startSession({ nickname, difficulty, categories, queue: nextQueue, mode });
+      navigate("/game");
+    } catch (error) {
+      console.error("Failed to start a new run", error);
+      setIsRestarting(false);
+      setToast("Could not start a new run. Please try again.");
+    }
   }
 
   const threadsUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(shareText)}`;
@@ -486,22 +502,27 @@ export function EndPage() {
           </>
         ) : null}
         <div className="action-row">
-          {mode === "classic" ? (
-            <>
-              <button className="primary-button" type="button" onClick={handlePlayAgain}>
-                {en.playAgain}
-              </button>
-              <Link className="secondary-button" to="/settings">
-                {en.changeSettings}
-              </Link>
-            </>
-          ) : (
+          {mode === "daily" ? (
             <>
               <Link className="primary-button" to="/daily" onClick={reset}>
                 Daily · Day {dayNumber}
               </Link>
               <Link className="secondary-button" to="/figure/today" onClick={reset}>
                 Read about today's figure
+              </Link>
+            </>
+          ) : (
+            <>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={handlePlayAgain}
+                disabled={isRestarting}
+              >
+                {en.playAgain}
+              </button>
+              <Link className="secondary-button" to="/settings">
+                {en.changeSettings}
               </Link>
             </>
           )}
