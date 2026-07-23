@@ -1,16 +1,34 @@
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { buildRoundRouteOverlays, getRoundRouteColor, getRoundRouteLabel } from "../../lib/routeOverlays";
-import type { Figure, RoundResult } from "../../types/figure";
+import {
+  buildReverseGuessOverlays,
+  buildRoundRouteOverlays,
+  getReverseRouteLegendLabel,
+  getRoundRouteColor,
+  getRoundRouteLabel,
+} from "../../lib/routeOverlays";
+import type { Figure, GameMode, RoundResult } from "../../types/figure";
 import type { GameMapHandle } from "../../lib/mapEngine";
 
 type MapEngine = typeof import("../../lib/mapEngine");
 
-export function SessionRoutesMap({ results, queue }: { results: RoundResult[]; queue: Figure[] }) {
+export function SessionRoutesMap({
+  results,
+  queue,
+  mode,
+}: {
+  results: RoundResult[];
+  queue: Figure[];
+  mode: GameMode;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapEngineRef = useRef<MapEngine | null>(null);
   const mapRef = useRef<GameMapHandle | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const routes = useMemo(() => buildRoundRouteOverlays(results, queue), [queue, results]);
+  const isReverse = mode === "reverse";
+  const routes = useMemo(
+    () => (isReverse ? buildReverseGuessOverlays(results, queue) : buildRoundRouteOverlays(results, queue)),
+    [isReverse, queue, results],
+  );
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -71,16 +89,24 @@ export function SessionRoutesMap({ results, queue }: { results: RoundResult[]; q
         <div className="routes-map-vignette" aria-hidden="true" />
       </div>
       <div className="route-legend" aria-label="Route result colors">
-        {results.map((result) => (
-          <span
-            key={`${result.round}-${result.figureName}`}
-            className="route-legend-item"
-            style={{ "--route-color": getRoundRouteColor(result) } as CSSProperties}
-          >
-            <strong>{result.round}</strong>
-            {getRoundRouteLabel(result)}
-          </span>
-        ))}
+        {results.map((result) =>
+          isReverse && !result.guessCoordinates ? null : (
+            <span
+              key={`${result.round}-${result.figureName}`}
+              className="route-legend-item"
+              style={{ "--route-color": getRoundRouteColor(result) } as CSSProperties}
+            >
+              {isReverse ? (
+                getReverseRouteLegendLabel(result)
+              ) : (
+                <>
+                  <strong>{result.round}</strong>
+                  {getRoundRouteLabel(result)}
+                </>
+              )}
+            </span>
+          ),
+        )}
       </div>
     </section>
   );

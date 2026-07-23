@@ -1,8 +1,7 @@
-import { ArrowRight, Flame, Globe2, MapPinned } from "lucide-react";
+import { ArrowRight, Flame, Globe2, MapPinned, Trophy } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { AnimatedMapBackground } from "../components/AnimatedMapBackground";
 import { HowToPlay } from "../components/HowToPlay";
 import { usePageMetadata } from "../hooks/usePageMetadata";
 import { hasSeenHowToPlay, markHowToPlaySeen } from "../lib/onboarding";
@@ -14,12 +13,13 @@ import { getLocalPlayersToday, recordLocalPlay } from "../lib/playerActivity";
 import { buildFigureQueue } from "../lib/session";
 import { isValidPublicNickname } from "../lib/apiSecurity";
 import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
+import { parseFriendChallenge } from "../lib/sharing";
 import { hasDeathDate, loadFigureRecords } from "../lib/figures";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useGameStore } from "../stores/useGameStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { FeaturedFigure, FigureIndex } from "../types/figure";
+import type { FigureIndex } from "../types/figure";
 
 const HOME_METADATA = {
   title: "Figura | Guess famous people by birthplace",
@@ -31,7 +31,6 @@ const HOME_METADATA = {
 
 type Props = {
   figureIndex: FigureIndex[];
-  featuredFigures: FeaturedFigure[];
   categories: string[];
 };
 
@@ -56,10 +55,16 @@ function nicknameErrorMessage(code: string): string {
   }
 }
 
-export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
+export function HomePage({ figureIndex, categories }: Props) {
   usePageMetadata(HOME_METADATA);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const challengeQuery = searchParams.toString();
+  const friendChallenge = useMemo(
+    () => parseFriendChallenge(new URLSearchParams(challengeQuery)),
+    [challengeQuery],
+  );
   const [nickname, setNickname] = useState(() => localStorage.getItem("gtf_nickname") ?? "");
   const [touched, setTouched] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -70,6 +75,8 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
   const setToast = useGameStore((state) => state.setToast);
   const difficulty = useSettingsStore((state) => state.difficulty);
   const gameMode = useSettingsStore((state) => state.gameMode);
+  const setDifficulty = useSettingsStore((state) => state.setDifficulty);
+  const setGameMode = useSettingsStore((state) => state.setGameMode);
   const selectedCategories = useSettingsStore((state) => state.selectedCategories);
   const setSelectedCategories = useSettingsStore((state) => state.setSelectedCategories);
   const xp = useProfileStore((state) => state.xp);
@@ -81,6 +88,12 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (!friendChallenge) return;
+    setDifficulty(friendChallenge.difficulty);
+    setGameMode(friendChallenge.mode);
+  }, [friendChallenge, setDifficulty, setGameMode]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -144,7 +157,13 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
     const queue = await loadFigureRecords(queueIndex);
     localStorage.setItem("gtf_nickname", nickname);
     recordLocalPlay();
-    startSession({ nickname, difficulty, categories: effectiveCategories, queue, mode: gameMode });
+    startSession({
+      nickname,
+      difficulty,
+      categories: effectiveCategories,
+      queue,
+      mode: gameMode,
+    });
     navigate("/game");
   }
 
@@ -153,13 +172,27 @@ export function HomePage({ figureIndex, featuredFigures, categories }: Props) {
 
   return (
     <main className="page-shell home-page">
-      <AnimatedMapBackground figures={featuredFigures} />
       <section className="home-panel" aria-labelledby="home-title">
         <div className="home-header">
           <Logo />
           <h1 id="home-title">Figura</h1>
         </div>
         <p className="home-subtitle">Who was here</p>
+        {friendChallenge ? (
+          <aside className="friend-challenge-card" aria-label="Friend challenge">
+            <span className="friend-challenge-icon" aria-hidden="true">
+              <Trophy size={21} />
+            </span>
+            <span>
+              <small>Friend challenge</small>
+              <strong>Beat {friendChallenge.score.toLocaleString()} points</strong>
+              <span>
+                {friendChallenge.mode === "reverse" ? "Reverse journey" : "Classic journey"} /{" "}
+                {friendChallenge.difficulty}
+              </span>
+            </span>
+          </aside>
+        ) : null}
         {(playersToday != null && playersToday > 0) || dailyStreak > 0 ? (
           <div className="home-pills">
             {playersToday != null && playersToday > 0 ? (

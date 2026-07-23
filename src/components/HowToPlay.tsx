@@ -15,7 +15,7 @@ const SECTIONS = [
   {
     icon: Timer,
     title: "Score fast, score clean",
-    body: "A figure is worth 5,000 points. Every wrong guess costs 1,200, answering quickly earns up to 800 extra, and first-try streaks add 500.",
+    body: "A figure is worth 5,000 points. Every wrong guess costs 700, answering quickly earns up to 500 extra, and first-try streaks add 500.",
   },
   {
     icon: CalendarDays,
@@ -49,7 +49,12 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
         aria-labelledby="howto-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="icon-button howto-close" type="button" onClick={onClose} aria-label="Close guide">
+        <button
+          className="icon-button howto-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Close guide"
+        >
           <X aria-hidden="true" size={18} />
         </button>
         <p className="eyebrow">Field guide</p>

@@ -357,8 +357,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       roundTenth(state.timeUsed + state.extraUsed),
       getDifficultyRules(state.difficulty).roundSeconds,
     );
-    // A reverse round is strict: only a pin within the correct-radius counts
-    // as identifying the figure (Codex, accuracy stats, around-the-world).
+    // Reverse mode accepts the surrounding region, while distance still
+    // determines how many location points the player earns.
     const correct = distance <= REVERSE_SCORING.correctRadiusKm;
     set(
       reveal(state, breakdown.total, correct, {

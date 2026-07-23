@@ -31,6 +31,33 @@ export function getRoundRouteLabel(result: RoundResult): string {
   return "Solved";
 }
 
+/** Where-mode legend: label the two endpoints of the guess->birthplace arc, no correct/miss wording. */
+export function getReverseRouteLegendLabel(result: RoundResult): string {
+  return `Guess ${result.round} → Birthplace`;
+}
+
+/** Where-mode route atlas: draws each round's guessed point to the actual birthplace (no deathplace). */
+export function buildReverseGuessOverlays(results: RoundResult[], queue: Figure[]): RouteOverlay[] {
+  return results.flatMap((result) => {
+    const figure = queue[result.round - 1];
+    if (!figure || !result.guessCoordinates) {
+      return [];
+    }
+
+    return [
+      {
+        id: `guess-${result.round}-${result.figureName}`,
+        birth: toLngLat(result.guessCoordinates),
+        death: toLngLat(figure.coordinates_of_the_place_of_birth),
+        color: getRoundRouteColor(result),
+        opacity: result.correct ? 0.82 : 0.68,
+        width: 3.2,
+        dasharray: result.correct ? undefined : [2, 1.5],
+      },
+    ];
+  });
+}
+
 export function buildRoundRouteOverlays(
   results: RoundResult[],
   queue: Figure[],

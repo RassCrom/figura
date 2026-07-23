@@ -90,4 +90,24 @@ describe("progression tiers", () => {
     });
     expect(clean).toContain("ice_cold");
   });
+
+  it("keeps Great Khan achievable under the milder score ceiling", () => {
+    const unlocked = resolveAchievementUnlocks({
+      summary: {
+        sessionId: "great-khan",
+        score: 27_000,
+        difficulty: "Explorer",
+        results: [result],
+      },
+      unlocked: [],
+      correctEver: true,
+      scholarWinStreak: 0,
+      totalGames: 1,
+      collectionSize: 1,
+      dailyStreak: 0,
+      categoryStats: {},
+    });
+
+    expect(unlocked).toContain("great_khan");
+  });
 });

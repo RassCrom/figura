@@ -5,13 +5,13 @@ import { Analytics } from "@vercel/analytics/react";
 import { AmbientMusic } from "./components/AmbientMusic";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Toast } from "./components/Toast";
-import { getCategories, loadFeaturedFigures, loadFigureIndex } from "./lib/figures";
+import { getCategories, loadFigureIndex } from "./lib/figures";
 import { ensureAnonymousUser, isSupabaseConfigured } from "./lib/supabase";
 import { useGameStore } from "./stores/useGameStore";
 import { useLeaderboardStore } from "./stores/useLeaderboardStore";
 import { useProfileStore } from "./stores/useProfileStore";
 import { useSettingsStore } from "./stores/useSettingsStore";
-import type { FeaturedFigure, FigureIndex } from "./types/figure";
+import type { FigureIndex } from "./types/figure";
 
 const GamePage = lazy(() => import("./pages/GamePage"));
 const DailyChallengePage = lazy(() =>
@@ -44,7 +44,6 @@ const FiguresMapPage = lazy(() =>
 
 export function App() {
   const [figureIndex, setFigureIndex] = useState<FigureIndex[] | null>(null);
-  const [featuredFigures, setFeaturedFigures] = useState<FeaturedFigure[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const toast = useGameStore((state) => state.toast);
   const setSelectedCategories = useSettingsStore((state) => state.setSelectedCategories);
@@ -53,24 +52,21 @@ export function App() {
 
   useEffect(() => {
     let mounted = true;
-    void Promise.all([loadFigureIndex(), loadFeaturedFigures()]).then(
-      ([validFigures, featured]) => {
-        if (!mounted) {
-          return;
-        }
-        const nextCategories = getCategories(validFigures);
-        setFigureIndex(validFigures);
-        setFeaturedFigures(featured);
-        setCategories(nextCategories);
-        // selectedCategories comes from persisted store; only seed the default
-        // on first ever load (when the store is empty). Reading the store value
-        // directly inside the callback avoids a stale-closure issue and means
-        // we don't need it in the dep array, preventing spurious re-fetches.
-        if (useSettingsStore.getState().selectedCategories.length === 0) {
-          setSelectedCategories(nextCategories);
-        }
-      },
-    );
+    void loadFigureIndex().then((validFigures) => {
+      if (!mounted) {
+        return;
+      }
+      const nextCategories = getCategories(validFigures);
+      setFigureIndex(validFigures);
+      setCategories(nextCategories);
+      // selectedCategories comes from persisted store; only seed the default
+      // on first ever load (when the store is empty). Reading the store value
+      // directly inside the callback avoids a stale-closure issue and means
+      // we don't need it in the dep array, preventing spurious re-fetches.
+      if (useSettingsStore.getState().selectedCategories.length === 0) {
+        setSelectedCategories(nextCategories);
+      }
+    });
 
     return () => {
       mounted = false;
@@ -102,11 +98,7 @@ export function App() {
           <Route
             path="/"
             element={
-              <HomePage
-                figureIndex={figureIndex}
-                featuredFigures={featuredFigures}
-                categories={categories}
-              />
+              <HomePage figureIndex={figureIndex} categories={categories} />
             }
           />
           <Route path="/settings" element={<SettingsPage categories={categories} />} />

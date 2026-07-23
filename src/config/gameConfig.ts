@@ -12,20 +12,20 @@ export const GAME_CONFIG = {
   countdownMs: 900,
   easyEndpointPopularityRating: 98,
   baseScore: 5000,
-  wrongPenalty: 1200,
-  timeBonusMax: 800,
+  wrongPenalty: 700,
+  timeBonusMax: 500,
   streakBonus: 500,
 } as const;
 
 export const REVERSE_SCORING = {
   locationPoints: 4600,
   speedPoints: 400,
-  perfectRadiusKm: 2,
-  distanceDecayKm: 750,
-  maxScoringDistanceKm: 5000,
+  perfectRadiusKm: 25,
+  distanceDecayKm: 1500,
+  maxScoringDistanceKm: 8000,
   // A reverse round counts as a "correct" identification (Codex, accuracy
-  // stats, continents) only when the pin lands within this radius.
-  correctRadiusKm: 2,
+  // stats, continents) when the player reaches the surrounding region.
+  correctRadiusKm: 150,
 } as const;
 
 export type ReverseScoreBreakdown = {
@@ -110,8 +110,7 @@ export function calcReverseScore(
   }
   const scoringDistance = Math.max(0, safeDistance - REVERSE_SCORING.perfectRadiusKm);
   const location = Math.round(
-    REVERSE_SCORING.locationPoints *
-      Math.exp(-scoringDistance / REVERSE_SCORING.distanceDecayKm),
+    REVERSE_SCORING.locationPoints * Math.exp(-scoringDistance / REVERSE_SCORING.distanceDecayKm),
   );
   const speed = Math.round(
     REVERSE_SCORING.speedPoints *

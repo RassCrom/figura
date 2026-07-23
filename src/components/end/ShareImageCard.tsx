@@ -19,13 +19,17 @@ export function ShareImageCard({
   score,
   rank,
   results,
+  shareUrl,
 }: {
   mode: string;
   dayNumber: number | null;
   score: number;
   rank: string;
   results: RoundResult[];
+  shareUrl: string;
 }) {
+  const challengeHost = new URL(shareUrl).host;
+
   return (
     <div
       style={{
@@ -50,7 +54,7 @@ export function ShareImageCard({
             color: "#c8962a",
           }}
         >
-          Guess The Figure
+          FIGURA
         </span>
       </div>
       {/* Day tag */}
@@ -64,7 +68,7 @@ export function ShareImageCard({
             letterSpacing: "0.1em",
           }}
         >
-          Daily Challenge · Day {dayNumber}
+          Daily Challenge / Day {dayNumber}
         </p>
       ) : null}
       {/* Score row */}
@@ -130,17 +134,28 @@ export function ShareImageCard({
           </div>
         ))}
       </div>
-      {/* Footer */}
+      {/* Challenge footer */}
       <p
         style={{
-          margin: "20px 0 0",
+          margin: "22px 0 4px",
+          fontSize: 14,
+          fontWeight: 700,
+          color: "#e8dfc8",
+          textAlign: "center",
+        }}
+      >
+        Can you beat my journey?
+      </p>
+      <p
+        style={{
+          margin: 0,
           fontSize: 11,
           color: "rgba(154,138,106,0.6)",
           textAlign: "center",
           letterSpacing: "0.04em",
         }}
       >
-        {mode === "daily" ? `${window.location.host}/daily` : window.location.host}
+        {mode === "daily" ? `${challengeHost}/daily` : challengeHost}
       </p>
     </div>
   );

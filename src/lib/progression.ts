@@ -80,7 +80,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "great_khan",
     name: "Great Khan",
-    description: "Reach 30,000 points in one run.",
+    description: "Reach 27,000 points in one run.",
   },
   { id: "collector_10", name: "Codex Initiate", description: "Identify 10 unique figures." },
   { id: "collector_50", name: "Codex Curator", description: "Identify 50 unique figures." },
@@ -177,7 +177,7 @@ export function resolveAchievementUnlocks(args: {
     names.some((name) => name.includes("genghis khan")) &&
       names.some((name) => name.includes("al farabi") || name.includes("muhammad al farabi")),
   );
-  unlock("great_khan", args.summary.score >= 30000);
+  unlock("great_khan", args.summary.score >= 27000);
   unlock("collector_10", args.collectionSize >= 10);
   unlock("collector_50", args.collectionSize >= 50);
   unlock("collector_100", args.collectionSize >= 100);

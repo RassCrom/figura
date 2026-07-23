@@ -29,7 +29,7 @@ import {
   searchFigureSuggestions,
 } from "../lib/figures";
 import type { GameMapHandle, JourneyHints } from "../lib/mapEngine";
-import { buildRoundRouteOverlays } from "../lib/routeOverlays";
+import { buildReverseGuessOverlays, buildRoundRouteOverlays } from "../lib/routeOverlays";
 import { useGameStore, type GameHint, type ReverseEstimate } from "../stores/useGameStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import type { Coordinates, FigureIndex } from "../types/figure";
@@ -336,10 +336,7 @@ export default function GamePage({ figureIndex }: Props) {
     const revealWhere = mode !== "reverse" && status === "revealed";
     const hints: JourneyHints = {
       birth: {
-        primary:
-          revealReverse || revealWhere
-            ? currentFigure.place_of_birth
-            : lifeDates.birthDate,
+        primary: revealReverse || revealWhere ? currentFigure.place_of_birth : lifeDates.birthDate,
         secondary: revealReverse
           ? lifeDates.birthDate
           : revealWhere
@@ -349,10 +346,7 @@ export default function GamePage({ figureIndex }: Props) {
               : null,
       },
       death: {
-        primary:
-          revealReverse || revealWhere
-            ? currentFigure.place_of_death
-            : lifeDates.deathDate,
+        primary: revealReverse || revealWhere ? currentFigure.place_of_death : lifeDates.deathDate,
         secondary: revealReverse
           ? lifeDates.deathDate
           : revealWhere
@@ -370,6 +364,7 @@ export default function GamePage({ figureIndex }: Props) {
       reducedMotion,
       compact: isSmallViewport,
       result: revealReverse,
+      hideDeath: mode === "reverse",
     });
   }, [currentFigure, isSmallViewport, mapReady, mode, reducedMotionSetting, wrongGuesses, status]);
 
@@ -496,8 +491,19 @@ export default function GamePage({ figureIndex }: Props) {
       reducedMotionSetting || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cinematic = revealWasCorrect && !reducedMotion;
     if (mapEngineRef.current && mapRef.current) {
-      const lifeJourney = getLifeJourney(revealedFigure.id);
-      if (lifeJourney) {
+      const reverseResultRoutes =
+        mode === "reverse" && revealResult ? buildReverseGuessOverlays([revealResult], queue) : [];
+      const lifeJourney = mode === "reverse" ? null : getLifeJourney(revealedFigure.id);
+      if (reverseResultRoutes.length > 0) {
+        mapEngineRef.current.renderRouteOverlay(mapRef.current, reverseResultRoutes, {
+          fit: true,
+          animateFit: !reducedMotion,
+          animateRoutes: !reducedMotion,
+          reducedMotion,
+          padding: isSmallViewport ? 52 : 84,
+          maxZoom: isSmallViewport ? 3.8 : 4.8,
+        });
+      } else if (lifeJourney) {
         mapEngineRef.current.renderLifeJourney(mapRef.current, lifeJourney, {
           animateFit: !reducedMotion,
           reducedMotion,
@@ -509,6 +515,7 @@ export default function GamePage({ figureIndex }: Props) {
           reducedMotion,
           compact: isSmallViewport,
           result: mode === "reverse",
+          hideDeath: mode === "reverse",
         });
       }
     }
@@ -526,7 +533,15 @@ export default function GamePage({ figureIndex }: Props) {
       setShowRevealCard(true);
     }, 620);
     return () => window.clearTimeout(timer);
-  }, [isSmallViewport, mode, reducedMotionSetting, revealWasCorrect, revealedFigure]);
+  }, [
+    isSmallViewport,
+    mode,
+    queue,
+    reducedMotionSetting,
+    revealResult,
+    revealWasCorrect,
+    revealedFigure,
+  ]);
 
   // Round transition: clear local UI state that's only meaningful within the
   // round just ended (the typed guess, the wrong-figure toast).
@@ -542,8 +557,11 @@ export default function GamePage({ figureIndex }: Props) {
     setPendingReverseGuess(null);
     if (mapEngineRef.current && mapRef.current) {
       mapEngineRef.current.clearReverseGuessMarker(mapRef.current, false);
+      if (mode === "reverse") {
+        mapEngineRef.current.renderRouteOverlay(mapRef.current, []);
+      }
     }
-  }, [roundIndex]);
+  }, [mode, roundIndex]);
 
   function updateBirthYearEstimate(year: number | null) {
     const birthYear =
@@ -842,9 +860,7 @@ export default function GamePage({ figureIndex }: Props) {
           ) : null}
           {mode !== "reverse" ? (
             <div className="hint-live" aria-live="polite">
-              {wrongGuesses === 1
-                ? "Hint added: place names are visible near the markers."
-                : null}
+              {wrongGuesses === 1 ? "Hint added: place names are visible near the markers." : null}
             </div>
           ) : null}
         </form>

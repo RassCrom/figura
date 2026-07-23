@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import {
-  Twitter,
-  Linkedin,
-  Image as ImageIcon,
-  Loader2,
-  Copy,
-  Check,
-  AlertCircle,
-  Download,
-} from "lucide-react";
 import { toPng } from "html-to-image";
 
 import { AchievementBadge } from "../components/AchievementBadge";
@@ -18,6 +8,7 @@ import { LevelBadge } from "../components/LevelBadge";
 import { LevelUpCelebration } from "../components/LevelUpCelebration";
 import { TopNav } from "../components/TopNav";
 import { ShareImageCard } from "../components/end/ShareImageCard";
+import { SharePanel } from "../components/end/SharePanel";
 import { SessionRoutesMap } from "../components/end/SessionRoutesMap";
 import { useCountUp } from "../hooks/useCountUp";
 import { en } from "../i18n/en";
@@ -26,35 +17,18 @@ import { fetchDailyPercentile } from "../lib/api";
 import { getValidatedFigureIndex, hasDeathDate, loadFigureRecords } from "../lib/figures";
 import { getRecentFigureIds, recordRecentFigures } from "../lib/recentFigures";
 import { buildFigureQueue } from "../lib/session";
+import {
+  buildChallengeUrl,
+  buildShareText,
+  buildSocialShareUrls,
+  getRunStats,
+  type RunShareDetails,
+} from "../lib/sharing";
 import { useGameStore } from "../stores/useGameStore";
 import { useLeaderboardStore } from "../stores/useLeaderboardStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
-import type { RoundResult } from "../types/figure";
 import type { ProfileAward } from "../lib/progression";
-
-/** Plain-text symbol for clipboard / social text posts */
-function symbolForResult(result: RoundResult): string {
-  if (!result.correct) return "✗";
-  if (result.firstGuess) return "★";
-  return "✓";
-}
-
-function buildShareText(
-  mode: string,
-  dayNumber: number | null,
-  score: number,
-  rank: string,
-  results: RoundResult[],
-): string {
-  const grid = results.map(symbolForResult).join(" ");
-  const url = mode === "daily" ? `${window.location.origin}/daily` : window.location.origin;
-  if (mode === "daily" && dayNumber) {
-    return `Guess The Figure – Day ${dayNumber}\n${grid}\n${score.toLocaleString()} pts · ${rank}\n${url}`;
-  }
-  return `Guess The Figure\n${grid}\n${score.toLocaleString()} pts · ${rank}\n${url}`;
-}
-
 
 function syncErrorMessage(code: string): string {
   switch (code) {
@@ -83,7 +57,6 @@ function rankName(score: number): string {
   return "Wanderer";
 }
 
-
 export function EndPage() {
   const navigate = useNavigate();
   const status = useGameStore((state) => state.status);
@@ -108,7 +81,6 @@ export function EndPage() {
   const lastAward = useProfileStore((state) => state.lastAward);
   const unlockedAchievements = useProfileStore((state) => state.unlockedAchievements);
   const animatedScore = useCountUp(score, 1200);
-  const resultRef = useRef<HTMLDivElement>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
@@ -120,11 +92,24 @@ export function EndPage() {
   const dismissLevelUp = useCallback(() => setShowLevelUp(false), []);
   const rank = rankName(score);
   const dayNumber = dailyDate ? getDayNumber(dailyDate) : null;
-  const shareText = useMemo(
-    () => buildShareText(mode, dayNumber, score, rank, results),
-    [dayNumber, mode, results, score, rank],
+  const shareDetails = useMemo<RunShareDetails>(
+    () => ({
+      origin: window.location.origin,
+      mode,
+      difficulty,
+      dayNumber,
+      score,
+      rank,
+      results,
+    }),
+    [dayNumber, difficulty, mode, rank, results, score],
   );
+  const shareText = useMemo(() => buildShareText(shareDetails), [shareDetails]);
+  const shareUrl = useMemo(() => buildChallengeUrl(shareDetails), [shareDetails]);
+  const socialUrls = useMemo(() => buildSocialShareUrls(shareDetails), [shareDetails]);
+  const runStats = useMemo(() => getRunStats(results), [results]);
   const displayAward = runAward ?? lastAward;
+  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
   async function handleCopyShare() {
     if (!shareText) return;
@@ -136,6 +121,20 @@ export function EndPage() {
       setCopyState("error");
       window.setTimeout(() => setCopyState("idle"), 2000);
     }
+  }
+
+  async function handleChallengeShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "FIGURA", text: shareText });
+        return;
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+      }
+    }
+    await handleCopyShare();
   }
 
   async function captureShareImage(): Promise<{ dataUrl: string; file: File } | null> {
@@ -283,12 +282,6 @@ export function EndPage() {
     }
   }
 
-  const threadsUrl = `https://www.threads.net/intent/post?text=${encodeURIComponent(shareText)}`;
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`;
-
-  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
-
   return (
     <main className="page-shell">
       <TopNav />
@@ -311,19 +304,46 @@ export function EndPage() {
             score={score}
             rank={rank}
             results={results}
+            shareUrl={shareUrl}
           />
         </div>
       </div>
 
       <section className="content-panel end-panel" aria-labelledby="end-title">
-        <div ref={resultRef} className="result-preview-wrapper">
+        <header className="result-hero">
           <p className="eyebrow">
             {mode === "daily" && dailyDate
-              ? `Daily - Day ${getDayNumber(dailyDate)}`
-              : "Final Score"}
+              ? `Daily · Day ${getDayNumber(dailyDate)}`
+              : "Journey complete"}
           </p>
-          <h1 id="end-title">{animatedScore.toLocaleString()}</h1>
-          <p className="rank-badge">{rank}</p>
+          <div className="result-score-lockup">
+            <div>
+              <span>Final score</span>
+              <h1 id="end-title">{animatedScore.toLocaleString()}</h1>
+            </div>
+            <p className="rank-badge">{rank}</p>
+          </div>
+          <p className="result-verdict">
+            {runStats.solved === runStats.total
+              ? "Every trail found. Your map is ready to challenge the next traveler."
+              : `${runStats.solved} of ${runStats.total} trails found. Share the route, then return for a rematch.`}
+          </p>
+          <dl className="result-stat-grid" aria-label="Run summary">
+            <div>
+              <dt>Solved</dt>
+              <dd>
+                {runStats.solved}/{runStats.total}
+              </dd>
+            </div>
+            <div>
+              <dt>First try</dt>
+              <dd>{runStats.firstTry}</dd>
+            </div>
+            <div>
+              <dt>Best round</dt>
+              <dd>{runStats.bestRoundScore.toLocaleString()}</dd>
+            </div>
+          </dl>
           {mode === "daily" && dailyPercentile != null ? (
             <p className="daily-percentile">You beat {dailyPercentile}% of today's players</p>
           ) : null}
@@ -348,153 +368,70 @@ export function EndPage() {
               <span>+{displayAward.xpAwarded.toLocaleString()} XP</span>
             </div>
           ) : null}
-          {displayAward?.unlockedNow.length ? (
-            <section className="achievement-section" aria-labelledby="new-achievements-title">
-              <h2 id="new-achievements-title">Unlocked Achievements</h2>
-              <div className="achievement-grid">
-                {displayAward.unlockedNow.map((id) => (
-                  <AchievementBadge key={id} id={id} />
-                ))}
-              </div>
-            </section>
-          ) : unlockedAchievements.length ? (
-            <section className="achievement-section" aria-labelledby="achievements-title">
-              <h2 id="achievements-title">Achievements</h2>
-              <div className="achievement-grid">
-                {unlockedAchievements.map((id) => (
-                  <AchievementBadge key={id} id={id} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-          <SessionRoutesMap results={results} queue={queue} />
-        </div>
-        <section className="share-card" aria-labelledby="share-title">
-          <h2 id="share-title" className="visually-hidden">
-            Share your run
-          </h2>
-          <pre className="share-card-text">{shareText}</pre>
-          <div className="share-actions">
-            {/* Copy text */}
-            <button
-              className="share-btn share-btn--copy"
-              type="button"
-              onClick={handleCopyShare}
-              aria-label="Copy share text"
-            >
-              {copyState === "copied" ? (
-                <>
-                  <Check size={16} /> Copied!
-                </>
-              ) : copyState === "error" ? (
-                <>
-                  <AlertCircle size={16} /> Failed
-                </>
-              ) : (
-                <>
-                  <Copy size={16} /> Copy
-                </>
-              )}
-            </button>
+        </header>
 
-            {/* Download image */}
-            <button
-              className="share-btn share-btn--image"
-              type="button"
-              onClick={handleDownloadImage}
-              disabled={isGeneratingImage}
-              aria-label="Download result image"
-            >
-              {isGeneratingImage ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Download size={16} />
-              )}
-              Save Image
-            </button>
+        <SharePanel
+          shareText={shareText}
+          socialUrls={socialUrls}
+          canNativeShare={canNativeShare}
+          copyState={copyState}
+          isGeneratingImage={isGeneratingImage}
+          onChallengeShare={handleChallengeShare}
+          onCopy={handleCopyShare}
+          onDownloadImage={handleDownloadImage}
+          onShareImage={handleNativeShare}
+        />
 
-            {/* Native share (Instagram, Threads, WhatsApp on mobile) */}
-            {canNativeShare && (
-              <button
-                className="share-btn share-btn--native"
-                type="button"
-                onClick={handleNativeShare}
-                disabled={isGeneratingImage}
-                aria-label="Share via apps (Instagram, Threads, WhatsApp…)"
+        {displayAward?.unlockedNow.length ? (
+          <section className="achievement-section" aria-labelledby="new-achievements-title">
+            <h2 id="new-achievements-title">Unlocked Achievements</h2>
+            <div className="achievement-grid">
+              {displayAward.unlockedNow.map((id) => (
+                <AchievementBadge key={id} id={id} />
+              ))}
+            </div>
+          </section>
+        ) : unlockedAchievements.length ? (
+          <section className="achievement-section" aria-labelledby="achievements-title">
+            <h2 id="achievements-title">Achievements</h2>
+            <div className="achievement-grid">
+              {unlockedAchievements.map((id) => (
+                <AchievementBadge key={id} id={id} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <SessionRoutesMap results={results} queue={queue} mode={mode} />
+
+        <section className="round-results-section" aria-labelledby="round-results-title">
+          <div className="section-heading">
+            <p className="eyebrow">Field notes</p>
+            <h2 id="round-results-title">Round by round</h2>
+          </div>
+          <div className="round-breakdown">
+            {results.map((result) => (
+              <article
+                key={`${result.round}-${result.figureName}`}
+                className={result.correct ? "is-solved" : "is-missed"}
               >
-                {isGeneratingImage ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <ImageIcon size={16} />
-                )}
-                Share via Apps
-              </button>
-            )}
-
-            {/* X / Twitter */}
-            <a
-              className="share-btn share-btn--twitter"
-              href={twitterUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Share to X (Twitter)"
-            >
-              <Twitter size={16} />X / Twitter
-            </a>
-
-            {/* Threads */}
-            <a
-              className="share-btn share-btn--threads"
-              href={threadsUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Share to Threads"
-            >
-              {/* Threads logo as inline SVG */}
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.5 12.186v-.002C1.5 5.476 5.476 1.5 12.186 1.5c3.389 0 6.186 1.187 8.303 3.435 1.88 2.001 2.961 4.718 3.028 7.666l.003.161v.186c-.016 1.993-.654 3.614-1.9 4.82-1.007.977-2.363 1.512-3.826 1.512-.089 0-.177-.002-.266-.005-1.07-.049-1.982-.41-2.647-1.044-.694.673-1.634 1.044-2.709 1.044h-.003zm-2.47-8.123c.485.538 1.182.84 2.016.84.865 0 1.598-.322 2.086-.908.498-.6.739-1.456.739-2.618 0-1.218-.285-2.113-.848-2.658-.543-.526-1.325-.793-2.326-.793-1.058 0-1.894.355-2.484 1.056-.577.687-.87 1.681-.87 2.954 0 1.217.25 2.14.742 2.742-.001 0 .945 1.385.945 1.385zm1.909-5.45c.671 0 1.21.173 1.601.515.395.344.59.841.59 1.479 0 .704-.198 1.237-.589 1.583-.38.336-.902.507-1.553.507-.606 0-1.113-.176-1.507-.524-.402-.354-.605-.874-.605-1.546 0-.691.199-1.22.592-1.567.387-.341.896-.447 1.471-.447z" />
-              </svg>
-              Threads
-            </a>
-
-            {/* LinkedIn */}
-            <a
-              className="share-btn share-btn--linkedin"
-              href={linkedinUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Share to LinkedIn"
-            >
-              <Linkedin size={16} />
-              LinkedIn
-            </a>
+                <span>
+                  {en.round} {result.round}
+                </span>
+                <strong>{result.figureName}</strong>
+                <small>
+                  {result.distanceKm != null
+                    ? `${result.score.toLocaleString()} pts, ${result.distanceKm.toLocaleString()} km away${
+                        result.birthYearError != null || result.deathYearError != null
+                          ? `, ${result.birthYearError ?? "-"}y / ${result.deathYearError ?? "-"}y off`
+                          : ""
+                      }`
+                    : `${result.score.toLocaleString()} pts, ${result.wrongGuesses ?? 0} wrong, ${result.hintsUsed} hints, ${Math.round(result.timeUsed)}s`}
+                </small>
+              </article>
+            ))}
           </div>
         </section>
-        <div className="round-breakdown">
-          {results.map((result) => (
-            <article key={`${result.round}-${result.figureName}`}>
-              <span>
-                {en.round} {result.round}
-              </span>
-              <strong>{result.figureName}</strong>
-              <small>
-                {result.distanceKm != null
-                  ? `${result.score.toLocaleString()} pts, ${result.distanceKm.toLocaleString()} km away${
-                      result.birthYearError != null || result.deathYearError != null
-                        ? `, ${result.birthYearError ?? "-"}y / ${result.deathYearError ?? "-"}y off`
-                        : ""
-                    }`
-                  : `${result.score.toLocaleString()} pts, ${result.wrongGuesses ?? 0} wrong, ${result.hintsUsed} hints, ${Math.round(result.timeUsed)}s`}
-              </small>
-            </article>
-          ))}
-        </div>
         {mode === "classic" ? (
           <>
             <h2>{en.leaderboard}</h2>

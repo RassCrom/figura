@@ -38,7 +38,10 @@ type ProfileState = {
   recordGame: (
     summary: GameProgressSummary,
     categories: string[],
-    options?: { mode?: "classic" | "daily" | "reverse"; dailyDate?: string },
+    options?: {
+      mode?: "classic" | "daily" | "reverse";
+      dailyDate?: string;
+    },
   ) => Promise<ProfileAward>;
 };
 

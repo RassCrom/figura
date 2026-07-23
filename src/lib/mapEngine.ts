@@ -52,6 +52,7 @@ type RenderOptions = {
   reducedMotion: boolean;
   compact?: boolean;
   result?: boolean;
+  hideDeath?: boolean;
 };
 
 type PendingRender = {
@@ -861,11 +862,13 @@ function doRenderLifeJourney(
 export function focusJourney(
   handle: GameMapHandle,
   figure: Figure,
-  options: { reducedMotion: boolean; compact?: boolean; result?: boolean } = {
+  options: { reducedMotion: boolean; compact?: boolean; result?: boolean; hideDeath?: boolean } = {
     reducedMotion: false,
   },
 ): void {
-  const { birth, death } = getJourneyCoordinates(figure);
+  const coordinates = getJourneyCoordinates(figure);
+  const birth = coordinates.birth;
+  const death = options.hideDeath ? null : coordinates.death;
   const boundsBuffer = options.result ? 3 : 8;
   if (!death) {
     const bounds: LngLatBoundsLike = [
@@ -1064,7 +1067,8 @@ function doRender(
   handle.currentFigureKey = key;
 
   const coordinates = getJourneyCoordinates(figure);
-  const { birth, death } = coordinates;
+  const { birth } = coordinates;
+  const death = options.hideDeath ? null : coordinates.death;
 
   const birthElement = makeMarkerElement("birth");
   birthElement.classList.toggle("result", Boolean(options.result));

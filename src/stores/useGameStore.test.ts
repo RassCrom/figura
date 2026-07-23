@@ -182,7 +182,7 @@ describe("game-wide hints", () => {
 });
 
 describe("reverse scoring", () => {
-  it("awards max points through the 2 km perfect radius", () => {
+  it("awards max points through the forgiving perfect radius", () => {
     const score = calcReverseScore(REVERSE_SCORING.perfectRadiusKm, 0);
 
     expect(score.location).toBe(REVERSE_SCORING.locationPoints);
@@ -190,7 +190,7 @@ describe("reverse scoring", () => {
     expect(score.total).toBe(REVERSE_SCORING.locationPoints + REVERSE_SCORING.speedPoints);
   });
 
-  it("starts reducing location points immediately after 2 km", () => {
+  it("starts reducing location points immediately after the perfect radius", () => {
     expect(calcReverseScore(REVERSE_SCORING.perfectRadiusKm + 1, 0).location).toBeLessThan(
       REVERSE_SCORING.locationPoints,
     );
@@ -199,7 +199,7 @@ describe("reverse scoring", () => {
   it("keeps medium-distance misses playable without awarding near-perfect points", () => {
     const score = calcReverseScore(500, 0);
 
-    expect(score.total).toBeGreaterThan(2_500);
-    expect(score.location).toBeLessThan(3_000);
+    expect(score.total).toBeGreaterThan(3_500);
+    expect(score.location).toBeLessThan(3_800);
   });
 });
